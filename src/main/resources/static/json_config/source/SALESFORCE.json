@@ -1,0 +1,105 @@
+{
+	"name": "SALESFORCE",
+	"authType": "REST2.0",
+	"status": "active",
+	"steps":"TWO",
+	"refresh":"YES",
+	"requestToken":{
+				"label": "RequestToken",
+				"type": "URL_BUTTON",
+				"url": "",
+				"params":[],
+				"method": "",
+				"header": [],
+				"responseBody": [],
+				"responseString":""
+			},
+	"accessCode": {
+				"label": "AuthorizeToken",
+				"type": "URL_BUTTON",
+				"url": "https://login.salesforce.com/services/oauth2/authorize",
+				"params":[
+						{"key":"response_type","value":"code","valueList":[]},
+						{"key":"client_id","value":"3MVG9d8..z.hDcPLK3vwKY4fl4032LqpK2hu1XvGxq6TdxCoOWionkjhoibFfX.KUqQQUfNHh9gZFDdSHvjRo","valueList":[]},
+						{"key":"redirect_uri","value":"http://localhost:8080/oauth2/s2","valueList":[]},
+						{"key":"state","value":"987654321","valueList":[]},
+						{"key":"scope","value":"full%20refresh_token","valueList":[]}
+						],
+				"method": "GET",
+				"header": [],
+				"responseBody": [],
+				"responseString":""
+			},
+	"accessToken": {
+			"label": "AccessToken",
+			"type": "URL_BUTTON",
+			"url": "https://login.salesforce.com/services/oauth2/token",
+			"params":[
+					{"key":"grant_type","value":"authorization_code","valueList":[]},
+					{"key":"client_id","value":"3MVG9d8..z.hDcPLK3vwKY4fl4032LqpK2hu1XvGxq6TdxCoOWionkjhoibFfX.KUqQQUfNHh9gZFDdSHvjRo","valueList":[]},
+					{"key":"redirect_uri","value":"http://localhost:8080/oauth2/s2","valueList":[]},
+					{"key":"client_secret","value":"5539859349361237815","valueList":[]},
+					{"key":"code","value":"codeValue","valueList":[]}
+					],
+			"method": "POST",
+			"header": [
+				{
+					"key": "Host",
+					"value": "login.salesforce.com"
+				,"valueList":[]}
+			],
+			"responseBody": [],
+				"responseString":""
+					},
+	"refreshToken": {
+			"label": "RefreshToken",
+			"type": "URL_BUTTON",
+			"url": "https://login.salesforce.com/services/oauth2/token",
+			"params":[
+					{"key":"grant_type","value":"refresh_token","valueList":[]},
+					{"key":"client_id","value":"3MVG9d8..z.hDcPLK3vwKY4fl4032LqpK2hu1XvGxq6TdxCoOWionkjhoibFfX.KUqQQUfNHh9gZFDdSHvjRo","valueList":[]},
+					{"key":"redirect_uri","value":"http://localhost:8080/oauth2/s2","valueList":[]},
+					{"key":"client_secret","value":"5539859349361237815","valueList":[]},
+					{"key":"refresh_token","value":"codeValue","valueList":[]}
+					],
+			"method": "POST",
+			"header": [
+				{
+					"key": "Host",
+					"value": "login.salesforce.com"
+				,"valueList":[]},
+				{
+					"key": "Content-Type",
+					"value": "application/x-www-form-urlencoded"
+				,"valueList":[]}
+			],
+			"responseBody": [],
+				"responseString":""
+					},				
+	"validateCredentials": {
+		"label":"Validate Credentials",
+		"url": "https://login.salesforce.com/services/oauth2/userinfo",
+		"params":[
+		{"key":"access_token","value":"codeValue","valueList":[]},
+		{"key":"format","value":"json","valueList":[]}
+		],
+		"method": "GET",
+		"header": [],
+		"responseBody": [],
+				"responseString":""
+	},
+	"endPoints":[
+	{
+		"label":"user info",
+		"url": "https://login.salesforce.com/services/oauth2/userinfo",
+		"params":[
+		{"key":"access_token","value":"codeValue","valueList":[]},
+		{"key":"format","value":"json","valueList":[]}
+		],
+		"method": "GET",
+		"header": [],
+		"responseBody": [],
+				"responseString":""
+	}
+	]
+}	

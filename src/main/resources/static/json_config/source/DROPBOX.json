@@ -1,0 +1,86 @@
+{
+	"name": "DROPBOX",
+	"authType": "REST2.0",
+	"status": "active",
+	"steps":"TWO",	
+	"refresh":"NO",
+	"requestToken":{
+				"label": "RequestToken",
+				"type": "URL_BUTTON",
+				"url": "",
+				"params":[],
+				"method": "",
+				"header": [],
+				"responseBody": [],
+				"responseString":""
+			},
+	"accessCode": {
+				"label": "AuthorizeToken",
+				"type": "URL_BUTTON",
+				"url": "https://www.dropbox.com/oauth2/authorize",
+				"params":[
+					{"key":"client_id","value":"seyw27yo6odma2r","valueList":[]},
+					{"key":"redirect_uri","value":"http://localhost:8080/oauth2/s2","valueList":[]},
+					{"key":"response_type","value":"code","valueList":[]},
+					{"key":"state","value":"124578921","valueList":[]}
+					],
+				"method": "GET",
+				"header": [],
+				"responseBody": [],
+				"responseString":""
+			},
+	"accessToken": {
+			"label": "AccessToken",
+			"type": "URL_BUTTON",
+			"url": "https://api.dropboxapi.com/oauth2/token",
+			"params":[
+					{"key":"client_id","value":"seyw27yo6odma2r","valueList":[]},
+					{"key":"redirect_uri","value":"http://localhost:8080/oauth2/s2","valueList":[]},
+					{"key":"grant_type","value":"authorization_code","valueList":[]},
+					{"key":"client_secret","value":"mblst8qoft849x5","valueList":[]},
+					{"key":"code","value":"codeValue","valueList":[]}
+			],
+			"method": "POST",
+			"header": [],
+			"responseBody": [],
+			"responseString":""
+					},
+	"refreshToken":{
+				"label": "RefreshToken",
+				"type": "URL_BUTTON",
+				"url": "",
+				"params":[],
+				"method": "",
+				"header": [],
+				"responseBody": [],
+				"responseString":""
+			},
+	"validateCredentials": {
+		"label": "validateCredentials",
+		"url": "https://api.dropboxapi.com/2/users/get_account",
+		"params":[],
+		"method": "POST",
+		"header": [
+		{"key": "Authorization","value": "Bearer","valueList":[
+											{"key": "access_token","value": "codeValueSpace","valueList":[]}
+												]},
+		{"key":"Content-Type","value":"application/json","valueList":[]}
+		],
+		"responseBody": [],
+		"responseString":"{\"account_id\":\"dbid:AABG-gTvAChVTbNg_gU1bivIWpMCzl4c5mE\"}"
+	},
+		"endPoints": [{
+		"label":"user info",
+		"url": "https://api.dropboxapi.com/2/users/get_account",
+		"params":[],
+		"method": "POST",
+		"header": [
+		{"key": "Authorization","value": "Bearer","valueList":[
+											{"key": "access_token","value": "codeValueSpace","valueList":[]}
+												]},
+		{"key":"Content-Type","value":"application/json","valueList":[]}
+		],
+		"responseBody": [],
+		"responseString":"{\"account_id\":\"dbid:AABG-gTvAChVTbNg_gU1bivIWpMCzl4c5mE\"}"
+	}]
+}	

@@ -1,0 +1,133 @@
+{
+	"name": "MAILCHIMP",
+	"authType": "REST2.0",
+	"status": "active",
+	"steps": "TWO",
+	"refresh": "NO",
+	"requestToken": {
+		"label": "RequestToken",
+		"type": "URL_BUTTON",
+		"url": "",
+		"params": [],
+		"method": "",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"accessCode": {
+		"label": "AuthorizeToken",
+		"type": "URL_BUTTON",
+		"url": "https://login.mailchimp.com/oauth2/authorize",
+		"params": [
+			{
+				"key": "response_type",
+				"value": "code",
+				"valueList": []
+			},
+			{
+				"key": "client_id",
+				"value": "256987224752",
+				"valueList": []
+			},
+			{
+				"key": "redirect_uri",
+				"value": "http://127.0.0.1:8080/oauth2/s2",
+				"valueList": []
+			}
+		],
+		"method": "GET",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"accessToken": {
+		"label": "AccessToken",
+		"type": "URL_BUTTON",
+		"url": "https://login.mailchimp.com/oauth2/token",
+		"params": [],
+		"method": "POST",
+		"header": [],
+		"responseBody": [
+			{
+				"key": "grant_type",
+				"value": "authorization_code",
+				"valueList": []
+			},
+			{
+				"key": "client_id",
+				"value": "256987224752",
+				"valueList": []
+			},
+			{
+				"key": "redirect_uri",
+				"value": "http://127.0.0.1:8080/oauth2/s2",
+				"valueList": []
+			},
+			{
+				"key": "client_secret",
+				"value": "687d4febd0a18c375ae4c4e9331fb52c049815f9dbda237855",
+				"valueList": []
+			},
+			{
+				"key": "code",
+				"value": "codeValue",
+				"valueList": []
+			}
+		],
+		"responseString": ""
+	},
+	"refreshToken": {
+		"label": "RefreshToken",
+		"type": "URL_BUTTON",
+		"url": "",
+		"params": [],
+		"method": "",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"validateCredentials": {
+		"label": "validateCredentials",
+		"url": "https://us17.api.mailchimp.com/3.0/campaign-folders",
+		"params": [],
+		"method": "GET",
+		"header": [
+			{
+				"key": "Authorization",
+				"value": "apikey",
+				"valueList": [
+					{
+						"key": "access_token",
+						"value": "codeValueSpace",
+						"valueList": []
+					}
+				]
+			}
+		],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"endPoints": [
+		{
+			"label": "campaign-folders",
+			"url": "https://us17.api.mailchimp.com/3.0/campaign-folders",
+			"params": [],
+			"method": "GET",
+			"header": [
+				{
+					"key": "Authorization",
+					"value": "apikey",
+					"valueList": [
+						{
+							"key": "access_token",
+							"value": "codeValueSpace",
+							"valueList": []
+						}
+					]
+				}
+			],
+			"responseBody": [],
+			"responseString": ""
+		}
+	]
+}	

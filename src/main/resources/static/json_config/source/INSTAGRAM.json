@@ -1,0 +1,126 @@
+{
+	"name": "INSTAGRAM",
+	"authType": "REST2.0",
+	"status": "active",
+	"steps": "TWO",
+	"refresh": "NO",
+	"requestToken": {
+		"label": "RequestToken",
+		"type": "URL_BUTTON",
+		"url": "",
+		"params": [],
+		"method": "",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"accessCode": {
+		"label": "AuthorizeToken",
+		"type": "URL_BUTTON",
+		"url": "https://api.instagram.com/oauth/authorize",
+		"params": [
+			{
+				"key": "client_id",
+				"value": "44711e6ab1b94e1caeff6fb21ab5003e",
+				"valueList": []
+			},
+			{
+				"key": "redirect_uri",
+				"value": "http://localhost:8080/oauth2/s2",
+				"valueList": []
+			},
+			{
+				"key": "response_type",
+				"value": "code",
+				"valueList": []
+			},
+			{
+				"key": "scope",
+				"value": "basic+follower_list",
+				"valueList": []
+			}
+		],
+		"method": "GET",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"accessToken": {
+		"label": "AccessToken",
+		"type": "URL_BUTTON",
+		"url": "https://api.instagram.com/oauth/access_token",
+		"params": [],
+		"method": "POST",
+		"header": [],
+		"responseBody": [
+			{
+				"key": "client_id",
+				"value": "44711e6ab1b94e1caeff6fb21ab5003e",
+				"valueList": []
+			},
+			{
+				"key": "client_secret",
+				"value": "cb42fae819a94315ab2de78565619323",
+				"valueList": []
+			},
+			{
+				"key": "grant_type",
+				"value": "authorization_code",
+				"valueList": []
+			},
+			{
+				"key": "redirect_uri",
+				"value": "http://localhost:8080/oauth2/s2",
+				"valueList": []
+			},
+			{
+				"key": "code",
+				"value": "codeValue",
+				"valueList": []
+			}
+		],
+		"responseString": ""
+	},
+	"refreshToken": {
+		"label": "RefreshToken",
+		"type": "URL_BUTTON",
+		"url": "",
+		"params": [],
+		"method": "",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"validateCredentials": {
+		"label": "validateCredentials",
+		"url": "https://api.instagram.com/v1/users/self",
+		"params": [
+			{
+				"key": "access_token",
+				"value": "codeValue",
+				"valueList": []
+			}
+		],
+		"method": "GET",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"endPoints": [
+		{
+			"label": "self",
+			"url": "https://api.instagram.com/v1/users/self",
+			"params": [
+				{
+					"key": "access_token",
+					"value": "codeValue",
+					"valueList": []
+				}
+			],
+			"method": "GET",
+			"header": [],
+			"responseBody": [],
+			"responseString": ""
+		}
+	]
+}	

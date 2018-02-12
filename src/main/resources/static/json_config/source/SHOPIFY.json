@@ -1,0 +1,116 @@
+{
+    "name": "SHOPIFY",
+    "authType": "REST2.0",
+    "status": "active",
+    "steps": "TWO",
+    "refresh": "NO",
+    "requestToken": {
+        "label": "RequestToken",
+        "type": "URL_BUTTON",
+        "url": "",
+        "params": [],
+        "method": "",
+        "header": [],
+        "responseBody": [],
+		"responseString": ""
+    },
+    "accessCode": {
+        "label": "AuthorizeToken",
+        "type": "URL_BUTTON",
+        "url": "https://BLAmart.myshopify.com/admin/oauth/authorize",
+        "params": [
+            {
+                "key": "client_id",
+                "value": "18ed55a56143ab964876d3b81cc0dfef",
+                "valueList": []
+            },
+            {
+                "key": "redirect_uri",
+                "value": "http://localhost:8080/oauth2/s2",
+                "valueList": []
+            },
+            {
+                "key": "scope",
+                "value": "write_orders,read_customers",
+                "valueList": []
+            },
+            {
+                "key": "nonce",
+                "value": "7689",
+                "valueList": []
+            }
+        ],
+        "method": "GET",
+        "header": [],
+        "responseBody": [],
+		"responseString": ""
+    },
+    "accessToken": {
+        "label": "AccessToken",
+        "type": "URL_BUTTON",
+        "url": "https://blamart.myshopify.com/admin/oauth/access_token",
+        "params": [
+            {
+                "key": "client_id",
+                "value": "18ed55a56143ab964876d3b81cc0dfef",
+                "valueList": []
+            },
+            {
+                "key": "client_secret",
+                "value": "dd743f106f6d7e47a56027bcc881ab6c",
+                "valueList": []
+            },
+            {
+                "key": "code",
+                "value": "codeValue",
+                "valueList": []
+            }
+        ],
+        "method": "POST",
+        "header": [],
+        "responseBody": [],
+		"responseString": ""
+    },
+    "refreshToken": {
+        "label": "RefreshToken",
+        "type": "URL_BUTTON",
+        "url": "",
+        "params": [],
+        "method": "",
+        "header": [],
+        "responseBody": [],
+		"responseString": ""
+    },
+    "validateCredentials": {
+        "label": "validateCredentials",
+        "url": "https://BLAmart.myshopify.com/admin/customers.json",
+        "params": [
+            {
+                "key": "access_token",
+                "value": "codeValue",
+                "valueList": []
+            }
+        ],
+        "method": "GET",
+        "header": [],
+        "responseBody": [],
+		"responseString": ""
+    },
+    "endPoints": [
+        {
+            "label": "blamart",
+            "url": "https://BLAmart.myshopify.com/admin/customers.json",
+            "params": [
+                {
+                    "key": "access_token",
+                    "value": "codeValue",
+                    "valueList": []
+                }
+            ],
+            "method": "GET",
+            "header": [],
+            "responseBody": [],
+		"responseString": ""
+        }
+    ]
+}
