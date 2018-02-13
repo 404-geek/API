@@ -5,8 +5,8 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
-import com.aptus.blackbox.index.JsonProp;
-import com.aptus.blackbox.index.Parser;
+import com.aptus.blackbox.index.DestObject;
+import com.aptus.blackbox.index.SrcObject;
 
 @Service
 public class Credentials {
@@ -15,7 +15,8 @@ public class Credentials {
 	private boolean userExist,usrSrcExist,usrDestExist;
 	private Map<String,String> srcToken=new HashMap<>();
 	private Map<String,String> destToken=new HashMap<>();
-	private JsonProp srcObj,destObj;
+	private SrcObject srcObj;
+	private DestObject destObj;
 	
 	public boolean isUserExist() {
 		return userExist;
@@ -71,16 +72,16 @@ public class Credentials {
 	public void setUserId(String userId) {
 		this.userId = userId;
 	}
-	public JsonProp getSrcObj() {
+	public SrcObject getSrcObj() {
 		return srcObj;
 	}
-	public void setSrcObj(JsonProp srcObj) {
+	public void setSrcObj(SrcObject srcObj) {
 		this.srcObj = srcObj;
 	}
-	public JsonProp getDestObj() {
+	public DestObject getDestObj() {
 		return destObj;
 	}
-	public void setDestObj(JsonProp destObj) {
+	public void setDestObj(DestObject destObj) {
 		this.destObj = destObj;
 	}
 }

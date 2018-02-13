@@ -2,7 +2,7 @@ package com.aptus.blackbox.index;
 
 import java.util.List;
 
-public class JsonProp {
+public class SrcObject {
 	private String name,authType,steps,refresh;
 	private UrlObject refreshToken,requestToken,accessCode,accessToken,validateCredentials;
 	private List<UrlObject> endPoints;

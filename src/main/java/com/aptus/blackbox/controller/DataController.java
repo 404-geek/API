@@ -1,18 +1,14 @@
 package com.aptus.blackbox.controller;
 
-import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import com.aptus.blackbox.Service.Credentials;
 
@@ -28,20 +24,18 @@ public class DataController {
 	private Credentials credentials;
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/authdesination")
-	private void destination(@RequestParam("data") String data) {
+	private void destination(@RequestParam("data") Map<String,String> data) {
 		try {
-			ResponseEntity<String> out = null;
-			RestTemplate restTemplate = new RestTemplate();
-			String url ="http://"+mongoUrl+"/credentials/userCredentials";
-			HttpHeaders headers =new HttpHeaders();
-	        headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-	        headers.add("Cache-Control", "no-cache");
-	        HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);	        
-	        out = restTemplate.exchange(URI.create(url), HttpMethod.GET, httpEntity, String.class);
-	        if(out.getStatusCode().is2xxSuccessful()) {
-	        	
-	        }
-		}
+			HashMap<String,String> destCred = new HashMap<>();
+			destCred.put("dbName", "mysql");
+			destCred.put("userName", "mysql");
+			destCred.put("password", "mysql");
+			destCred.put("host", "mysql");
+			destCred.put("port", "mysql");
+			credentials.setDestToken(destCred);
+			
+			
+	    }
 		catch(Exception e) {
 			e.printStackTrace();
 		}

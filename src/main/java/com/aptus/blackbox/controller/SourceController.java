@@ -24,7 +24,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.Service.Credentials;
-import com.aptus.blackbox.index.JsonProp;
+import com.aptus.blackbox.index.SrcObject;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.common.net.UrlEscapers;
@@ -53,7 +53,7 @@ public class SourceController {
 		try {
 			values = new HashMap<String, String>();
 			app = "source/" + app.toUpperCase();
-			JsonProp obj = credentials.getSrcObj();
+			SrcObject obj = credentials.getSrcObj();
 			System.out.println(obj.getName());
 			appname = obj.getName();
 			values.put("appname", appname);

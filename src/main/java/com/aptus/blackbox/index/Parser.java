@@ -7,16 +7,23 @@ import com.google.gson.Gson;
 
 public class Parser {
 	
-	private JsonProp jsonprop;
+	private SrcObject srcProp;
+	private DestObject destProp;
 	public Parser(String type)
 	{
 		try {
 		Gson gson=new Gson();
 		String path="/home/sourav/Documents/sts space/BlackBoxReloaded/src/main/resources/static/json_config/";
-		path+=type+".json";
-		BufferedReader br=new BufferedReader(new FileReader(path));
-		jsonprop = gson.fromJson(br, JsonProp.class);
-		
+		if(type.toLowerCase().startsWith("source")){
+			path+=type+".json";
+			BufferedReader br=new BufferedReader(new FileReader(path));
+			srcProp = gson.fromJson(br, SrcObject.class);
+		}
+		else if(type.toLowerCase().startsWith("destination")){
+			path+=type+".json";
+			BufferedReader br=new BufferedReader(new FileReader(path));
+			destProp = gson.fromJson(br, DestObject.class);
+		}		
 		}
 		catch(Exception e)
 		{
@@ -24,8 +31,12 @@ public class Parser {
 		}
 	}
 	
-	public JsonProp getProp()
+	public SrcObject getSrcProp()
 	{
-		return this.jsonprop;
+		return this.srcProp;
+	}
+	public DestObject getDestProp()
+	{
+		return this.destProp;
 	}
 }

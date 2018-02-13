@@ -20,7 +20,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.Service.Credentials;
-import com.aptus.blackbox.index.JsonProp;
+import com.aptus.blackbox.index.SrcObject;
+import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.Parser;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.common.net.UrlEscapers;
@@ -37,7 +38,8 @@ public class home {
 	}
 	@Autowired
 	private Credentials credentials;
-	private JsonProp srcObj, destObj;
+	private SrcObject srcObj;
+	private DestObject destObj;
 
 	@RequestMapping(value = "/{userId}")
 	public Object index(@PathVariable String userId) {
@@ -70,11 +72,11 @@ public class home {
 	public Object source(@PathVariable String type, @PathVariable String srcdestId) {
 
 		if (type.equalsIgnoreCase("source")) {
-			srcObj = new Parser("source/" + srcdestId.toUpperCase()).getProp();
+			srcObj = new Parser("source/" + srcdestId.toUpperCase()).getSrcProp();
 			credentials.setSrcObj(srcObj);
 			credentials.setSrcName(srcdestId.toLowerCase());
 		} else {
-			destObj = new Parser("destination/" + srcdestId.toUpperCase()).getProp();
+			destObj = new Parser("destination/" + srcdestId.toUpperCase()).getDestProp();
 			credentials.setDestObj(destObj);
 			credentials.setDestName(srcdestId.toLowerCase());
 		}

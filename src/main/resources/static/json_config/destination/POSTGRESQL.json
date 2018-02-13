@@ -1,0 +1,18 @@
+{
+"_id":"POSTGRESQL",
+			"drivers":"org.postgresql.Driver",
+			"urlprefix":"jdbc:postgresql://",
+			"dbnameseparator":"/",
+			"type_varchar":"VARCHAR",
+  			"type_text":"BLOB",
+			"type_integer":"INTEGER",
+			"type_real":"REAL",
+           "type_time":"TIME",
+           "type_date":"DATE",
+           "type_dateTime":"TIMESTAMP",
+			"identifier_quote_open":"&quot;",
+			"identifier_quote_close":"&quot;",
+			"value_quote_open":"'",
+			"value_quote_close":"'"
+}
+
