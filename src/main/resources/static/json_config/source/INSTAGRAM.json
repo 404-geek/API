@@ -12,6 +12,7 @@
 		"method": "",
 		"header": [],
 		"responseBody": [],
+		"signature":[],
 		"responseString": ""
 	},
 	"accessCode": {
@@ -42,6 +43,7 @@
 		],
 		"method": "GET",
 		"header": [],
+		"signature":[],
 		"responseBody": [],
 		"responseString": ""
 	},
@@ -52,6 +54,7 @@
 		"params": [],
 		"method": "POST",
 		"header": [],
+		"signature":[],
 		"responseBody": [
 			{
 				"key": "client_id",
@@ -88,6 +91,7 @@
 		"params": [],
 		"method": "",
 		"header": [],
+		"signature":[],
 		"responseBody": [],
 		"responseString": ""
 	},
@@ -103,6 +107,7 @@
 		],
 		"method": "GET",
 		"header": [],
+		"signature":[],
 		"responseBody": [],
 		"responseString": ""
 	},
@@ -120,6 +125,7 @@
 			"method": "GET",
 			"header": [],
 			"responseBody": [],
+			"signature":[],
 			"responseString": ""
 		}
 	]

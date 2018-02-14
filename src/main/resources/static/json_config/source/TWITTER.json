@@ -23,8 +23,11 @@
 										]
 					}
 				],
+				"signature":[
+					{"key":"oauth_consumer_secret","value":"RkCKQyxlkwYrGRzBNQBeCaydgVREf389z9fOXVM7e40mxbCej6","valueList":[]}
+				],
 				"responseBody": [],
-		"responseString": ""
+				"responseString": ""
 			},
 	"accessCode": {
 				"label": "AuthorizeToken",
@@ -33,10 +36,13 @@
 				"params":[
 					{"key":"oauth_token","value":"codeValue","valueList":[]}
 				],
+				"signature":[
+					{"key":"oauth_consumer_secret","value":"RkCKQyxlkwYrGRzBNQBeCaydgVREf389z9fOXVM7e40mxbCej6","valueList":[]}
+				],
 				"method": "GET",
 				"header": [],
 				"responseBody": [],
-		"responseString": ""
+				"responseString": ""
 			},
 	"accessToken": {
 			"label": "AccessToken",
@@ -58,18 +64,22 @@
 										]
 					}
 			],
+			"signature":[
+					{"key":"oauth_consumer_secret","value":"RkCKQyxlkwYrGRzBNQBeCaydgVREf389z9fOXVM7e40mxbCej6","valueList":[]}
+				],
 			"responseBody": [],
-		"responseString": ""
+			"responseString": ""
 					},
 	"refreshToken":{
 				"label": "RefreshToken",
 				"type": "URL_BUTTON",
 				"url": "",
 				"params":[],
+				"signature":[],
 				"method": "",
 				"header": [],
 				"responseBody": [],
-		"responseString": ""
+				"responseString": ""
 			},
 	"validateCredentials": {
 		"label": "validateCredentials",
@@ -90,6 +100,9 @@
 										]
 					}
 				],
+		"signature":[
+				{"key":"oauth_consumer_secret","value":"RkCKQyxlkwYrGRzBNQBeCaydgVREf389z9fOXVM7e40mxbCej6","valueList":[]}
+			],
 		"responseBody": [],
 		"responseString": ""
 	},
@@ -111,6 +124,9 @@
 											{"key":"oauth_signature","value":"codeValue","valueList":[]}
 										]
 					}
+				],
+		"signature":[
+					{"key":"oauth_consumer_secret","value":"RkCKQyxlkwYrGRzBNQBeCaydgVREf389z9fOXVM7e40mxbCej6","valueList":[]}
 				],
 		"responseBody": [],
 		"responseString": ""

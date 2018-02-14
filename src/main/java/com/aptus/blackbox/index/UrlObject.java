@@ -5,9 +5,15 @@ import java.util.List;
 public class UrlObject {
 	
 	private String label,type,url,method,responseString;
-	private List<objects> params,header,responseBody;
+	private List<objects> params,header,responseBody,signature;
 	
 	
+	public List<objects> getSignature() {
+		return signature;
+	}
+	public void setSignature(List<objects> signature) {
+		this.signature = signature;
+	}
 	public String getLabel() {
 		return label;
 	}

@@ -1,6 +1,7 @@
 package com.aptus.blackbox.controller;
 
 import java.net.URI;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,61 +92,71 @@ public class SourceController {
 		//System.out.println(srcname+" "+destname);
 		try
 		{
-			String body="",b1="";
+			String body="",b1="",endpnts="",conId;
+			conId=credentials.getUserId()+"_"+credentials.getSrcName()+"_"+credentials.getDestName()
+					+"_"+String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
 			for(Map.Entry<String,String> mp:credentials.getSrcToken().entrySet()) {
 				b1+="{\"key\":\""+String.valueOf(mp.getKey())+"\",\"value\":\""+String.valueOf(mp.getValue())+"\"},";
-			}				
+			}
+			for(UrlObject obj:endPoints) {
+				endpnts+="\""+obj.getLabel()+"\",";
+			}
+			endpnts = endpnts.substring(0, endpnts.length()-1).toLowerCase();
 			System.out.println(b1);
 			if(!b1.isEmpty())
-				b1=b1.substring(0,b1.length()-1);
-			
+				b1=b1.substring(0,b1.length()-1);			
 			
 			if(credentials.isUserExist())
 			{
-				body= "{\n" + 
-						"	\"$set\":{" + 
-						"	\"sourceId\":[{\"sourceName\":\""+credentials.getSrcName()+"\",\n" + 
-						"				\"credentials\":["+b1+"]\n" + 
-						"		}]\n" + 
-						"	}\n" + 
-						"}";
-				if((!credentials.isUsrDestExist())||(!credentials.isUsrSrcExist()))
-				postpatchMetaData("{\"$push\":{\"srcdestId\":{\"srcId\":\""+credentials.getSrcName().toLowerCase()+"\",\"destId\":\""+credentials.getDestName().toLowerCase()+"\"}}" + 
-						"}","user","PATCH");
-				postpatchMetaData(body,"source","PATCHset");
-				body= "{\n" + 
-						"	\"$set\":{" + 
-						"	\"destinationId\":[{\"destinationName\":\"mongodb\",\n" + 
-						"				\"credentials\":["+b1+"]\n" + 
-						"		}]\n" + 
-						"	}\n" + 
-						"}";
-				postpatchMetaData(body,"destination","PATCHset");
+				//sourceCredentials
+				body= "{\"credentials\":["+b1+"]}";
+				
+				postpatchMetaData(body,"source","PATCHapp");
+				
+				//userCredentials
+				body = "{\"$addToSet\":"
+						+ "{\"srcdestId\":"
+						+ "{\"$each\":["
+						+ "{\"sourceName\": \""+credentials.getSrcName().toLowerCase()+"\","
+						+ "\"destName\":\""+credentials.getDestName().toLowerCase()+"\","
+						+ "\"connectionId\": \""+conId.toLowerCase()+"\","
+						+ "\"endPoints\":["+endpnts+"]}"
+						+ "]}}}";
+				
+				postpatchMetaData(body,"user","PATCH");
+				
+				//destCredentials
+				body= "{\"credentials\":["+b1+"]}";
+				
+				postpatchMetaData(body,"destination","PATCHapp");
 				
 			}
 			else {
 				//userCredentials
-				postpatchMetaData("{\"_id\":\""+credentials.getUserId()+"\",\"srcdestId\":[{\"srcId\":\""+credentials.getSrcName().toLowerCase()+"\",\"destId\":\"mongodb\"}]" + 
-						"}","user","POST");
+				body = "{ \"_id\" : \""+credentials.getUserId().toLowerCase()+"\","
+						+ "\"srcdestId\" : [ "
+						+ "{ \"sourceName\" : \""+credentials.getSrcName().toLowerCase()+"\" , "
+						+ "\"destName\" : \""+credentials.getDestName().toLowerCase()+"\","
+						+ "\"connectionId\":\""+conId.toLowerCase()+"\","
+						+ "\"endPoints\":["+endpnts+"]}"
+						+ "]}";
+				
+				postpatchMetaData(body,"user","POST");
 				
 				//sourceCredentials
 				body= "{\n" + 
-						"	\"_id\" : \""+credentials.getUserId()+"\",\n" + 
-						"	\"sourceId\":[{\"sourceName\":\""+credentials.getSrcName()+"\",\n" + 
-						"				\"credentials\":["+b1+"]\n" + 
-						"		}\n" + 
-						"	]\n" + 
+						"	\"_id\" : \""+credentials.getUserId().toLowerCase()
+						+"_"+credentials.getSrcName().toLowerCase()+"\",\n" + 
+						"	\"credentials\":["+b1+"]\n" +
 						"}";
 				 
 				postpatchMetaData(body,"source","POST");
-				//destCredentials
 				
+				//destCredentials
 				body= "{\n" + 
-						"	\"_id\" : \""+credentials.getUserId()+"\",\n" + 
-						"	\"destinationId\":[{\"destinationName\":\""+credentials.getDestName()+"\",\n" + 
+						"	\"_id\" : \""+credentials.getUserId().toLowerCase()
+						+"_"+credentials.getDestName().toLowerCase()+"\",\n" +
 						"				\"credentials\":["+b1+"]\n" + 
-						"		}\n" + 
-						"	]\n" + 
 						"}";
 				
 				postpatchMetaData(body,"destination","POST");
@@ -158,12 +169,54 @@ public class SourceController {
 		}
 		return ret;
 	}
-	
+	private void postpatchMetaData(String body,String type,String method)
+	   {
+	       try {
+	           ResponseEntity<String> out = null;
+	           String url="";
+	           String appname = "";
+	           RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+	           HttpMethod met=null;
+	           System.out.println(body);
+	           String filter="";
+	           if(method.equalsIgnoreCase("POST")) {
+	               url ="http://"+mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials";
+	               met = HttpMethod.POST;
+	           }                
+	           else if(method.equalsIgnoreCase("PATCH")) {
+	               url ="http://"+mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase();
+	               met = HttpMethod.PATCH;
+	           }
+	           else if(method.equalsIgnoreCase("PATCHapp")) {
+	        	   if(type.equalsIgnoreCase("source")) {
+	        		   appname = credentials.getSrcName();
+	        	   }
+	        	   else {
+	        		   appname = credentials.getDestName();
+	        	   }
+	        	   url ="http://"+mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase()+"_"+appname.toLowerCase();
+	        	   met = HttpMethod.PATCH;
+	           }
+	           System.out.println(url+"\n"+met);
+	           HttpHeaders headers =new HttpHeaders();
+	           headers.add("Content-Type","application/json") ;
+	           headers.add("Cache-Control", "no-cache");
+	           HttpEntity<?> httpEntity = new HttpEntity<Object>(body,headers);
+	           out = restTemplate.exchange(url, met, httpEntity, String.class,filter);
+	           if (out.getStatusCode().is2xxSuccessful()) {
+	               credentials.setUserExist(true);
+	            }
+	       }
+	       catch(Exception e) {
+	           e.printStackTrace();
+	           System.out.println("source.postpatchmetadata");
+	       }
+	       return;    
+	   }
 	
     private ResponseEntity<String> data(String appname) {
         ResponseEntity<String> ret = null;
         try {
-        	//credentials.getSrcToken().forEach((ob,ob1)->System.out.println(ob+" : "+ob1));
 			if (((values!=null)&&(!values.isEmpty())) && (values.get("appname").equals(appname.toUpperCase()))) {
                 if (refresh.equals("YES")) {
                     ret = Utilities.token(validateCredentials,values);
@@ -211,50 +264,7 @@ public class SourceController {
         return ret;
     }
 
-    private void postpatchMetaData(String body,String type,String method)
-	   {
-	       try {
-	           ResponseEntity<String> out = null;
-	           String url="";
-	           String appname = "";
-	           RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-	           HttpMethod met=null;
-	           System.out.println(body);
-	           String filter="";
-	           if(method.equalsIgnoreCase("POST")) {
-	               url ="http://"+mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials";
-	               met = HttpMethod.POST;
-	           }                
-	           else if(method.equalsIgnoreCase("PATCH")) {
-	               url ="http://"+mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase();
-	               met = HttpMethod.PATCH;
-	           }
-	           else if(method.equalsIgnoreCase("PATCHset")) {
-	        	   if(type.equalsIgnoreCase("source")) {
-	        		   appname = credentials.getSrcName();
-	        	   }
-	        	   else {
-	        		   appname = credentials.getDestName();
-	        	   }
-	        	   url ="http://"+mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase();
-	        	   met = HttpMethod.PATCH;
-	           }
-	           System.out.println(met);
-	           HttpHeaders headers =new HttpHeaders();
-	           headers.add("Content-Type","application/json") ;
-	           headers.add("Cache-Control", "no-cache");
-	           HttpEntity<?> httpEntity = new HttpEntity<Object>(body,headers);
-	           out = restTemplate.exchange(url, met, httpEntity, String.class,filter);
-	           if (out.getStatusCode().is2xxSuccessful()) {
-	               credentials.setUserExist(true);
-	            }
-	       }
-	       catch(Exception e) {
-	           e.printStackTrace();
-	           System.out.println("source.patch");
-	       }
-	       return;    
-	   }
+    
 	private ResponseEntity<String> code(UrlObject object) {
 		ResponseEntity<String> redirect = null;
 		HttpHeaders headers;

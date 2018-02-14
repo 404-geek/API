@@ -11,6 +11,7 @@
 		"params": [],
 		"method": "",
 		"header": [],
+		"signature":[],
 		"responseBody": [],
 		"responseString": ""
 	},
@@ -42,6 +43,7 @@
 		],
 		"method": "GET",
 		"header": [],
+		"signature":[],
 		"responseBody": [],
 		"responseString": ""
 	},
@@ -73,6 +75,7 @@
 		],
 		"method": "GET",
 		"header": [],
+		"signature":[],
 		"responseBody": [],
 		"responseString": ""
 	},
@@ -83,6 +86,7 @@
 		"params": [],
 		"method": "",
 		"header": [],
+		"signature":[],
 		"responseBody": [],
 		"responseString": ""
 	},
@@ -104,6 +108,7 @@
 		"method": "GET",
 		"header": [],
 		"responseBody": [],
+		"signature":[],
 		"responseString": ""
 	},
 	"endPoints": [
@@ -124,6 +129,7 @@
 			],
 			"method": "GET",
 			"header": [],
+			"signature":[],
 			"responseBody": [],
 			"responseString": ""
 		}

@@ -98,7 +98,7 @@
 	},
 	"validateCredentials": {
 		"label": "validateCredentials",
-		"url": "https://www.zohoapis.com/crm/v2/Leads",
+		"url": "https://www.zohoapis.com/crm/v2/org",
 		"params": [],
 		"method": "GET",
 		"header": [
@@ -125,84 +125,6 @@
 	"endPoints": [
 		{
 			"label": "zoho.org",
-			"url": "https://www.zohoapis.com/crm/v2/Leads",
-			"params": [],
-			"method": "GET",
-			"header": [
-				{
-					"key": "response_type",
-					"value": "code",
-					"valueList": []
-				},
-				{
-					"key": "Authorization",
-					"value": "Zoho-oauthtoken ",
-					"valueList": [
-						{
-							"key": "access_token",
-							"value": "codeValueSpace",
-							"valueList": []
-						}
-					]
-				}
-			],
-			"responseBody": [],
-			"responseString": ""
-		},
-		{
-			"label": "Leads",
-			"url": "https://www.zohoapis.com/crm/v2/Leads",
-			"params": [],
-			"method": "GET",
-			"header": [
-				{
-					"key": "response_type",
-					"value": "code",
-					"valueList": []
-				},
-				{
-					"key": "Authorization",
-					"value": "Zoho-oauthtoken ",
-					"valueList": [
-						{
-							"key": "access_token",
-							"value": "codeValueSpace",
-							"valueList": []
-						}
-					]
-				}
-			],
-			"responseBody": [],
-			"responseString": ""
-		},
-		{
-			"label": "Settings",
-			"url": "https://www.zohoapis.com/crm/v2/Leads",
-			"params": [],
-			"method": "GET",
-			"header": [
-				{
-					"key": "response_type",
-					"value": "code",
-					"valueList": []
-				},
-				{
-					"key": "Authorization",
-					"value": "Zoho-oauthtoken ",
-					"valueList": [
-						{
-							"key": "access_token",
-							"value": "codeValueSpace",
-							"valueList": []
-						}
-					]
-				}
-			],
-			"responseBody": [],
-			"responseString": ""
-		},
-		{
-			"label": "Modules",
 			"url": "https://www.zohoapis.com/crm/v2/Leads",
 			"params": [],
 			"method": "GET",

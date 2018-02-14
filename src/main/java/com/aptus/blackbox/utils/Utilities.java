@@ -36,7 +36,12 @@ public class Utilities {
 		return time.substring(0, time.length()-3);
 	}
 	private static String signature(UrlObject object,Map<String,String> params, Map<String, String> values) throws Exception {
-		String consumerSecret="RkCKQyxlkwYrGRzBNQBeCaydgVREf389z9fOXVM7e40mxbCej6";
+		String consumerSecret=null;
+		for(objects obj:object.getSignature()){
+			if(obj.getKey().toLowerCase().indexOf("secret")!=-1) {
+				consumerSecret = obj.getValue().toString();
+			}
+		}
 		String baseSignature = object.getMethod().toString()+"&"+
 		encode(object.getUrl())+"&";
 		String parameter="",value="";

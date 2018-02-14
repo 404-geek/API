@@ -11,6 +11,7 @@
 				"params":[],
 				"method": "",
 				"header": [],
+				"signature":[],
 				"responseBody": [],
 				"responseString":""
 			},
@@ -26,6 +27,7 @@
 					],
 				"method": "GET",
 				"header": [],
+				"signature":[],
 				"responseBody": [],
 				"responseString":""
 			},
@@ -42,6 +44,7 @@
 			],
 			"method": "POST",
 			"header": [],
+			"signature":[],
 			"responseBody": [],
 			"responseString":""
 					},
@@ -52,6 +55,7 @@
 				"params":[],
 				"method": "",
 				"header": [],
+				"signature":[],
 				"responseBody": [],
 				"responseString":""
 			},
@@ -67,6 +71,7 @@
 		{"key":"Content-Type","value":"application/json","valueList":[]}
 		],
 		"responseBody": [],
+		"signature":[],
 		"responseString":"{\"account_id\":\"dbid:AABG-gTvAChVTbNg_gU1bivIWpMCzl4c5mE\"}"
 	},
 		"endPoints": [{
@@ -81,6 +86,7 @@
 		{"key":"Content-Type","value":"application/json","valueList":[]}
 		],
 		"responseBody": [],
+		"signature":[],
 		"responseString":"{\"account_id\":\"dbid:AABG-gTvAChVTbNg_gU1bivIWpMCzl4c5mE\"}"
 	}]
 }	
