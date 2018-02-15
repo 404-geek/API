@@ -3,93 +3,93 @@
 		{
 		"name":"DROPBOX",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/rDh9ixm.png"
 		},
 		{
 		"name":"FACEBOOK",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/gDrWWU4.png"
 		},
 		{
 		"name":"INSTAGRAM",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/zoX8VOE.png"
 		},
 		{
 		"name":"LINKEDIN",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/BUaj07e.png"
 		},
 		{
 		"name":"MAILCHIMP",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/u5UJHIX.png"
 		},
 		{
 		"name":"SALESFORCE",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/doUMOZv.png"
 		},
 		{
 		"name":"SHOPIFY",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/sHkSxml.png"
 		},
 		{
 		"name":"TWITTER",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/xcXYlQk.png"
 		},
 		{
 		"name":"YOUTUBE",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/wkA4FcS.png"
 		},
 		{
 		"name":"ZOHOCRM",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/7oeIQBt.png"
 		},
 		{
 		"name":"ZOHOHELPDESK",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/LBEL84S.png"
 		}],
 "destination":[
 		{
 		"name":"MYSQL",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/W5Kzbpg.png"
 		},
 		{
 		"name":"SQLSERVER",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/PYtIpVk.png"
 		},
 		{
 		"name":"ORACLE",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/DJ25LE0.png"
 		},
 		{
 		"name":"POSTGRESQL",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/HVrCqBy.png"
 		},
 		{
 		"name":"MONGODB",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/5AmghPI.png"
 		},
 		{
 		"name":"CSV",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/PIHtalQ.png"
 		},
 		{
 		"name":"XML",
 		"url":"",
-		"logo":""
+		"logo":"https://i.imgur.com/dbHpt3Q.png"
 		}
 		]
 }

@@ -96,9 +96,10 @@
 		"responseBody": [],
 		"responseString": ""
 	},
+	
 	"validateCredentials": {
 		"label": "validateCredentials",
-		"url": "https://www.zohoapis.com/crm/v2/org",
+		"url": "https://www.zohoapis.com/crm/v2/Leads?page=3",
 		"params": [],
 		"method": "GET",
 		"header": [
@@ -147,7 +148,10 @@
 				}
 			],
 			"responseBody": [],
-			"responseString": ""
+			"responseString": "",
+			"pagination":[
+					{"key":"info.page","param":"page","type":"inc"}
+				]
 		}
 	]
 }	

@@ -131,7 +131,11 @@
 			"header": [],
 			"signature":[],
 			"responseBody": [],
-			"responseString": ""
+			"responseString": "",
+			"pagination":[
+					{"key":"paging.next","param":"","type":"url"},
+					{"key":"paging.cursors.after","param":"after","type":"append"}
+				]
 		}
 	]
 }	

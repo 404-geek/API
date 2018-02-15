@@ -64,7 +64,7 @@ public class Credentials {
 		this.srcToken.putAll(srcToken);
 	}
 	public void setSrcToken(String key,String value) {
-		this.destToken.put(key, value);
+		this.srcToken.put(key, value);
 	}
 	public String getUserId() {
 		return userId;

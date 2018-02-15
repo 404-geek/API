@@ -16,9 +16,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -171,8 +173,11 @@ public class Utilities {
 					}
 					if(x.getValue().equals("codeValue"))
 						s+= x.getKey() + "=" + encode(values.get(x.getKey()))+",";
-					else if(x.getValue().equals("codeValueSpace"))
+					else if(x.getValue().equals("codeValueSpace")) {
+						System.out.println(values.keySet()+" :: "+values.values());
+						System.out.println(x.getKey() + "\n" + values.get(x.getKey()));
 						s+= encode(values.get(x.getKey()))+",";
+					}
 					else
 						s+= x.getKey() + "=" + encode(x.getValue())+",";
 					if(value.equalsIgnoreCase("oauth")) {
@@ -246,10 +251,28 @@ public class Utilities {
 			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 			System.out.println(out.getBody());
 
-		} catch (Exception e) {
+		} 
+		catch(HttpClientErrorException e) {
+			System.out.println(e.getMessage());
+			if(e.getMessage().startsWith("4")) {
+				out =  new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+			}
+		}
+		catch (Exception e) {
 			e.printStackTrace();
-			System.out.println(e+"token");
+
+			System.out.println("\nutilities.token");
 		}
 		return out;
 	}
+	public static void valid()
+	{
+		System.out.println("********************Valid******************");
+	}
+	public static void invalid()
+	{
+		System.out.println("*****************Invalid***************");
+	}
+	
+	
 }

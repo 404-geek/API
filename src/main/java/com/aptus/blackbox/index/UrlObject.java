@@ -6,6 +6,7 @@ public class UrlObject {
 	
 	private String label,type,url,method,responseString;
 	private List<objects> params,header,responseBody,signature;
+	private List<Cursor> pagination;
 	
 	
 	public List<objects> getSignature() {
@@ -61,6 +62,12 @@ public class UrlObject {
 	}
 	public void setResponseString(String responseString) {
 		this.responseString = responseString;
+	}
+	public List<Cursor> getPagination() {
+		return pagination;
+	}
+	public void setPagination(List<Cursor> pagination) {
+		this.pagination = pagination;
 	}
 	
 }

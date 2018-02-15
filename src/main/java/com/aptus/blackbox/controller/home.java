@@ -1,6 +1,9 @@
 package com.aptus.blackbox.controller;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.net.URI;
+
 import java.nio.charset.Charset;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +32,16 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+/*
+ * "pagination":[
+					{"key":"info.page","to-add":"page","value":"inc"},
+ 					{"key":"info.page","to-add":"","value":"url"}, 
+					{"key":"info.page","to-add":"page","value":"append"}, 
+					{"key":"info.page","to-add":"page","value":"self-inc"}, 
+ 					{"key":"info.page","to-add":"page","value":"self-inc"} 
+				]
+ */
+
 @Controller
 public class home {
 	private String mongoUrl;
@@ -43,6 +56,7 @@ public class home {
 
 	@RequestMapping(value = "/{userId}")
 	public Object index(@PathVariable String userId) {
+		//Change return to void
 		try {
 			ResponseEntity<String> out = null;
 			credentials.setUserId(userId);
@@ -70,6 +84,7 @@ public class home {
 
 	@RequestMapping(value = "/{type}/{srcdestId}")
 	public Object source(@PathVariable String type, @PathVariable String srcdestId) {
+		//change return type to void
 
 		if (type.equalsIgnoreCase("source")) {
 			srcObj = new Parser("source/" + srcdestId.toUpperCase()).getSrcProp();
@@ -96,7 +111,7 @@ public class home {
 				name = credentials.getSrcName();
 			else
 				name = credentials.getDestName();
-			filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase()+name.toLowerCase() + "\"}";
+			filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase()+"_"+name.toLowerCase() + "\"}";
 			
 			url = "http://"+mongoUrl+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
 			 
@@ -135,8 +150,11 @@ public class home {
 						type.equalsIgnoreCase("source") ? credentials.getSrcToken() : credentials.getDestToken());
 				if (out.getStatusCode().is2xxSuccessful()) {
 					System.out.println(type + "tick");
+					Utilities.valid();
+					return  new ResponseEntity<String>("valid", null, HttpStatus.CREATED);
 					// tick
-				} else {
+				} 
+				else {
 					String name;
 					if (type.equalsIgnoreCase("source"))
 						name = credentials.getSrcName();
@@ -151,7 +169,8 @@ public class home {
 					headers.setLocation(URI.create(url));
 					out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
 				}
-			} else {
+			} 
+			else {
 				String name;
 				if (type.equalsIgnoreCase("source"))
 					name = credentials.getSrcName();
@@ -183,7 +202,7 @@ public class home {
 			else
 				appId = credentials.getDestName();
 			RestTemplate restTemplate = new RestTemplate();
-			String url = "http://"+mongoUrl+"/credentials/" + type + "Credentials/" + userid.toLowerCase();
+			String url = "http://"+mongoUrl+"/credentials/" + type + "Credentials/" + userid.toLowerCase()+"_"+appId.toLowerCase();
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
@@ -191,16 +210,15 @@ public class home {
 			System.out.println(out.getBody());
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
-			System.out.println(jobj.getAsJsonArray(type.toLowerCase()));
-			for (JsonElement obj : jobj.getAsJsonArray(type.toLowerCase())) {
-				if (obj.getAsJsonObject().get(type.toLowerCase() + "Name").toString().equalsIgnoreCase(appId)) {
-					System.out.println("SFuyafdhbc");
-					obj.getAsJsonObject().get("credentials").getAsJsonArray()
-							.forEach(ob -> credentials.setSrcToken(ob.getAsJsonObject().get("key").toString(),
-									ob.getAsJsonObject().get("value").toString()));
-				}
+			for(JsonElement ob:jobj.get("credentials").getAsJsonArray()) {
+				String key=ob.getAsJsonObject().get("key").toString(),
+						value=ob.getAsJsonObject().get("value").toString();
+				key=key.substring(1, key.length()-1);
+				value=value.substring(1, value.length()-1);
+				credentials.setSrcToken(key,value);
 			}
-			//valid
+			System.out.println(credentials.getSrcToken().keySet()+" : "+credentials.getSrcToken().values());
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("home.fetch");
