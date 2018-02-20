@@ -54,6 +54,10 @@ public class home {
 	private SrcObject srcObj;
 	private DestObject destObj;
 
+	/* Input:user_id
+	 * Takes user_id as input, checks if user already exists and stores true/false accordingly in credentials.
+	 * Return type: void 
+	 */
 	@RequestMapping(value = "/{userId}")
 	public Object index(@PathVariable String userId) {
 		//Change return to void
@@ -82,6 +86,11 @@ public class home {
 		return "index";
 	}
 
+	/*
+	 * input:  type(source/destination) and its name
+	 * Parses its configuration file and stores it in credentials
+	 * output:void
+	 */
 	@RequestMapping(value = "/{type}/{srcdestId}")
 	public Object source(@PathVariable String type, @PathVariable String srcdestId) {
 		//change return type to void
@@ -98,6 +107,9 @@ public class home {
 		return "index";
 	}
 
+	/*
+	 * 
+	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/validate")
 	public ResponseEntity<String> verifyUser(@RequestParam("type") String type) {
 		ResponseEntity<String> out = null;
@@ -145,7 +157,7 @@ public class home {
 		ResponseEntity<String> out = null;
 		try {
 			if (credentials.isUsrSrcExist() || credentials.isUsrDestExist()) {
-				fetchSourceCred(type);
+				fetchSrcdestCred(type);
 				out = Utilities.token(srcObj.getValidateCredentials(),
 						type.equalsIgnoreCase("source") ? credentials.getSrcToken() : credentials.getDestToken());
 				if (out.getStatusCode().is2xxSuccessful()) {
@@ -154,13 +166,14 @@ public class home {
 					return  new ResponseEntity<String>("valid", null, HttpStatus.CREATED);
 					// tick
 				} 
+				//add destination fetch and validation
 				else {
 					String name;
 					if (type.equalsIgnoreCase("source"))
 						name = credentials.getSrcName();
 					else
 						name = credentials.getDestName();
-					String url = "http://localhost:8080/auth" + type + "/" + name + "";
+					String url = "http://localhost:8080/auth" + type;
 					System.out.println(url);
 
 					HttpHeaders headers = new HttpHeaders();
@@ -176,7 +189,7 @@ public class home {
 					name = credentials.getSrcName();
 				else
 					name = credentials.getDestName();
-				String url = "http://localhost:8080/auth" + type + "/" + name + "";
+				String url = "http://localhost:8080/auth" + type;
 				System.out.println(url);
 
 				HttpHeaders headers = new HttpHeaders();
@@ -192,7 +205,7 @@ public class home {
 		return out;
 	}
 
-	private void fetchSourceCred(String type) {
+	private void fetchSrcdestCred(String type) {
 		ResponseEntity<String> out = null;
 		int res = 0;
 		String userid = credentials.getUserId(), appId;
@@ -218,6 +231,7 @@ public class home {
 				credentials.setSrcToken(key,value);
 			}
 			System.out.println(credentials.getSrcToken().keySet()+" : "+credentials.getSrcToken().values());
+			//Add destination fetching
 			
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -35,6 +37,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 @RestController
+//@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS,value="session")
 public class SourceController {
 	
 	private String mongoUrl;
@@ -49,35 +52,16 @@ public class SourceController {
 	private String appname, refresh;
 	private UrlObject accessCode, accessToken, requestToken, refreshToken, validateCredentials;
 	private List<UrlObject> endPoints;
-	private Map<String, String> values;
 
-	@RequestMapping(method = RequestMethod.GET, value = "/authsource/{app}")
-	private ResponseEntity<String> source(@PathVariable String app) {
+	@RequestMapping(method = RequestMethod.GET, value = "/authsource")
+	private ResponseEntity<String> source() {
 		ResponseEntity<String> ret = null;
 		try {
-			values = new HashMap<String, String>();
-			app = "source/" + app.toUpperCase();
-			SrcObject obj = credentials.getSrcObj();
-			System.out.println(obj.getName());
-			appname = obj.getName();
-			values.put("appname", appname);
-			refresh = obj.getRefresh();
-			accessCode = obj.getAccessCode();
-			System.out.println("source : " + accessCode.getUrl());
-			accessToken = obj.getAccessToken();
-			System.out.println("source : " + accessToken.getUrl());
-			requestToken = obj.getRequestToken();
-			System.out.println("source : " + requestToken.getUrl());
-			refreshToken = obj.getRefreshToken();
-			System.out.println("source : " + refreshToken.getUrl());
-			validateCredentials = obj.getValidateCredentials();
-			System.out.println("source : " + validateCredentials.getUrl());
-			endPoints = obj.getEndPoints();
-			System.out.println(endPoints.toString());
+			SrcObject obj = init();
 			if (obj.getSteps().compareTo("TWO") == 0) {
 				ret = code(accessCode);
 			} else if (obj.getSteps().compareTo("THREE") == 0) {
-				ret = Utilities.token(requestToken,values);
+				ret = Utilities.token(requestToken,credentials.getSrcToken());
 				saveValues(ret);
 				ret = code(accessCode);
 			}
@@ -87,14 +71,29 @@ public class SourceController {
 		}
 		return ret;
 	}
-	
+	private SrcObject init() {			
+		SrcObject obj = credentials.getSrcObj();
+		System.out.println(obj.getName());
+		refresh = obj.getRefresh();
+		accessCode = obj.getAccessCode();
+		System.out.println("source : " + accessCode.getUrl());
+		accessToken = obj.getAccessToken();
+		System.out.println("source : " + accessToken.getUrl());
+		requestToken = obj.getRequestToken();
+		System.out.println("source : " + requestToken.getUrl());
+		refreshToken = obj.getRefreshToken();
+		System.out.println("source : " + refreshToken.getUrl());
+		validateCredentials = obj.getValidateCredentials();
+		System.out.println("source : " + validateCredentials.getUrl());
+		endPoints = obj.getEndPoints();
+		System.out.println(endPoints.toString());
+		return obj;
+	}
 	@RequestMapping(method = RequestMethod.GET, value = "/data")
 	private ResponseEntity<String> getdata()
 	{
-		if(values==null||values.isEmpty())
-		{
-			values = new HashMap<String,String>();
-			values.putAll(credentials.getSrcToken());
+		if(validateCredentials==null||endPoints==null||refreshToken==null) {
+			init();
 		}
 		ResponseEntity<String> ret = null;
 		//System.out.println(srcname+" "+destname);
@@ -170,6 +169,7 @@ public class SourceController {
 				postpatchMetaData(body,"destination","POST");
 			}
 			ret = data(credentials.getSrcName());
+			System.out.println(ret.getBody());
 		}
 		catch(Exception e)
 		{
@@ -225,25 +225,23 @@ public class SourceController {
     private ResponseEntity<String> data(String appname) {
         ResponseEntity<String> ret = null;
         try {
-			if (((values!=null)&&(!values.isEmpty())) && (values.get("appname").equals(appname.toUpperCase()))) {
-                if (refresh.equals("YES")) {
-                    ret = Utilities.token(refreshToken,values);
-                    if (!ret.getStatusCode().is2xxSuccessful()) {
-                        ret = source(appname);
-                        ret = validateData(validateCredentials, endPoints);
-                    } else {
-                        saveValues(ret);
-                        ret = validateData(validateCredentials, endPoints);
-                    }
+            if (refresh.equals("YES")) {
+                ret = Utilities.token(refreshToken,credentials.getSrcToken());
+                if (!ret.getStatusCode().is2xxSuccessful()) {
+                    ret = source();
+                    ret = validateData(validateCredentials, endPoints);
                 } else {
-                    ret = Utilities.token(validateCredentials,values);
-                    if (!ret.getStatusCode().is2xxSuccessful()) {
-                        ret = source(appname);
-                        ret = validateData(validateCredentials, endPoints);
-                    } else {
-                        ret = Utilities.token(endPoints.get(0),values);
-                        return ret;
-                    }
+                    saveValues(ret);
+                    ret = validateData(validateCredentials, endPoints);
+                }
+            } else {
+                ret = Utilities.token(validateCredentials,credentials.getSrcToken());
+                if (!ret.getStatusCode().is2xxSuccessful()) {
+                    ret = source();
+                    ret = validateData(validateCredentials, endPoints);
+                } else {
+                    ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
+                    return ret;
                 }
             }
         } catch (Exception e) {
@@ -256,11 +254,11 @@ public class SourceController {
     private ResponseEntity<String> validateData(UrlObject valid, List<UrlObject> endPoints) {
         ResponseEntity<String> ret = null;
         try {
-            ret = Utilities.token(valid,values);
+            ret = Utilities.token(valid,credentials.getSrcToken());
             if (!ret.getStatusCode().is2xxSuccessful()) {
                 System.out.print("contact support....\n");
             } else {
-                ret = Utilities.token(endPoints.get(0),values);
+                ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
                 return ret;
             }
 
@@ -277,15 +275,15 @@ public class SourceController {
     		try {
     			RestTemplate restTemplate = new RestTemplate();
     			for(UrlObject object:endpoints) {
-    				String url = Utilities.buildUrl(object, values);
+    				String url = Utilities.buildUrl(object, credentials.getSrcToken());
         			System.out.println(object.getLabel() + " = " + url);
 
-        			HttpHeaders headers = Utilities.buildHeader(object, values);
+        			HttpHeaders headers = Utilities.buildHeader(object, credentials.getSrcToken());
         			HttpEntity<?> httpEntity;
         			if (!object.getResponseString().isEmpty()) {
         				httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
         			} else if (!object.getResponseBody().isEmpty()) {
-        				MultiValueMap<String, String> body = Utilities.buildBody(object, values);
+        				MultiValueMap<String, String> body = Utilities.buildBody(object, credentials.getSrcToken());
         				httpEntity = new HttpEntity<Object>(body, headers);
         			} else {
         				httpEntity = new HttpEntity<Object>(headers);
@@ -295,6 +293,8 @@ public class SourceController {
         			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
         			System.out.println("----------------------------"+uri);
         			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
+        			
+        			//call destination validation and push data 
         			
    ////null and empty case+ three more cases+bodu cursor(dropbox).......and a lot more     			
 //        			while(true) {
@@ -307,26 +307,9 @@ public class SourceController {
 //        				}
 //        			}
         			
-        			while(true) {
-        				List<Cursor> page =object.getPagination();
-        				JsonObject ele = new Gson().fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
-        				for(Cursor cur:page) {
-        					String arr[] = cur.getKey().split(".");
-        					for(String jobj:arr)
-        					{
-        						ele=ele.get(jobj).getAsJsonObject();    							
-        						System.out.println(ele);
-        					}
-        						
-        				}
-        				
-        				
-        			}
-        			
-        			
-        			
         			//System.out.println(out.getBody());
-    			}    			
+    			}
+    			
 
     		} catch (Exception e) {
     			e.printStackTrace();
@@ -340,11 +323,11 @@ public class SourceController {
 		ResponseEntity<String> redirect = null;
 		HttpHeaders headers;
 		try {
-			String url = Utilities.buildUrl(object, values);
+			String url = Utilities.buildUrl(object, credentials.getSrcToken());
 
 			System.out.println(object.getLabel() + " = " + url);
 
-			headers = Utilities.buildHeader(object, values);
+			headers = Utilities.buildHeader(object, credentials.getSrcToken());
 			headers.setLocation(URI.create(url));
 			HttpEntity<?> httpEntity;
 			if (!object.getResponseString().isEmpty()) {
@@ -365,22 +348,22 @@ public class SourceController {
 	@RequestMapping(value = "/oauth2/s2")
 	@ResponseStatus(value = HttpStatus.OK)
 	private String handlefooo(@RequestParam Map<String, String> parameters) {
-		values.putAll(parameters);
-		System.out.println("token : " + values.keySet() + ":" + values.values());
+		credentials.getSrcToken().putAll(parameters);
+		System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
 		System.out.println("parameters : " + parameters.keySet() + ":" + parameters.values());
 		ResponseEntity<String> out = null;
 		try {
-			String url = Utilities.buildUrl(accessToken, values);
+			String url = Utilities.buildUrl(accessToken, credentials.getSrcToken());
 			System.out.println(accessToken.getLabel() + " = " + url);
 
 			RestTemplate restTemplate = new RestTemplate();
 
-			HttpHeaders headers = Utilities.buildHeader(accessToken, values);
+			HttpHeaders headers = Utilities.buildHeader(accessToken, credentials.getSrcToken());
 			HttpEntity<?> httpEntity;
 			if (!accessToken.getResponseString().isEmpty()) {
 				httpEntity = new HttpEntity<Object>(accessToken.getResponseString(), headers);
 			} else if (!accessToken.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> body = Utilities.buildBody(accessToken, values);
+				MultiValueMap<String, String> body = Utilities.buildBody(accessToken, credentials.getSrcToken());
 				httpEntity = new HttpEntity<Object>(body, headers);
 			} else {
 				httpEntity = new HttpEntity<Object>(headers);
@@ -390,8 +373,7 @@ public class SourceController {
 			 url =UrlEscapers.urlFragmentEscaper().escape(url);
 			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 			saveValues(out);
-			credentials.setSrcToken(values);
-			out = Utilities.token(validateCredentials,values);
+			out = Utilities.token(validateCredentials,credentials.getSrcToken());
 			System.out.println(out.getBody());
 			if (!out.getStatusCode().is2xxSuccessful()) {
 				System.out.println("invalid access token");
@@ -411,14 +393,14 @@ public class SourceController {
 	private void saveValues(ResponseEntity<String> out) {
 		if (out.getBody() != null) {
 			try {
-				values.putAll(new Gson().fromJson(out.getBody(), values.getClass()));
+				credentials.getSrcToken().putAll(new Gson().fromJson(out.getBody(), HashMap.class));
 			} catch (Exception e) {
 				for (String s : out.getBody().toString().split("&")) {
 					System.out.println(s);
-					values.put(s.split("=")[0], s.split("=")[1]);
+					credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
 				}
 			}
-			System.out.println("token : " + values.keySet() + ":" + values.values());
+			System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
 		}
 	}
 }

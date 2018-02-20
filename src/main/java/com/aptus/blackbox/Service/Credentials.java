@@ -3,12 +3,15 @@ package com.aptus.blackbox.Service;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 
 import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.SrcObject;
 
 @Service
+@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS,value="session")
 public class Credentials {
 	
 	private String userId,srcName,destName;
