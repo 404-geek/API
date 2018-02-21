@@ -11,8 +11,8 @@ import java.util.TreeMap;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import javax.servlet.http.HttpSession;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -31,8 +32,13 @@ import com.aptus.blackbox.index.objects;
 import sun.misc.BASE64Encoder;
 
 public class Utilities {
-	@Autowired
-	private Credentials credentials ;
+	@RequestMapping(value="/getsession")
+	public static String getsession(HttpSession session,Credentials credentials)
+	{
+		if(session.getId().equals(credentials.getSessionId().get(credentials.getUserId())))
+				return credentials.getUserId();
+		return null;
+	}	
 	private static String timestamp() {
 		String time = String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
 		return time.substring(0, time.length()-3);
@@ -192,6 +198,7 @@ public class Utilities {
 				headers.add(key, value);
 			}
 		headers.add("Cache-Control", "no-cache");
+        headers.add("Access-Control-Allow-Origin", "*");
 		return headers;
 	}
 	public static MultiValueMap<String,String> buildBody(UrlObject token, Map<String, String> values)
@@ -236,7 +243,7 @@ public class Utilities {
 
 			HttpHeaders headers = Utilities.buildHeader(object, values);
 			HttpEntity<?> httpEntity;
-			if (!object.getResponseString().isEmpty()) {
+			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
 				httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
 			} else if (!object.getResponseBody().isEmpty()) {
 				MultiValueMap<String, String> body = Utilities.buildBody(object, values);

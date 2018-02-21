@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,19 +36,18 @@ import com.github.opendevl.JFlat;
 
 @RestController
 public class DataController {
-	private String mongoUrl, tableName;
+	private String  tableName;
 	private Connection con = null;
 
-	public DataController() {
-
-	}
-
-	public DataController(Environment env) {
-		mongoUrl = env.getProperty("spring.mongodb.ipAndPort");
-	}
+	
+	@Value("${abc}")
+	private String mongoUrl;
 
 	@Autowired
 	private Credentials credentials;
+	
+	private DestObject destObj;
+	private Map<String,String> destToken;
 
 	@RequestMapping(method = RequestMethod.GET, value = "/authdestination")
 	private void destination() throws SQLException { // @RequestParam("data") Map<String,String> data
@@ -58,12 +58,15 @@ public class DataController {
 			destCred.put("database_name", "test");
 			destCred.put("db_username", "root");
 			destCred.put("db_password", "blackbox");
-			destCred.put("server_host", "192.168.1.9");
+			destCred.put("server_host", "192.168.1.40");
 			destCred.put("server_port", "3306");
 			//tableName = "user";
 			credentials.setDestToken(destCred);
-
-			if (!checkDB(credentials.getDestToken().get("database_name"))) {
+			
+			this.destObj = credentials.getDestObj();
+			this.destToken = credentials.getDestToken();
+			
+			if (!checkDB(destToken.get("database_name"))) {
 				// invalid
 			}
 
@@ -79,109 +82,87 @@ public class DataController {
 
 	}
 
-	public boolean jsontodatabase(String jsonString,String tableName) throws SQLException {
-
+	@RequestMapping(method = RequestMethod.POST, value = "/pushToDB")
+	public boolean jsontodatabase(@RequestBody String  jsonString,@RequestParam("tableName") String tableName) throws SQLException {
+		System.out.println("pushDBController-driver: "+destObj.getDrivers());
 		this.tableName=tableName;
 		try {
-			if (con == null)
+			if (con == null || con.isClosed())
 				connection();
-
-			JFlat x = new JFlat(jsonString);
-			List<Object[]> json2csv = x.json2Sheet().getJsonAsSheet();
-			Map<String, String> dt = credentials.getDestToken();
-			String host = dt.get("server_host");
-			String port = dt.get("server_port");
-			String dbase = dt.get("database_name");
-			String user = dt.get("db_username");
-			String pass = dt.get("db_password");
-			PreparedStatement stmt;
-			if (checkDB(credentials.getDestToken().get("database_name"))) {
-				String query = "CREATE TABLE " + credentials.getDestObj().getValue_quote_open() + tableName
-						+ credentials.getDestObj().getValue_quote_close() + "(id "
-						+ credentials.getDestObj().getType_integer() + "," + "name "
-						+ credentials.getDestObj().getType_varchar() + "(100));";
-				System.out.println(query);
-				stmt = con.prepareStatement(query);
-				//stmt.executeUpdate();
-
-				query = "INSERT INTO " + credentials.getDestObj().getValue_quote_open() + tableName
-						+ credentials.getDestObj().getValue_quote_close() + " VALUES(?,?)";
-				stmt = con.prepareStatement(query);
-				stmt.setInt(1, 2);
-				stmt.setString(2, "jj");
-
-				//stmt.executeUpdate();
-				System.out.println(query);
-
+			System.out.println("TABLENAME: "+tableName);
+			//System.out.println("JSONSTRING: "+jsonString);
+			String host = destToken.get("server_host");
+			String port = destToken.get("server_port");
+			String dbase = destToken.get("database_name");
+			String user = destToken.get("db_username");
+			String pass = destToken.get("db_password");
+			PreparedStatement preparedStmt;
+			if (checkDB(destToken.get("database_name"))) {
+				JFlat x = new JFlat(jsonString);
+				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
+				// System.out.println(json2csv);
+				
+				String statement = "";
+				
 				int i = 0;
-				int count = 0;
-				String statement= "CREATE TABLE `"+ tableName + "`("  ;
-				
-				Object[] type; 
-				if(json2csv.size()>0)
-					type = json2csv.get(1);
-				else
-					System.out.println("No Data");
-				
-//				for (Object[] o : json2csv) {
-//					if (i > -1) {
-//						if (con == null)
-//							connection();
-//						if (i == 0) {
-//							for (Object t : o) {
-//								statement += "`" + t.toString()+":"+t.getClass()+"," ;
-//							}
-//							System.out.println(statement.substring(0, statement.length() - 1) + ");");
-//						stmt = con.prepareStatement(statement.substring(0, statement.length() - 1) + ");");
-////							stmt.executeUpdate();
-//						} else {
-//							String insstmt = "INSERT INTO `" + tableName + "` VALUES(";
-//							for (Object t : o) {
-//								if (t == null) {
-//									insstmt += "" + "NULL ,";
-//								} else {
-//									count++;
-//									insstmt += t.toString()+":"+t.getClass() + ",";
-//								}
-//								insstmt = insstmt.substring(0, insstmt.length() - 1) + "(";
-//								for (int j = 0; j < count; j++) {
-//								insstmt += "?,";
-//								}
-//
-//							}
-//							 stmt = con.prepareStatement(insstmt.substring(0, statement.length() - 1) + ");");
-//							System.out.println(insstmt.substring(0, insstmt.length() - 1) + ");");
-//							//stmt.executeUpdate();
-//						}
-//					}
-//					i = i + 1;
-//				}
-
+				for (Object[] row : json2csv) {
+					if (i == 0) {
+						 statement="CREATE TABLE "+
+								 destObj.getIdentifier_quote_open()+ tableName +destObj.getIdentifier_quote_close()+
+								 "(";
+						 for(Object t : row)
+						 statement+=t.toString()+" TEXT,";
+						
+						 statement=statement.substring(0,statement.length()-1)+");";
+						 System.out.println("-----"+statement);
+						 preparedStmt = con.prepareStatement(statement);
+						 preparedStmt.execute();
+					} else {
+						int k;						
+						String instmt = "INSERT INTO " +
+								 destObj.getIdentifier_quote_open()+ tableName +destObj.getIdentifier_quote_close()+
+								  " VALUES(";
+						
+						for(k=0;k<row.length;k++)
+							instmt+="?,";
+						
+						instmt = instmt.substring(0,instmt.length()-1)+");";
+						PreparedStatement stmt = con.prepareStatement(instmt);
+						
+						k=1;
+						for (Object attr : row) {
+							stmt.setString( k++,attr==null?null:attr.toString());
+						}
+						System.out.println(instmt);
+						stmt.execute();
+					}
+					i++;
+				}
+				con.close();
+				return true;
 			}
-			return true;
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
+			System.err.println("Got an exception!");
+			System.err.println(e.getMessage());
 			e.printStackTrace();
-
 		}
+				
+		
 		return false;
 	}
 
+	
 	public void connection() throws SQLException {
 		try {
-			DestObject destObj = credentials.getDestObj();
-			System.out.println(destObj.getDrivers());
+			
+			System.out.println("DataController-driver: "+destObj.getDrivers());
 			Class.forName(destObj.getDrivers());
-			String url = destObj.getUrlprefix() + credentials.getDestToken().get("server_host") + ":"
-					+ credentials.getDestToken().get("server_port") + destObj.getDbnameseparator()
-					+ credentials.getDestToken().get("database_name");
+			String url = destObj.getUrlprefix() + destToken.get("server_host") + ":"
+					+ destToken.get("server_port") + destObj.getDbnameseparator()
+					+ destToken.get("database_name");
 			System.out.println(url);
-			con = DriverManager.getConnection(url, credentials.getDestToken().get("db_username"),
-					credentials.getDestToken().get("db_password"));
+			con = DriverManager.getConnection(url, destToken.get("db_username"),
+					destToken.get("db_password"));
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -194,10 +175,12 @@ public class DataController {
 	public boolean checkDB(String dbase) throws SQLException {
 
 		try {
-			if (con == null)
+			if (con == null || con.isClosed())
 				connection();
 			Statement stmt = con.createStatement();
-			String query = "SELECT count(*) FROM information_schema.tables WHERE table_schema =" + "'" + dbase;
+			String query = "SELECT count(*) FROM information_schema.tables WHERE table_schema =" 
+			+ destObj.getValue_quote_open()+ dbase+destObj.getValue_quote_close()+";";
+			System.out.println(query);
 			ResultSet res = stmt.executeQuery(query);
 			if (res.next())
 				return true;

@@ -1,5 +1,6 @@
 package com.aptus.blackbox.Service;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,15 +13,23 @@ import com.aptus.blackbox.index.SrcObject;
 
 @Service
 @Scope(proxyMode = ScopedProxyMode.TARGET_CLASS,value="session")
-public class Credentials {
+public class Credentials implements Serializable {
 	
-	private String userId,srcName,destName;
+	private String userId,srcName,destName,connectionId;
+	private Map<String,String> sessionId;
 	private boolean userExist,usrSrcExist,usrDestExist;
 	private Map<String,String> srcToken=new HashMap<>();
 	private Map<String,String> destToken=new HashMap<>();
 	private SrcObject srcObj;
 	private DestObject destObj;
 	
+	public Map<String, String> getSessionId() {
+		return sessionId;
+	}
+	public void setSessionId(String userId,String sessionId) {
+		this.sessionId.clear();
+		this.sessionId.put(userId, sessionId);
+	}
 	public boolean isUserExist() {
 		return userExist;
 	}
@@ -86,5 +95,11 @@ public class Credentials {
 	}
 	public void setDestObj(DestObject destObj) {
 		this.destObj = destObj;
+	}
+	public String getConnectionId() {
+		return connectionId;
+	}
+	public void setConnectionId(String connectionId) {
+		this.connectionId = connectionId;
 	}
 }
