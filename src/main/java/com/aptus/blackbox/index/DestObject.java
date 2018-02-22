@@ -1,6 +1,8 @@
 package com.aptus.blackbox.index;
 
-public class DestObject {
+import java.io.Serializable;
+
+public class DestObject implements Serializable {
 	private String _id, drivers, urlprefix, dbnameseparator, type_varchar, type_text, type_integer, type_real,
 			type_time, type_date, type_dateTime, identifier_quote_open, identifier_quote_close, value_quote_open,
 			value_quote_close;

@@ -1,5 +1,7 @@
 package com.aptus.blackbox.index;
 
+import java.io.Serializable;
+
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -8,7 +10,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
-public class Parser {
+public class Parser implements Serializable{
 	Parser(){}
 	private SrcObject srcProp;
 	private DestObject destProp;

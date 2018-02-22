@@ -1,6 +1,8 @@
 package com.aptus.blackbox.index;
 
-public class Cursor {
+import java.io.Serializable;
+
+public class Cursor implements Serializable{
 private String key,param,type;
 
 public String getKey() {

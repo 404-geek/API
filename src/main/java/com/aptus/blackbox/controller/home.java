@@ -1,7 +1,6 @@
 package com.aptus.blackbox.controller;
 
 import java.net.URI;
-import java.nio.charset.Charset;
 
 import javax.servlet.http.HttpSession;
 
@@ -12,13 +11,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -54,12 +50,32 @@ public class home {
 	private DestObject destObj;
 
 	@RequestMapping(value="/login")
-	private String login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
+	private ResponseEntity<String> login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
 	{
-		credentials.setSessionId(user,session.getId());
-		System.out.println(session.getId());
-		existUser(user);
-		return Utilities.getsession(session, credentials);
+		try {
+			System.out.println(user);			
+			HttpHeaders header = new HttpHeaders();
+			header.add("Cache-Control", "no-cache");
+			header.add("access-control-allow-origin", "*");
+			if(existUser(user)){
+				credentials.setSessionId(user,session.getId());
+				System.out.println(session.getId());
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("id", user);
+				respBody.addProperty("status", "200");
+				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+			}
+			else{
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("id", user);
+				respBody.addProperty("status", "404");
+				return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(header).body(respBody.toString());
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 		//store in credentials
 	}
 //	@RequestMapping(value="/signup")
@@ -67,47 +83,19 @@ public class home {
 //	{
 //		System.out.println(session.getId());
 //	}
-	@RequestMapping(value="/getdatasources")
-	private String dataSources(@RequestParam("userId") String user) {
-		String dataSource=null;
-		try {
-			ResponseEntity<String> out = null;
-			RestTemplate restTemplate = new RestTemplate();
-			restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
-			String url = "http://"+mongoUrl+"/credentials/userCredentials/"+credentials.getUserId();
-			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-			HttpHeaders headers = new HttpHeaders();
-			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-			headers.add("Cache-Control", "no-cache");
-			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-			System.out.println(out.getBody());
-			dataSource = "{ \"data\":"+out.getBody().toString()+",\"status\":200}";
-			System.out.println(dataSource);
-			return dataSource;
-		}
-		catch(HttpClientErrorException e) {
-			System.out.println(e.getMessage());
-			if(e.getMessage().startsWith("4")) {
-				return "{ \"data\":null,\"status\":404}";
-			}
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
-		return dataSource;
-	}
+	
 	
 	/* Input:user_id
 	 * Takes user_id as input, checks if user already exists and stores true/false accordingly in credentials.
 	 * Return type: void 
 	 */
-	private void existUser(String userId) {
-		try {			
+	private boolean existUser(String userId) {
+		try {
+			boolean ret=false;
 			ResponseEntity<String> out = null;
 			credentials.setUserId(userId);
 			RestTemplate restTemplate = new RestTemplate();
-			restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
+			//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 			String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
 			String url;
 			url = "http://"+mongoUrl+"/credentials/userCredentials?filter=" + filter;
@@ -122,11 +110,13 @@ public class home {
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
 			credentials.setUserExist(jobj.get("_returned").getAsInt() == 0 ? false : true);
+			ret = credentials.isUserExist();
+			return ret;
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("home.index");
 		}
-		return;
+		return false;
 	}
 
 	/*
@@ -156,7 +146,7 @@ public class home {
 		ResponseEntity<String> out = null;
 		int res = 0;
 		try {
-			if(Utilities.getsession(session,credentials)!=null) {
+			if(Utilities.isSessionValid(session,credentials)) {
 				srcDestId(type,srcdestId);
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
@@ -293,10 +283,11 @@ public class home {
 		}
 	}
 	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdest")
-	private String getSrcDest(HttpSession session) {
-		String s=null;
+	private ResponseEntity<String> getSrcDest(HttpSession session) {
+		ResponseEntity<String> s=null;
 		try {
-			if(Utilities.getsession(session,credentials)!=null) {
+			System.out.println(session.getId());
+			if(Utilities.isSessionValid(session,credentials)) {
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
 				String url = "http://"+mongoUrl+"/credentials/SrcDstlist";			 
@@ -306,10 +297,15 @@ public class home {
 				headers.add("Cache-Control", "no-cache");
 				headers.add("Access-Control-Allow-Origin", "*");
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-				s  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class).getBody();
+				s  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
 			}
 			else {
-				return "redirect://";
+				System.out.println("Session expired!");
+				HttpHeaders headers = new HttpHeaders();
+				String url="http://localhost:8080/login";
+				headers.setLocation(URI.create(url));
+				s = new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+		
 			}
 		}
 		catch(Exception e) {

@@ -1,8 +1,9 @@
 package com.aptus.blackbox.index;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class SrcObject {
+public class SrcObject implements Serializable {
 	private String name,authType,steps,refresh;
 	private UrlObject refreshToken,requestToken,accessCode,accessToken,validateCredentials;
 	private List<UrlObject> endPoints;

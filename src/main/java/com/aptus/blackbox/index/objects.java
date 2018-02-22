@@ -1,8 +1,9 @@
 package com.aptus.blackbox.index;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class objects {
+public class objects implements Serializable{
 	private String key,value;
 	private List<objects> valueList;
 	public String getKey() {

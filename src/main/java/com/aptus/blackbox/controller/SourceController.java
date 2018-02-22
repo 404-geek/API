@@ -53,7 +53,7 @@ public class SourceController {
 	private ResponseEntity<String> source(HttpSession session) {
 		ResponseEntity<String> ret = null;
 		try {
-			if(Utilities.getsession(session,credentials)!=null) {
+			if(Utilities.isSessionValid(session,credentials)) {
 				SrcObject obj = init();
 				if (obj.getSteps().compareTo("TWO") == 0) {
 					ret = code(accessCode);
@@ -94,8 +94,8 @@ public class SourceController {
 		System.out.println(endPoints.toString());
 		return obj;
 	}
-	@RequestMapping(method = RequestMethod.GET, value = "/data")
-	private ResponseEntity<String> getdata(HttpSession session)
+	@RequestMapping(method = RequestMethod.GET, value = "/createdatasource")
+	private ResponseEntity<String> createDataSource(HttpSession session)
 	{
 		
 		
@@ -103,7 +103,7 @@ public class SourceController {
 		//System.out.println(srcname+" "+destname);
 		try
 		{
-			if(Utilities.getsession(session,credentials)!=null) {
+			if(Utilities.isSessionValid(session,credentials)) {
 				if(validateCredentials==null||endPoints==null||refreshToken==null) {
 					init();
 				}
@@ -177,7 +177,7 @@ public class SourceController {
 					
 					postpatchMetaData(body,"destination","POST");
 				}
-				ret = data(credentials.getSrcName());
+				//ret = data(credentials.getSrcName());
 				System.out.println(ret.getBody());
 			}
 			else {
@@ -240,134 +240,7 @@ public class SourceController {
 	       return;    
 	   }
 	
-    private ResponseEntity<String> data(String appname) {
-        ResponseEntity<String> ret = null;
-        try {
-            if (refresh.equals("YES")) {
-                ret = Utilities.token(refreshToken,credentials.getSrcToken());
-                if (!ret.getStatusCode().is2xxSuccessful()) {
-                	SrcObject obj = init();
-    				if (obj.getSteps().compareTo("TWO") == 0) {
-    					ret = code(accessCode);
-    				} else if (obj.getSteps().compareTo("THREE") == 0) {
-    					ret = Utilities.token(requestToken,credentials.getSrcToken());
-    					saveValues(ret);
-    					ret = code(accessCode);
-    				}
-                    ret = validateData(validateCredentials, endPoints);
-                } else {
-                    saveValues(ret);
-                    ret = validateData(validateCredentials, endPoints);
-                }
-            } else {
-                ret = Utilities.token(validateCredentials,credentials.getSrcToken());
-                if (!ret.getStatusCode().is2xxSuccessful()) {
-                	SrcObject obj = init();
-    				if (obj.getSteps().compareTo("TWO") == 0) {
-    					ret = code(accessCode);
-    				} else if (obj.getSteps().compareTo("THREE") == 0) {
-    					ret = Utilities.token(requestToken,credentials.getSrcToken());
-    					saveValues(ret);
-    					ret = code(accessCode);
-    				}
-                    ret = validateData(validateCredentials, endPoints);
-                } else {
-                    //ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
-                	fetchEndpointsData(endPoints);
-                    return ret;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println(e + "home.data");
-        }
-        return ret;
-    }
-
-    private ResponseEntity<String> validateData(UrlObject valid, List<UrlObject> endPoints) {
-        ResponseEntity<String> ret = null;
-        try {
-            ret = Utilities.token(valid,credentials.getSrcToken());
-            if (!ret.getStatusCode().is2xxSuccessful()) {
-                System.out.print("contact support....\n");
-            } else {
-                //ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
-            	fetchEndpointsData(endPoints);
-                return ret;
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("source.validatedata");
-        }
-        return ret;
-    }
-
-    private void fetchEndpointsData(List<UrlObject> endpoints)
-    {
-    	ResponseEntity<String> out = null;
-    		try {
-    			RestTemplate restTemplate = new RestTemplate();
-    			for(UrlObject object:endpoints) {
-    				String url = Utilities.buildUrl(object, credentials.getSrcToken());
-        			System.out.println(object.getLabel() + " = " + url);
-
-        			HttpHeaders headers = Utilities.buildHeader(object, credentials.getSrcToken());
-        			HttpEntity<?> httpEntity;
-        			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
-        				httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
-        			} else if (!object.getResponseBody().isEmpty()) {
-        				MultiValueMap<String, String> body = Utilities.buildBody(object, credentials.getSrcToken());
-        				httpEntity = new HttpEntity<Object>(body, headers);
-        			} else {
-        				httpEntity = new HttpEntity<Object>(headers);
-        			}
-        			HttpMethod method = (object.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
-        			System.out.println("Method : "+method);
-        			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-        			System.out.println("----------------------------"+uri);
-        			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
-        			
-        			//call destination validation and push data 
-        			
-   ////null and empty case+ three more cases+bodu cursor(dropbox).......and a lot more     			
-//        			while(true) {
-//        				List<Cursor> page =object.getPagination();
-//        				JsonObject ele = new Gson().fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
-//        				for(Cursor cur:page) {
-//        					String arr[] = cur.getKey().split(".");
-//        					for(String jobj:arr)
-//        						JsonElement je =  
-//        				}
-//        			}
-        			
-        			//System.out.println(out.getBody());
-        			 //System.out.println(out.getBody());
-
-                    String tableName=credentials.getConnectionId()+"_"+object.getLabel();
-
-                    System.out.println("SourceController-driver: "+credentials.getDestObj().getDrivers());
-
-                    url = "http://localhost:8080/pushToDB?tableName="+tableName;
-
-                    httpEntity = new HttpEntity<Object>(out.getBody(),null);
-
-                    ResponseEntity<Boolean> res= restTemplate.exchange(URI.create(url),
-
-                            HttpMethod.POST,httpEntity,Boolean.class);
-
-
-    			}
-    			
-
-    		} catch (Exception e) {
-    			e.printStackTrace();
-    			System.out.println(e+"token");
-    		}
-    		
-    	
-    }
-    
+        
 	private ResponseEntity<String> code(UrlObject object) {
 		ResponseEntity<String> redirect = null;
 		HttpHeaders headers;
@@ -409,9 +282,9 @@ public class SourceController {
 
 			HttpHeaders headers = Utilities.buildHeader(accessToken, credentials.getSrcToken());
 			HttpEntity<?> httpEntity;
-			if (!accessToken.getResponseString().isEmpty()) {
+			if (accessToken.getResponseString()!=null && !accessToken.getResponseString().isEmpty()) {
 				httpEntity = new HttpEntity<Object>(accessToken.getResponseString(), headers);
-			} else if (!accessToken.getResponseBody().isEmpty()) {
+			} else if (accessToken.getResponseBody()!=null && !accessToken.getResponseBody().isEmpty()) {
 				MultiValueMap<String, String> body = Utilities.buildBody(accessToken, credentials.getSrcToken());
 				httpEntity = new HttpEntity<Object>(body, headers);
 			} else {

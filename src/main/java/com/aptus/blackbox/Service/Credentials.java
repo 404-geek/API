@@ -16,8 +16,8 @@ import com.aptus.blackbox.index.SrcObject;
 public class Credentials implements Serializable {
 	
 	private String userId,srcName,destName,connectionId;
-	private Map<String,String> sessionId;
-	private boolean userExist,usrSrcExist,usrDestExist;
+	private Map<String,String> sessionId=new HashMap<>();
+	private boolean userExist,usrSrcExist,usrDestExist,srcValid,destValid;
 	private Map<String,String> srcToken=new HashMap<>();
 	private Map<String,String> destToken=new HashMap<>();
 	private SrcObject srcObj;
@@ -101,5 +101,17 @@ public class Credentials implements Serializable {
 	}
 	public void setConnectionId(String connectionId) {
 		this.connectionId = connectionId;
+	}
+	public boolean isSrcValid() {
+		return srcValid;
+	}
+	public void setSrcValid(boolean srcValid) {
+		this.srcValid = srcValid;
+	}
+	public boolean isDestValid() {
+		return destValid;
+	}
+	public void setDestValid(boolean destValid) {
+		this.destValid = destValid;
 	}
 }

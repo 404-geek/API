@@ -1,8 +1,9 @@
 package com.aptus.blackbox.index;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class UrlObject {
+public class UrlObject implements Serializable {
 	
 	private String label,type,url,method,responseString;
 	private List<objects> params,header,responseBody,signature;
