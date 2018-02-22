@@ -1,94 +1,94 @@
 {
 "source":[
 		{
-		"name":"DROPBOX",
-		"url":"",
+		"_id":"DRROPBOX",
+		"name":"Dropbox",
 		"logo":"https://i.imgur.com/rDh9ixm.png"
 		},
 		{
-		"name":"FACEBOOK",
-		"url":"",
+		"_id":"FACEBOOK",
+		"name":"Facebook",
 		"logo":"https://i.imgur.com/gDrWWU4.png"
 		},
 		{
-		"name":"INSTAGRAM",
-		"url":"",
+		"_id":"INSTAGRAM",
+		"name":"Instagram",
 		"logo":"https://i.imgur.com/zoX8VOE.png"
 		},
 		{
-		"name":"LINKEDIN",
-		"url":"",
+		"_id":"LINKEDIN",
+		"name":"LinkedIn",
 		"logo":"https://i.imgur.com/BUaj07e.png"
 		},
 		{
-		"name":"MAILCHIMP",
-		"url":"",
+		"_id":"MAILCHIMP",
+		"name":"Mailchimp",
 		"logo":"https://i.imgur.com/u5UJHIX.png"
 		},
 		{
-		"name":"SALESFORCE",
-		"url":"",
+		"_id":"SALESFORCE",
+		"name":"Salesforce",
 		"logo":"https://i.imgur.com/doUMOZv.png"
 		},
 		{
-		"name":"SHOPIFY",
-		"url":"",
+		"_id":"SHOPIFY",
+		"name":"Shopify",
 		"logo":"https://i.imgur.com/sHkSxml.png"
 		},
 		{
-		"name":"TWITTER",
-		"url":"",
+		"_id":"TWITTER",
+		"name":"Twitter",
 		"logo":"https://i.imgur.com/xcXYlQk.png"
 		},
 		{
-		"name":"YOUTUBE",
-		"url":"",
+		"_id":"YOUTUBE",
+		"name":"Youtube",
 		"logo":"https://i.imgur.com/wkA4FcS.png"
 		},
 		{
-		"name":"ZOHOCRM",
-		"url":"",
+		"_id":"ZOHOCRM",
+		"name":"Zohocrm",
 		"logo":"https://i.imgur.com/7oeIQBt.png"
 		},
 		{
-		"name":"ZOHOHELPDESK",
-		"url":"",
+		"_id":"ZOHOHELPDESK",
+		"name":"ZohoHelpDesk",
 		"logo":"https://i.imgur.com/LBEL84S.png"
 		}],
 "destination":[
 		{
-		"name":"MYSQL",
-		"url":"",
+		"_id":"MYSQL",
+		"name":"MySql",
 		"logo":"https://i.imgur.com/W5Kzbpg.png"
 		},
 		{
-		"name":"SQLSERVER",
-		"url":"",
+		"_id":"SQLSERVER",
+		"name":"Sqlserver",
 		"logo":"https://i.imgur.com/PYtIpVk.png"
 		},
 		{
-		"name":"ORACLE",
-		"url":"",
+		"_id":"ORACLE",
+		"name":"Oracle",
 		"logo":"https://i.imgur.com/DJ25LE0.png"
 		},
 		{
-		"name":"POSTGRESQL",
-		"url":"",
+		"_id":"POSTGRESQL",
+		"name":"PostgreSql",
 		"logo":"https://i.imgur.com/HVrCqBy.png"
 		},
 		{
-		"name":"MONGODB",
-		"url":"",
+		"_id":"MONGODB",
+		"name":"MongoDB",
 		"logo":"https://i.imgur.com/5AmghPI.png"
 		},
 		{
-		"name":"CSV",
-		"url":"",
+		"_id":"CSV",
+		"name":"csv",
 		"logo":"https://i.imgur.com/PIHtalQ.png"
 		},
 		{
-		"name":"XML",
-		"url":"",
+		"_id":"XML",
+		"name":"xml",
 		"logo":"https://i.imgur.com/dbHpt3Q.png"
 		}
 		]

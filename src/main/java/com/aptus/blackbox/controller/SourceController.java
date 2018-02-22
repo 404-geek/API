@@ -9,7 +9,7 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -36,11 +36,14 @@ import com.google.gson.Gson;
 //@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS,value="session")
 public class SourceController {
 	
+	@Value("${spring.mongodb.ipAndPort}")
 	private String mongoUrl;
-	
-	public SourceController(Environment env) {
-		mongoUrl = env.getProperty("spring.mongodb.ipAndPort");
-	}
+	@Value("${homepage.url}")
+	private String homeUrl;
+	@Value("${base.url}")
+	private String baseUrl;
+	@Value("${access.control.allow.origin}")
+	private String rootUrl;
 
 	@Autowired
 	private Credentials credentials;
@@ -66,7 +69,7 @@ public class SourceController {
 			else {
 				System.out.println("Session expired!");
 				HttpHeaders headers = new HttpHeaders();
-				String url="http://localhost:8080/login";
+				String url=baseUrl;
 				headers.setLocation(URI.create(url));
 				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
 			}
@@ -183,7 +186,7 @@ public class SourceController {
 			else {
 				System.out.println("Session expired!");
 				HttpHeaders headers = new HttpHeaders();
-				String url="http://localhost:8080/login";
+				String url=baseUrl;
 				headers.setLocation(URI.create(url));
 				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
 			}
@@ -205,11 +208,11 @@ public class SourceController {
 	           System.out.println(body);
 	           String filter="";
 	           if(method.equalsIgnoreCase("POST")) {
-	               url ="http://"+mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials";
+	               url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials";
 	               met = HttpMethod.POST;
 	           }                
 	           else if(method.equalsIgnoreCase("PATCH")) {
-	               url ="http://"+mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase();
+	               url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase();
 	               met = HttpMethod.PATCH;
 	           }
 	           else if(method.equalsIgnoreCase("PATCHapp")) {
@@ -219,14 +222,15 @@ public class SourceController {
 	        	   else {
 	        		   appname = credentials.getDestName();
 	        	   }
-	        	   url ="http://"+mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase()+"_"+appname.toLowerCase();
+	        	   url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase()+"_"+appname.toLowerCase();
 	        	   met = HttpMethod.PATCH;
 	           }
 	           System.out.println(url+"\n"+met);
 	           HttpHeaders headers =new HttpHeaders();
 	           headers.add("Content-Type","application/json") ;
 	           headers.add("Cache-Control", "no-cache");
-	           headers.add("Access-Control-Allow-Origin", "*");
+	           headers.add("access-control-allow-origin", rootUrl);
+	            headers.add("access-control-allow-credentials", "true");
 	           HttpEntity<?> httpEntity = new HttpEntity<Object>(body,headers);
 	           out = restTemplate.exchange(url, met, httpEntity, String.class,filter);
 	           if (out.getStatusCode().is2xxSuccessful()) {

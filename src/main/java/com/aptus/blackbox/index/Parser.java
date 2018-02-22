@@ -23,7 +23,7 @@ public class Parser implements Serializable{
          HttpHeaders headers =new HttpHeaders();
          headers.add("Cache-Control", "no-cache");
          HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-         String url="http://"+mongoUrl+"/credentials/"+type+"/"+Id.toUpperCase();
+         String url=mongoUrl+"/credentials/"+type+"/"+Id.toUpperCase();
          System.out.println(url);
          out = restTemplate.exchange(url, HttpMethod.GET, httpEntity, String.class); 
          System.out.println(out.getBody());

@@ -59,6 +59,12 @@ public class DataController {
 	
 	@Value("${spring.mongodb.ipAndPort}")
 	private String mongoUrl;
+	@Value("${homepage.url}")
+	private String homeUrl;
+	@Value("${base.url}")
+	private String baseUrl;
+	@Value("${access.control.allow.origin}")
+	private String rootUrl;
 
 	@Autowired
 	private Credentials credentials;
@@ -75,7 +81,7 @@ public class DataController {
 			destCred.put("database_name", "test");
 			destCred.put("db_username", "root");
 			destCred.put("db_password", "blackbox");
-			destCred.put("server_host", "192.168.1.40");
+			destCred.put("server_host", "192.168.1.36");
 			destCred.put("server_port", "3306");
 			//tableName = "user";
 			credentials.setDestToken(destCred);
@@ -100,37 +106,43 @@ public class DataController {
 	}
 	
 	@RequestMapping(value="/getconnectionids")
-	private ResponseEntity<String> getConnectionIds(@RequestParam("userId") String user) {
+	private ResponseEntity<String> getConnectionIds(@RequestParam("userId") String user,HttpSession session) {
 		String dataSource=null;
-		HttpHeaders headers;
+		HttpHeaders headers = new HttpHeaders();			
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+        headers.add("access-control-allow-credentials", "true");
 		try {
-			ResponseEntity<String> out = null;
-			RestTemplate restTemplate = new RestTemplate();
-			//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
-			String url = "http://"+mongoUrl+"/credentials/userCredentials/"+credentials.getUserId();
-			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-			headers = new HttpHeaders();
-			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-			headers.add("Cache-Control", "no-cache");
-			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-			System.out.println(out.getBody());
-			
-			headers = new HttpHeaders();			
-			headers.add("Cache-Control", "no-cache");
-			headers.add("Access-Control-Allow-Origin", "*");
-			JsonObject respBody = new JsonObject();
-			respBody.addProperty("data", out.getBody());
-			respBody.addProperty("status", "200");
-			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			if(Utilities.isSessionValid(session,credentials)) {
+				ResponseEntity<String> out = null;
+				RestTemplate restTemplate = new RestTemplate();
+				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
+				String url = mongoUrl+"/credentials/userCredentials/"+credentials.getUserId();
+				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+				HttpHeaders header = new HttpHeaders();
+				// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+				header.add("Cache-Control", "no-cache");
+				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
+				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
+				System.out.println(out.getBody());
+				
+				
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("data", out.getBody());
+				respBody.addProperty("status", "200");
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			}
+			else {
+				System.out.println("Session expired!");
+				String url=homeUrl;
+				headers.setLocation(URI.create(url));
+				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+			}			
 		}
 		catch(HttpClientErrorException e) {
 			System.out.println(e.getMessage());
 			if(e.getMessage().startsWith("4")) {
-				headers = new HttpHeaders();			
-				headers.add("Cache-Control", "no-cache");
-				headers.add("Access-Control-Allow-Origin", "*");
-				JsonObject respBody = new JsonObject();
+	            JsonObject respBody = new JsonObject();
 				respBody.addProperty("data", "null");
 				respBody.addProperty("status", "200");
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
@@ -258,7 +270,7 @@ public class DataController {
 		return false;
 	}
 	
-	@RequestMapping(method = RequestMethod.POST, value = "/selectaction")
+	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
 	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,HttpSession httpsession) {
         ResponseEntity<String> ret = null;
         try {
@@ -270,8 +282,9 @@ public class DataController {
                 if (!ret.getStatusCode().is2xxSuccessful()) {
                 	HttpHeaders header = new HttpHeaders();
         			header.add("Cache-Control", "no-cache");
-        			header.add("access-control-allow-origin", "*");
-        			JsonObject respBody = new JsonObject();
+        			header.add("access-control-allow-origin", rootUrl);
+                    header.add("access-control-allow-credentials", "true");
+                    JsonObject respBody = new JsonObject();
         			respBody.addProperty("message", "Re-authorize");
     				respBody.addProperty("status", "51");
     				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
@@ -300,8 +313,9 @@ public class DataController {
                 if (!ret.getStatusCode().is2xxSuccessful()) {
                 	HttpHeaders header = new HttpHeaders();
         			header.add("Cache-Control", "no-cache");
-        			header.add("access-control-allow-origin", "*");
-        			JsonObject respBody = new JsonObject();
+        			header.add("access-control-allow-origin", rootUrl);
+                    header.add("access-control-allow-credentials", "true");
+                    JsonObject respBody = new JsonObject();
         			respBody.addProperty("message", "Re-authorize");
     				respBody.addProperty("status", "51");
     				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
@@ -332,8 +346,9 @@ public class DataController {
             if (!ret.getStatusCode().is2xxSuccessful()) {
             	HttpHeaders header = new HttpHeaders();
     			header.add("Cache-Control", "no-cache");
-    			header.add("access-control-allow-origin", "*");
-    			JsonObject respBody = new JsonObject();
+    			header.add("access-control-allow-origin", rootUrl);
+                header.add("access-control-allow-credentials", "true");
+                JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Contact Support");
 				respBody.addProperty("status", "52");
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(respBody.toString());
@@ -350,7 +365,7 @@ public class DataController {
         return ret;
     }
 
-    private void fetchEndpointsData(List<UrlObject> endpoints, String choice)
+    private ResponseEntity<String> fetchEndpointsData(List<UrlObject> endpoints, String choice)
     {
     	ResponseEntity<String> out = null;
     		try {
@@ -390,20 +405,34 @@ public class DataController {
         			
         			//System.out.println(out.getBody());
         			 //System.out.println(out.getBody());
+        			headers = new HttpHeaders();
+    				headers.add("Cache-Control", "no-cache");
+    				headers.add("access-control-allow-origin", rootUrl);
+    	            headers.add("access-control-allow-credentials", "true");
+        			if(choice.equalsIgnoreCase("view")) {
+        				
+        	            JsonObject respBody = new JsonObject();
+        				respBody.addProperty("status", "200");
+        				respBody.addProperty("data", out.getBody().toString());
+        				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+        			}
+        			else {
+        				String tableName=credentials.getConnectionId()+"_"+object.getLabel();
 
-                    String tableName=credentials.getConnectionId()+"_"+object.getLabel();
+                        System.out.println("SourceController-driver: "+credentials.getDestObj().getDrivers());
 
-                    System.out.println("SourceController-driver: "+credentials.getDestObj().getDrivers());
+                        url = "http://localhost:8080/pushtodb?tableName=shgfdjbnjibfuvns";
 
-                    url = "http://localhost:8080/pushtodb?tableName="+tableName;
+                        httpEntity = new HttpEntity<Object>(out.getBody(),null);
 
-                    httpEntity = new HttpEntity<Object>(out.getBody(),null);
+                        ResponseEntity<Boolean> res= restTemplate.exchange(URI.create(url),
 
-                    ResponseEntity<Boolean> res= restTemplate.exchange(URI.create(url),
-
-                            HttpMethod.POST,httpEntity,Boolean.class);
-
-
+                                HttpMethod.POST,httpEntity,Boolean.class);
+        	            JsonObject respBody = new JsonObject();
+        				respBody.addProperty("status", "200");
+        				respBody.addProperty("data", "Successfully pushed");
+        				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+        			}
     			}
     			
 
@@ -411,7 +440,7 @@ public class DataController {
     			e.printStackTrace();
     			System.out.println(e+"token");
     		}
-    		
+    		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
     	
     }
 

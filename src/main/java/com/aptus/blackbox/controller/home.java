@@ -5,6 +5,7 @@ import java.net.URI;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -39,11 +40,15 @@ import com.google.gson.JsonObject;
 
 @Controller
 public class home {
+	@Value("${spring.mongodb.ipAndPort}")
 	private String mongoUrl;
+	@Value("${homepage.url}")
+	private String homeUrl;
+	@Value("${base.url}")
+	private String baseUrl;
+	@Value("${access.control.allow.origin}")
+	private String rootUrl;
 	
-	public home(Environment env) {
-		mongoUrl = env.getProperty("spring.mongodb.ipAndPort");
-	}
 	@Autowired
 	private Credentials credentials;
 	private SrcObject srcObj;
@@ -54,22 +59,23 @@ public class home {
 	{
 		try {
 			System.out.println(user);			
-			HttpHeaders header = new HttpHeaders();
-			header.add("Cache-Control", "no-cache");
-			header.add("access-control-allow-origin", "*");
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("Cache-Control", "no-cache");
+			headers.add("access-control-allow-origin", rootUrl);
+            headers.add("access-control-allow-credentials", "true");
 			if(existUser(user)){
 				credentials.setSessionId(user,session.getId());
 				System.out.println(session.getId());
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("id", user);
 				respBody.addProperty("status", "200");
-				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}
 			else{
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("id", user);
 				respBody.addProperty("status", "404");
-				return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(header).body(respBody.toString());
+				return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -98,12 +104,13 @@ public class home {
 			//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 			String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
 			String url;
-			url = "http://"+mongoUrl+"/credentials/userCredentials?filter=" + filter;
+			url = mongoUrl+"/credentials/userCredentials?filter=" + filter;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			HttpHeaders headers = new HttpHeaders();
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 			headers.add("Cache-Control", "no-cache");
-			headers.add("Access-Control-Allow-Origin", "*");
+			headers.add("access-control-allow-origin", rootUrl);
+            headers.add("access-control-allow-credentials", "true");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
 			System.out.println(out.getBody());
@@ -158,13 +165,14 @@ public class home {
 					name = credentials.getDestName();
 				filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase()+"_"+name.toLowerCase() + "\"}";
 				
-				url = "http://"+mongoUrl+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
+				url = mongoUrl+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
 				 
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				HttpHeaders headers = new HttpHeaders();
 				// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 				headers.add("Cache-Control", "no-cache");
-				headers.add("Access-Control-Allow-Origin", "*");
+				headers.add("access-control-allow-origin", rootUrl);
+				headers.add("access-control-allow-credentials", "true");
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
 				System.out.println(out.getBody());
@@ -183,7 +191,7 @@ public class home {
 			else {
 				System.out.println("Session expired!");
 				HttpHeaders headers = new HttpHeaders();
-				String url="http://localhost:8080/login";
+				String url=homeUrl;
 				headers.setLocation(URI.create(url));
 				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
 			}
@@ -197,33 +205,37 @@ public class home {
 	private ResponseEntity<String> initialiser(String type) {
 		ResponseEntity<String> out = null;
 		try {
+			HttpHeaders headers = new HttpHeaders();
+			headers = new HttpHeaders();
+			headers.add("Cache-Control", "no-cache");
+			headers.add("access-control-allow-origin", rootUrl);
+			headers.add("access-control-allow-credentials", "true");
 			if (credentials.isUsrSrcExist() || credentials.isUsrDestExist()) {
-				fetchSrcdestCred(type);
-				out = Utilities.token(srcObj.getValidateCredentials(),
-						type.equalsIgnoreCase("source") ? credentials.getSrcToken() : credentials.getDestToken());
-				if (out.getStatusCode().is2xxSuccessful()) {
-					System.out.println(type + "tick");
-					Utilities.valid();
-					return  new ResponseEntity<String>("valid", null, HttpStatus.CREATED);
-					// tick
-				} 
-				//add destination fetch and validation
+				if(type.equalsIgnoreCase("source")) {
+					fetchSrcdestCred(type);
+					System.out.println(srcObj+" "+credentials);
+					out = Utilities.token(srcObj.getValidateCredentials(),credentials.getSrcToken());
+					if (out.getStatusCode().is2xxSuccessful()) {
+						System.out.println(type + "tick");
+						Utilities.valid();
+						return  new ResponseEntity<String>("valid", null, HttpStatus.CREATED);
+						// tick
+					} 
+					//add destination fetch and validation
+					else {
+						String url =  baseUrl+"/authsource";
+						System.out.println(url);						
+						headers.setLocation(URI.create(url));
+						out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
+					}
+				}
 				else {
-					String name;
-					if (type.equalsIgnoreCase("source"))
-						name = credentials.getSrcName();
-					else
-						name = credentials.getDestName();
-					String url = "http://localhost:8080/auth" + type;
+					String url =  baseUrl+"/authdestination";
 					System.out.println(url);
-
-					HttpHeaders headers = new HttpHeaders();
-					headers = new HttpHeaders();
-					headers.add("Cache-Control", "no-cache");
-					headers.add("Access-Control-Allow-Origin", "*");
 					headers.setLocation(URI.create(url));
 					out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
 				}
+				
 			} 
 			else {
 				String name;
@@ -231,13 +243,8 @@ public class home {
 					name = credentials.getSrcName();
 				else
 					name = credentials.getDestName();
-				String url = "http://localhost:8080/auth" + type;
+				String url = baseUrl+"/auth" + type;
 				System.out.println(url);
-
-				HttpHeaders headers = new HttpHeaders();
-				headers = new HttpHeaders();
-				headers.add("Cache-Control", "no-cache");
-				headers.add("Access-Control-Allow-Origin", "*");
 				headers.setLocation(URI.create(url));
 				out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
 			}
@@ -258,10 +265,11 @@ public class home {
 			else
 				appId = credentials.getDestName();
 			RestTemplate restTemplate = new RestTemplate();
-			String url = "http://"+mongoUrl+"/credentials/" + type + "Credentials/" + userid.toLowerCase()+"_"+appId.toLowerCase();
+			String url = mongoUrl+"/credentials/" + type + "Credentials/" + userid.toLowerCase()+"_"+appId.toLowerCase();
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
-			headers.add("Access-Control-Allow-Origin", "*");
+			headers.add("access-control-allow-origin", rootUrl);
+            headers.add("access-control-allow-credentials", "true");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(URI.create(url), HttpMethod.GET, httpEntity, String.class);
 			System.out.println(out.getBody());
@@ -287,22 +295,26 @@ public class home {
 		ResponseEntity<String> s=null;
 		try {
 			System.out.println(session.getId());
+			HttpHeaders headers = new HttpHeaders();
+			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+			headers.add("Cache-Control", "no-cache");
+			headers.add("access-control-allow-origin", rootUrl);
+            headers.add("access-control-allow-credentials", "true");
 			if(Utilities.isSessionValid(session,credentials)) {
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
-				String url = "http://"+mongoUrl+"/credentials/SrcDstlist";			 
+				String url = mongoUrl+"/credentials/SrcDstlist/srcdestlist";			 
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				HttpHeaders headers = new HttpHeaders();
-				// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-				headers.add("Cache-Control", "no-cache");
-				headers.add("Access-Control-Allow-Origin", "*");
-				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
+				HttpHeaders header = new HttpHeaders();
+				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
 				s  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
+				System.out.println(s.getBody());
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(s.getBody().toString());
 			}
 			else {
 				System.out.println("Session expired!");
-				HttpHeaders headers = new HttpHeaders();
-				String url="http://localhost:8080/login";
+				headers = new HttpHeaders();
+				String url=homeUrl;
 				headers.setLocation(URI.create(url));
 				s = new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
 		
