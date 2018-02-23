@@ -421,7 +421,7 @@ public class DataController {
 
                         System.out.println("SourceController-driver: "+credentials.getDestObj().getDrivers());
 
-                        url = "http://localhost:8080/pushtodb?tableName=shgfdjbnjibfuvns";
+                        url = "http://localhost:8080/pushtodb?tableName="+tableName;
 
                         httpEntity = new HttpEntity<Object>(out.getBody(),null);
 

@@ -114,6 +114,7 @@ public class SourceController {
 				String body="",b1="",endpnts="",conId;
 				conId=credentials.getUserId()+"_"+credentials.getSrcName()+"_"+credentials.getDestName()
 						+"_"+String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
+				credentials.setConnectionId(conId);
 				for(Map.Entry<String,String> mp:credentials.getSrcToken().entrySet()) {
 					b1+="{\"key\":\""+String.valueOf(mp.getKey())+"\",\"value\":\""+String.valueOf(mp.getValue())+"\"},";
 				}
@@ -181,7 +182,7 @@ public class SourceController {
 					postpatchMetaData(body,"destination","POST");
 				}
 				//ret = data(credentials.getSrcName());
-				System.out.println(ret.getBody());
+				//System.out.println(ret.getBody());
 			}
 			else {
 				System.out.println("Session expired!");

@@ -145,7 +145,7 @@
 	},
 	"endPoints": [
 		{
-			"label": "user info",
+			"label": "userinfo",
 			"url": "https://api.linkedin.com/v1/people/~",
 			"params": [],
 			"method": "GET",
