@@ -32,12 +32,9 @@ import com.aptus.blackbox.index.objects;
 import sun.misc.BASE64Encoder;
 
 public class Utilities {
-	@RequestMapping(value="/issessionvalid")
 	public static boolean isSessionValid(HttpSession session,Credentials credentials)
 	{
-		return session.getId().equals(credentials.getSessionId().get(credentials.getUserId()));
-			
-		
+		return session.getId().equals(credentials.getSessionId().get(credentials.getUserId()));		
 	}	
 	private static String timestamp() {
 		String time = String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());

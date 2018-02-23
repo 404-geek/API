@@ -26,6 +26,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.Service.Credentials;
+import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.SrcObject;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
@@ -302,11 +303,14 @@ public class SourceController {
 			saveValues(out);
 			out = Utilities.token(validateCredentials,credentials.getSrcToken());
 			System.out.println(out.getBody());
+			headers = new HttpHeaders();
+			headers.add("Cache-Control", "no-cache");
+			headers.add("access-control-allow-origin", rootUrl);
+			headers.add("access-control-allow-credentials", "true");
 			if (!out.getStatusCode().is2xxSuccessful()) {
 				System.out.println("invalid access token");
 				Utilities.invalid();
-				credentials.setSrcValid(false);
-				headers = new HttpHeaders();
+				credentials.setSrcValid(false);				
 				url=homeUrl;
 				headers.setLocation(URI.create(url+"/close.html"));
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
@@ -314,7 +318,6 @@ public class SourceController {
 			} else {
 				Utilities.valid();
 				credentials.setSrcValid(true);
-				headers = new HttpHeaders();
 				url=homeUrl;
 				headers.setLocation(URI.create(url+"/close.html"));
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);

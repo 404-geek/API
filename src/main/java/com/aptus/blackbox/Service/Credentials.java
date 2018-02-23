@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 
+import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.SrcObject;
 
@@ -16,6 +17,7 @@ import com.aptus.blackbox.index.SrcObject;
 public class Credentials implements Serializable {
 	
 	private String userId,srcName,destName,connectionId;
+	private Map<String,ConnObj>connectionIds=new HashMap<>();
 	private Map<String,String> sessionId=new HashMap<>();
 	private boolean userExist,usrSrcExist,usrDestExist;
 	private boolean srcValid,destValid;
@@ -23,7 +25,6 @@ public class Credentials implements Serializable {
 	private Map<String,String> destToken=new HashMap<>();
 	private SrcObject srcObj;
 	private DestObject destObj;
-	
 	public Map<String, String> getSessionId() {
 		return sessionId;
 	}
@@ -97,12 +98,6 @@ public class Credentials implements Serializable {
 	public void setDestObj(DestObject destObj) {
 		this.destObj = destObj;
 	}
-	public String getConnectionId() {
-		return connectionId;
-	}
-	public void setConnectionId(String connectionId) {
-		this.connectionId = connectionId;
-	}
 	public boolean isSrcValid() {
 		return srcValid;
 	}
@@ -114,5 +109,17 @@ public class Credentials implements Serializable {
 	}
 	public void setDestValid(boolean destValid) {
 		this.destValid = destValid;
+	}
+	public Map<String,ConnObj> getConnectionIds() {
+		return connectionIds;
+	}
+	public void setConnectionIds(String connectionId,ConnObj obj) {
+		this.connectionIds.put(connectionId, obj);
+	}
+	public String getConnectionId() {
+		return connectionId;
+	}
+	public void setConnectionId(String connectionId) {
+		this.connectionId = connectionId;
 	}
 }

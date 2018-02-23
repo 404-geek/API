@@ -31,25 +31,16 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.Service.Credentials;
+import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.SrcObject;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.github.opendevl.JFlat;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
-
-
-
-/*
- * boolean null text number/integer
- */
-
-
-
-
-
 
 @RestController
 public class DataController {
@@ -76,28 +67,26 @@ public class DataController {
 	private ResponseEntity<String> destination(HttpSession session) throws SQLException { // @RequestParam("data") Map<String,String> data
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
-			HashMap<String, String> destCred = new HashMap<>();
-
-			destCred.put("database_name", "test");
-			destCred.put("db_username", "root");
-			destCred.put("db_password", "blackbox");
-			destCred.put("server_host", "192.168.1.36");
-			destCred.put("server_port", "3306");
-			//tableName = "user";
-			credentials.setDestToken(destCred);
-			
-			this.destObj = credentials.getDestObj();
-			this.destToken = credentials.getDestToken();
-			
-			if (!checkDB(destToken.get("database_name"))) {
-				// invalid
-			}
-			HttpHeaders headers = new HttpHeaders();
-			String url=homeUrl;
-			headers.setLocation(URI.create(url+"/close.html"));
-			return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
-
-
+				HashMap<String, String> destCred = new HashMap<>();
+				destCred.put("database_name", "test");
+				destCred.put("db_username", "root");
+				destCred.put("db_password", "blackbox");
+				destCred.put("server_host", "192.168.1.36");
+				destCred.put("server_port", "3306");
+				//tableName = "user";
+				credentials.setDestToken(destCred);			
+				this.destObj = credentials.getDestObj();
+				this.destToken = credentials.getDestToken();			
+				if (!checkDB(destToken.get("database_name"))) {
+					// invalid
+				}
+				HttpHeaders headers = new HttpHeaders();
+				String url=homeUrl;
+				headers.setLocation(URI.create(url+"/close.html"));
+				headers.add("Cache-Control", "no-cache");
+				headers.add("access-control-allow-origin", rootUrl);
+				headers.add("access-control-allow-credentials", "true");
+				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
 			}
 			else {
 				System.out.println("Session expired!");
@@ -118,7 +107,7 @@ public class DataController {
 		return null;
 	}
 	
-	@RequestMapping(value="/getconnectionids")
+	@RequestMapping(value="/getConnectionIds")
 	private ResponseEntity<String> getConnectionIds(@RequestParam("userId") String user,HttpSession session) {
 		String dataSource=null;
 		HttpHeaders headers = new HttpHeaders();			
@@ -137,13 +126,20 @@ public class DataController {
 				header.add("Cache-Control", "no-cache");
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				System.out.println(out.getBody());
-				
-				
+				System.out.println(out.getBody());								
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("data", out.getBody());
 				respBody.addProperty("status", "200");
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+				ConnObj conObj = new ConnObj();
+				Gson gson=new Gson();
+				JsonElement data = gson.fromJson(out.getBody(), JsonElement.class);
+				JsonArray srcdestId = data.getAsJsonObject().get("srcdestId").getAsJsonArray();
+				for(JsonElement ele:srcdestId) {
+					conObj = gson.fromJson(ele, ConnObj.class);
+					credentials.setConnectionIds(conObj.getConnectionId(), conObj);
+				}
+				System.out.println(credentials.getConnectionIds().values());
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString().replace("\\\"", "\""));
 			}
 			else {
 				System.out.println("Session expired!");
@@ -286,10 +282,22 @@ public class DataController {
 	}
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
-	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,HttpSession httpsession) {
+	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,
+			@RequestParam String conId,HttpSession httpsession) {
         ResponseEntity<String> ret = null;
         try {
-        	if(Utilities.isSessionValid(httpsession,credentials)) {        	
+        	if(Utilities.isSessionValid(httpsession,credentials)) {
+        		if(!credentials.getConnectionId().equalsIgnoreCase(conId)) {
+        			//for same source n destination pair don't validate again
+        			HttpHeaders headers = new HttpHeaders();
+        			headers.add("Cache-Control", "no-cache");
+        			headers.add("access-control-allow-origin", rootUrl);
+                    headers.add("access-control-allow-credentials", "true");
+                    JsonObject respBody = new JsonObject();
+                    respBody.addProperty("data", "ConnChanged");
+    				respBody.addProperty("status", "210");
+    				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+        		}
 	        	SrcObject obj = credentials.getSrcObj();
 	            if (obj.getRefresh().equals("YES")) {
 	                ret = Utilities.token(credentials.getSrcObj().getRefreshToken(),credentials.getSrcToken());
@@ -437,7 +445,7 @@ public class DataController {
         			if(choice.equalsIgnoreCase("view")) {
         				
         	            JsonObject respBody = new JsonObject();
-        				respBody.addProperty("status", "200");
+        				respBody.addProperty("status", "211");
         				respBody.addProperty("data", out.getBody().toString());
         				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
         			}
@@ -454,8 +462,8 @@ public class DataController {
                                 HttpMethod.POST,httpEntity,Boolean.class);
                         
         	            JsonObject respBody = new JsonObject();
-        				respBody.addProperty("status", "200");
-        				respBody.addProperty("data", "Successfully pushed");
+        				respBody.addProperty("status", "212");
+        				respBody.addProperty("data", "Successfullypushed");
         				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
         			}
     			}

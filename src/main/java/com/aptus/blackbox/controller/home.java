@@ -137,10 +137,13 @@ public class home {
 			srcObj = new Parser("source",srcdestId.toUpperCase(),mongoUrl).getSrcProp();
 			credentials.setSrcObj(srcObj);
 			credentials.setSrcName(srcdestId.toLowerCase());
+			credentials.setSrcValid(false);
+			
 		} else {
 			destObj = new Parser("destination",srcdestId.toUpperCase(),mongoUrl).getDestProp();
 			credentials.setDestObj(destObj);
 			credentials.setDestName(srcdestId.toLowerCase());
+			credentials.setDestValid(false);
 		}
 		return;
 	}
@@ -203,6 +206,7 @@ public class home {
 	}
 
 	private ResponseEntity<String> initialiser(String type) {
+		//add destination fetch and validation
 		ResponseEntity<String> out = null;
 		try {
 			HttpHeaders headers = new HttpHeaders();
@@ -222,11 +226,13 @@ public class home {
 						headers = new HttpHeaders();
 						String url=homeUrl;
 						headers.setLocation(URI.create(url+"/close.html"));
+						headers.add("Cache-Control", "no-cache");
+						headers.add("access-control-allow-origin", rootUrl);
+						headers.add("access-control-allow-credentials", "true");
 						return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
 						//return  new ResponseEntity<String>("valid", null, HttpStatus.CREATED);
 						// tick
-					} 
-					//add destination fetch and validation
+					}
 					else {
 						String url =  baseUrl+"/authsource";
 						System.out.println(url);						
@@ -341,6 +347,10 @@ public class home {
 		}
 		JsonObject jobject = new JsonObject();
 		jobject.addProperty("isvalid",isvalid);
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-credentials", "true");
 		return ResponseEntity.status(HttpStatus.OK).body(jobject.toString());
 	}
 
