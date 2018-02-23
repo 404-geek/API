@@ -358,7 +358,7 @@ public class home {
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", rootUrl);
 		headers.add("access-control-allow-credentials", "true");
-		return ResponseEntity.status(HttpStatus.OK).body(jobject.toString());
+		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobject.toString());
 	}
 
 }

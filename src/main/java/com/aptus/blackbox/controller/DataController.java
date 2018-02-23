@@ -126,12 +126,12 @@ public class DataController {
 				header.add("Cache-Control", "no-cache");
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				System.out.println(out.getBody());								
-				JsonObject respBody = new JsonObject();
-				respBody.addProperty("data", out.getBody());
-				respBody.addProperty("status", "200");
-				ConnObj conObj = new ConnObj();
+				System.out.println(out.getBody());	
 				Gson gson=new Gson();
+				JsonObject respBody = new JsonObject();
+				respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
+				respBody.addProperty("status", "200");
+				ConnObj conObj = new ConnObj();				
 				JsonElement data = gson.fromJson(out.getBody(), JsonElement.class);
 				JsonArray srcdestId = data.getAsJsonObject().get("srcdestId").getAsJsonArray();
 				for(JsonElement ele:srcdestId) {
@@ -352,8 +352,8 @@ public class DataController {
 	                } else {
 	                	credentials.setSrcValid(true);
 	                    //ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
-	                	fetchEndpointsData(obj.getEndPoints(),choice);
-	                    return ret;
+	                	
+	                    return fetchEndpointsData(obj.getEndPoints(),choice);
 	                }
 	            }
 	        }
@@ -387,8 +387,8 @@ public class DataController {
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(respBody.toString());
             } else {
                 //ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
-            	fetchEndpointsData(endPoints,choice);
-                return ret;
+            	
+                return fetchEndpointsData(endPoints,choice);
             }
 
         } catch (Exception e) {
