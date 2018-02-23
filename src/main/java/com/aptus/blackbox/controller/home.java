@@ -337,12 +337,19 @@ public class home {
 		return s;
 	}
 	@RequestMapping(method = RequestMethod.GET, value = "/isvalid")
-	private ResponseEntity<String> isValid(@RequestParam("type") String type,HttpSession session) {
+	private ResponseEntity<String> isValid(@RequestParam("type") String type,
+			@RequestParam("srcdestId") String srcDestId, HttpSession session) {
 		boolean isvalid = false;
 		if(type.equals("source")){
+			if(!credentials.getSrcName().equalsIgnoreCase(srcDestId)) {
+				credentials.setSrcValid(false);
+			}
 			isvalid=credentials.isSrcValid();
 		}
 		else if(type.equals("destination")) {
+			if(!credentials.getDestName().equalsIgnoreCase(srcDestId)) {
+				credentials.setDestValid(false);
+			}
 			isvalid=credentials.isDestValid();
 		}
 		JsonObject jobject = new JsonObject();
