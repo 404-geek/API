@@ -107,8 +107,8 @@ public class DataController {
 		return null;
 	}
 	
-	@RequestMapping(value="/getConnectionIds")
-	private ResponseEntity<String> getConnectionIds(@RequestParam("userId") String user,HttpSession session) {
+	@RequestMapping(value="/getconnectionids")
+	private ResponseEntity<String> getConnectionIds(HttpSession session) {
 		String dataSource=null;
 		HttpHeaders headers = new HttpHeaders();			
 		headers.add("Cache-Control", "no-cache");
