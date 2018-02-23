@@ -218,7 +218,12 @@ public class home {
 					if (out.getStatusCode().is2xxSuccessful()) {
 						System.out.println(type + "tick");
 						Utilities.valid();
-						return  new ResponseEntity<String>("valid", null, HttpStatus.CREATED);
+						credentials.setSrcValid(true);
+						headers = new HttpHeaders();
+						String url=homeUrl;
+						headers.setLocation(URI.create(url+"/close.html"));
+						return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
+						//return  new ResponseEntity<String>("valid", null, HttpStatus.CREATED);
 						// tick
 					} 
 					//add destination fetch and validation
@@ -324,6 +329,19 @@ public class home {
 			e.printStackTrace();
 		}
 		return s;
+	}
+	@RequestMapping(method = RequestMethod.GET, value = "/isvalid")
+	private ResponseEntity<String> isValid(@RequestParam("type") String type,HttpSession session) {
+		boolean isvalid = false;
+		if(type.equals("source")){
+			isvalid=credentials.isSrcValid();
+		}
+		else if(type.equals("destination")) {
+			isvalid=credentials.isDestValid();
+		}
+		JsonObject jobject = new JsonObject();
+		jobject.addProperty("isvalid",isvalid);
+		return ResponseEntity.status(HttpStatus.OK).body(jobject.toString());
 	}
 
 }

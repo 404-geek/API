@@ -274,7 +274,7 @@ public class SourceController {
 
 	@RequestMapping(value = "/oauth2/s2")
 	@ResponseStatus(value = HttpStatus.OK)
-	private String handlefooo(@RequestParam Map<String, String> parameters) {
+	private ResponseEntity<String> handlefooo(@RequestParam Map<String, String> parameters) {
 		credentials.getSrcToken().putAll(parameters);
 		System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
 		System.out.println("parameters : " + parameters.keySet() + ":" + parameters.values());
@@ -305,10 +305,20 @@ public class SourceController {
 			if (!out.getStatusCode().is2xxSuccessful()) {
 				System.out.println("invalid access token");
 				Utilities.invalid();
-				return "Not Valid";
+				credentials.setSrcValid(false);
+				headers = new HttpHeaders();
+				url=homeUrl;
+				headers.setLocation(URI.create(url+"/close.html"));
+				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
+
 			} else {
 				Utilities.valid();
-				return "Valid";
+				credentials.setSrcValid(true);
+				headers = new HttpHeaders();
+				url=homeUrl;
+				headers.setLocation(URI.create(url+"/close.html"));
+				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
+
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

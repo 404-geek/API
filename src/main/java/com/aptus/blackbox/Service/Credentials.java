@@ -17,7 +17,8 @@ public class Credentials implements Serializable {
 	
 	private String userId,srcName,destName,connectionId;
 	private Map<String,String> sessionId=new HashMap<>();
-	private boolean userExist,usrSrcExist,usrDestExist,srcValid,destValid;
+	private boolean userExist,usrSrcExist,usrDestExist;
+	private boolean srcValid,destValid;
 	private Map<String,String> srcToken=new HashMap<>();
 	private Map<String,String> destToken=new HashMap<>();
 	private SrcObject srcObj;

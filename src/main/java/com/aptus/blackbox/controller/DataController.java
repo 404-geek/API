@@ -73,9 +73,9 @@ public class DataController {
 	private Map<String,String> destToken;
 
 	@RequestMapping(method = RequestMethod.GET, value = "/authdestination")
-	private void destination() throws SQLException { // @RequestParam("data") Map<String,String> data
+	private ResponseEntity<String> destination(HttpSession session) throws SQLException { // @RequestParam("data") Map<String,String> data
 		try {
-
+			if(Utilities.isSessionValid(session,credentials)) {
 			HashMap<String, String> destCred = new HashMap<>();
 
 			destCred.put("database_name", "test");
@@ -92,8 +92,21 @@ public class DataController {
 			if (!checkDB(destToken.get("database_name"))) {
 				// invalid
 			}
+			HttpHeaders headers = new HttpHeaders();
+			String url=homeUrl;
+			headers.setLocation(URI.create(url+"/close.html"));
+			return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
 
-		} catch (SQLException e) {
+
+			}
+			else {
+				System.out.println("Session expired!");
+				HttpHeaders headers = new HttpHeaders();
+				String url=homeUrl;
+				headers.setLocation(URI.create(url));
+				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+			}
+		}catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (Exception e) {
@@ -102,7 +115,7 @@ public class DataController {
 		} finally {
 			con.close();
 		}
-
+		return null;
 	}
 	
 	@RequestMapping(value="/getconnectionids")
@@ -256,17 +269,19 @@ public class DataController {
 			+ destObj.getValue_quote_open()+ dbase+destObj.getValue_quote_close()+";";
 			System.out.println(query);
 			ResultSet res = stmt.executeQuery(query);
-			if (res.next())
+			if (res.next()) {
+				credentials.setDestValid(true);
 				return true;
-
+			}
+			credentials.setDestValid(false);
+			return false;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-
+		}		
 		return false;
 	}
 	
@@ -274,65 +289,75 @@ public class DataController {
 	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,HttpSession httpsession) {
         ResponseEntity<String> ret = null;
         try {
-        	//if(Utilities.isSessionValid(httpsession,credentials))
-        	
-        	SrcObject obj = credentials.getSrcObj();
-            if (obj.getRefresh().equals("YES")) {
-                ret = Utilities.token(credentials.getSrcObj().getRefreshToken(),credentials.getSrcToken());
-                if (!ret.getStatusCode().is2xxSuccessful()) {
-                	HttpHeaders header = new HttpHeaders();
-        			header.add("Cache-Control", "no-cache");
-        			header.add("access-control-allow-origin", rootUrl);
-                    header.add("access-control-allow-credentials", "true");
-                    JsonObject respBody = new JsonObject();
-        			respBody.addProperty("message", "Re-authorize");
-    				respBody.addProperty("status", "51");
-    				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
-//    				if (obj.getSteps().compareTo("TWO") == 0) {
-//    					ret = code(accessCode);
-//    				} else if (obj.getSteps().compareTo("THREE") == 0) {
-//    					ret = Utilities.token(requestToken,credentials.getSrcToken());
-//    					saveValues(ret);
-//    					ret = code(accessCode);
-//    				}
-                } else {
-                	//next code is saveValues 
-                	try {
-        				credentials.getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
-        			} catch (Exception e) {
-        				for (String s : ret.getBody().toString().split("&")) {
-        					System.out.println(s);
-        					credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
-        				}
-        			}
-        			System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
-                    ret = validateData(obj.getValidateCredentials(), obj.getEndPoints(),choice);
-                }
-            } else {
-                ret = Utilities.token(obj.getValidateCredentials(),credentials.getSrcToken());
-                if (!ret.getStatusCode().is2xxSuccessful()) {
-                	HttpHeaders header = new HttpHeaders();
-        			header.add("Cache-Control", "no-cache");
-        			header.add("access-control-allow-origin", rootUrl);
-                    header.add("access-control-allow-credentials", "true");
-                    JsonObject respBody = new JsonObject();
-        			respBody.addProperty("message", "Re-authorize");
-    				respBody.addProperty("status", "51");
-    				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
-//    				if (obj.getSteps().compareTo("TWO") == 0) {
-//    					ret = code(accessCode);
-//    				} else if (obj.getSteps().compareTo("THREE") == 0) {
-//    					ret = Utilities.token(requestToken,credentials.getSrcToken());
-//    					saveValues(ret);
-//    					ret = code(accessCode);
-//    				}
-                } else {
-                    //ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
-                	fetchEndpointsData(obj.getEndPoints(),choice);
-                    return ret;
-                }
-            }
-        } catch (Exception e) {
+        	if(Utilities.isSessionValid(httpsession,credentials)) {        	
+	        	SrcObject obj = credentials.getSrcObj();
+	            if (obj.getRefresh().equals("YES")) {
+	                ret = Utilities.token(credentials.getSrcObj().getRefreshToken(),credentials.getSrcToken());
+	                if (!ret.getStatusCode().is2xxSuccessful()) {
+	                	HttpHeaders header = new HttpHeaders();
+	        			header.add("Cache-Control", "no-cache");
+	        			header.add("access-control-allow-origin", rootUrl);
+	                    header.add("access-control-allow-credentials", "true");
+	                    JsonObject respBody = new JsonObject();
+	        			respBody.addProperty("message", "Re-authorize");
+	    				respBody.addProperty("status", "51");
+	    				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
+	//    				if (obj.getSteps().compareTo("TWO") == 0) {
+	//    					ret = code(accessCode);
+	//    				} else if (obj.getSteps().compareTo("THREE") == 0) {
+	//    					ret = Utilities.token(requestToken,credentials.getSrcToken());
+	//    					saveValues(ret);
+	//    					ret = code(accessCode);
+	//    				}
+	                } else {
+	                	//next code is saveValues 
+	                	try {
+	        				credentials.getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
+	        			} catch (Exception e) {
+	        				for (String s : ret.getBody().toString().split("&")) {
+	        					System.out.println(s);
+	        					credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
+	        				}
+	        			}
+	        			System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
+	                    ret = validateData(obj.getValidateCredentials(), obj.getEndPoints(),choice);
+	                }
+	            } else {
+	                ret = Utilities.token(obj.getValidateCredentials(),credentials.getSrcToken());
+	                if (!ret.getStatusCode().is2xxSuccessful()) {
+	                	credentials.setSrcValid(false);
+	                	HttpHeaders header = new HttpHeaders();
+	        			header.add("Cache-Control", "no-cache");
+	        			header.add("access-control-allow-origin", rootUrl);
+	                    header.add("access-control-allow-credentials", "true");
+	                    JsonObject respBody = new JsonObject();
+	        			respBody.addProperty("message", "Re-authorize");
+	    				respBody.addProperty("status", "51");
+	    				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
+	//    				if (obj.getSteps().compareTo("TWO") == 0) {
+	//    					ret = code(accessCode);
+	//    				} else if (obj.getSteps().compareTo("THREE") == 0) {
+	//    					ret = Utilities.token(requestToken,credentials.getSrcToken());
+	//    					saveValues(ret);
+	//    					ret = code(accessCode);
+	//    				}
+	                } else {
+	                	credentials.setSrcValid(true);
+	                    //ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
+	                	fetchEndpointsData(obj.getEndPoints(),choice);
+	                    return ret;
+	                }
+	            }
+	        }
+        	else {
+    			System.out.println("Session expired!");
+    			HttpHeaders headers = new HttpHeaders();
+    			String url=homeUrl;
+    			headers.setLocation(URI.create(url));
+    			return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+    		}
+        }
+        catch (Exception e) {
             e.printStackTrace();
             System.out.println(e + "home.data");
         }
@@ -426,8 +451,8 @@ public class DataController {
                         httpEntity = new HttpEntity<Object>(out.getBody(),null);
 
                         ResponseEntity<Boolean> res= restTemplate.exchange(URI.create(url),
-
                                 HttpMethod.POST,httpEntity,Boolean.class);
+                        
         	            JsonObject respBody = new JsonObject();
         				respBody.addProperty("status", "200");
         				respBody.addProperty("data", "Successfully pushed");

@@ -257,7 +257,6 @@ public class Utilities {
 			System.out.println("----------------------------"+uri);
 			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 			System.out.println(out.getBody());
-
 		} 
 		catch(HttpClientErrorException e) {
 			System.out.println(e.getMessage());
