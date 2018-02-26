@@ -184,13 +184,23 @@ public class SourceController {
 				}
 				//ret = data(credentials.getSrcName());
 				//System.out.println(ret.getBody());
+				HttpHeaders headers = new HttpHeaders();
+				headers.add("Cache-Control", "no-cache");
+				headers.add("access-control-allow-origin", rootUrl);
+				headers.add("access-control-allow-credentials", "true");
+				String url=baseUrl;
+				headers.setLocation(URI.create(url));
+				return new ResponseEntity<String>("",headers ,HttpStatus.OK);
 			}
 			else {
 				System.out.println("Session expired!");
 				HttpHeaders headers = new HttpHeaders();
+				headers.add("Cache-Control", "no-cache");
+				headers.add("access-control-allow-origin", rootUrl);
+				headers.add("access-control-allow-credentials", "true");
 				String url=baseUrl;
 				headers.setLocation(URI.create(url));
-				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.OK);
 			}
 		}
 		catch(Exception e)

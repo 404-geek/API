@@ -64,15 +64,20 @@ public class DataController {
 	private Map<String,String> destToken;
 
 	@RequestMapping(method = RequestMethod.GET, value = "/authdestination")
-	private ResponseEntity<String> destination(HttpSession session) throws SQLException { // @RequestParam("data") Map<String,String> data
+	private ResponseEntity<String> destination(HttpSession session,
+			@RequestParam(value ="database_name") String database_name,
+			@RequestParam(value ="db_username") String db_username,
+			@RequestParam(value ="db_password") String db_password,
+			@RequestParam(value ="server_host") String server_host,
+			@RequestParam(value ="server_port") String server_port) throws SQLException { // @RequestParam("data") Map<String,String> data
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
 				HashMap<String, String> destCred = new HashMap<>();
-				destCred.put("database_name", "test");
-				destCred.put("db_username", "root");
-				destCred.put("db_password", "blackbox");
-				destCred.put("server_host", "192.168.1.36");
-				destCred.put("server_port", "3306");
+				destCred.put("database_name", database_name);
+				destCred.put("db_username", db_username);
+				destCred.put("db_password", db_password);
+				destCred.put("server_host", server_host);
+				destCred.put("server_port", server_port);
 				//tableName = "user";
 				credentials.setDestToken(destCred);			
 				this.destObj = credentials.getDestObj();
@@ -126,12 +131,12 @@ public class DataController {
 				header.add("Cache-Control", "no-cache");
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				System.out.println(out.getBody());	
-				Gson gson=new Gson();
+				System.out.println(out.getBody());
+				Gson gson=new Gson();								
 				JsonObject respBody = new JsonObject();
-				respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
+				respBody.add("data",gson.fromJson(out.getBody(), JsonElement.class));
 				respBody.addProperty("status", "200");
-				ConnObj conObj = new ConnObj();				
+				ConnObj conObj = new ConnObj();
 				JsonElement data = gson.fromJson(out.getBody(), JsonElement.class);
 				JsonArray srcdestId = data.getAsJsonObject().get("srcdestId").getAsJsonArray();
 				for(JsonElement ele:srcdestId) {
@@ -283,7 +288,7 @@ public class DataController {
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
 	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,
-			@RequestParam String conId,HttpSession httpsession) {
+			@RequestParam("conId") String conId,HttpSession httpsession) {
         ResponseEntity<String> ret = null;
         try {
         	if(Utilities.isSessionValid(httpsession,credentials)) {
@@ -443,10 +448,10 @@ public class DataController {
     				headers.add("access-control-allow-origin", rootUrl);
     	            headers.add("access-control-allow-credentials", "true");
         			if(choice.equalsIgnoreCase("view")) {
-        				
+        				Gson gson=new Gson();				
         	            JsonObject respBody = new JsonObject();
         				respBody.addProperty("status", "211");
-        				respBody.addProperty("data", out.getBody().toString());
+        				respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
         				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
         			}
         			else {

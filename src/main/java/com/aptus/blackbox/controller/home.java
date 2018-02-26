@@ -152,7 +152,12 @@ public class home {
 	 * 
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/validate")
-	private ResponseEntity<String> verifyUser(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session) {
+	private ResponseEntity<String> verifyUser(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session,
+			@RequestParam(value ="database_name",required=false) String database_name,
+			@RequestParam(value ="db_username",required=false) String db_username,
+			@RequestParam(value ="db_password",required=false) String db_password,
+			@RequestParam(value ="server_host",required=false) String server_host,
+			@RequestParam(value ="server_port",required=false) String server_port){
 		ResponseEntity<String> out = null;
 		int res = 0;
 		try {
@@ -189,7 +194,7 @@ public class home {
 					credentials.setUsrDestExist(jobj.get("_returned").getAsInt() == 0 ? false : true);
 					System.out.println(url+" : "+credentials.isUsrDestExist());
 				}
-				out = initialiser(type);
+				out = initialiser(type,database_name,db_username,db_password,server_host,server_port);
 			}
 			else {
 				System.out.println("Session expired!");
@@ -205,7 +210,7 @@ public class home {
 		return out;
 	}
 
-	private ResponseEntity<String> initialiser(String type) {
+	private ResponseEntity<String> initialiser(String type,String database_name,String db_username,String db_password,String server_host,String server_port) {
 		//add destination fetch and validation
 		ResponseEntity<String> out = null;
 		try {
@@ -241,8 +246,13 @@ public class home {
 					}
 				}
 				else {
-					String url =  baseUrl+"/authdestination";
-					System.out.println(url);
+					String url =  baseUrl+"/authdestination?"+
+							"database_name="+database_name+
+							"&db_username="+db_username+
+							"&db_password="+db_password+
+							"&server_host="+server_host+
+							"&server_port="+server_port;
+					System.out.println(url);					
 					headers.setLocation(URI.create(url));
 					out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
 				}
@@ -340,6 +350,7 @@ public class home {
 	private ResponseEntity<String> isValid(@RequestParam("type") String type,
 			@RequestParam("srcdestId") String srcDestId, HttpSession session) {
 		boolean isvalid = false;
+		System.out.println(type+" "+srcDestId);
 		if(type.equals("source")){
 			if(!credentials.getSrcName().equalsIgnoreCase(srcDestId)) {
 				credentials.setSrcValid(false);
