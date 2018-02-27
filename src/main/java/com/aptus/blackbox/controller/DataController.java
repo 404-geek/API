@@ -71,6 +71,10 @@ public class DataController {
 			@RequestParam(value ="server_host") String server_host,
 			@RequestParam(value ="server_port") String server_port) throws SQLException { // @RequestParam("data") Map<String,String> data
 		try {
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("Cache-Control", "no-cache");
+			headers.add("access-control-allow-origin", rootUrl);
+			headers.add("access-control-allow-credentials", "true");
 			if(Utilities.isSessionValid(session,credentials)) {
 				HashMap<String, String> destCred = new HashMap<>();
 				destCred.put("database_name", database_name);
@@ -85,17 +89,12 @@ public class DataController {
 				if (!checkDB(destToken.get("database_name"))) {
 					// invalid
 				}
-				HttpHeaders headers = new HttpHeaders();
 				String url=homeUrl;
-				headers.setLocation(URI.create(url+"/close.html"));
-				headers.add("Cache-Control", "no-cache");
-				headers.add("access-control-allow-origin", rootUrl);
-				headers.add("access-control-allow-credentials", "true");
+				headers.setLocation(URI.create(url+"/close.html"));				
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
 			}
 			else {
 				System.out.println("Session expired!");
-				HttpHeaders headers = new HttpHeaders();
 				String url=homeUrl;
 				headers.setLocation(URI.create(url));
 				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
@@ -143,7 +142,7 @@ public class DataController {
 					conObj = gson.fromJson(ele, ConnObj.class);
 					credentials.setConnectionIds(conObj.getConnectionId(), conObj);
 				}
-				System.out.println(credentials.getConnectionIds().values());
+				//System.out.println(credentials.getConnectionIds().values());
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString().replace("\\\"", "\""));
 			}
 			else {
@@ -288,21 +287,11 @@ public class DataController {
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
 	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,
-			@RequestParam("conId") String conId,HttpSession httpsession) {
+			@RequestParam("connId") String connId,HttpSession httpsession) {
         ResponseEntity<String> ret = null;
         try {
         	if(Utilities.isSessionValid(httpsession,credentials)) {
-        		if(!credentials.getConnectionId().equalsIgnoreCase(conId)) {
-        			//for same source n destination pair don't validate again
-        			HttpHeaders headers = new HttpHeaders();
-        			headers.add("Cache-Control", "no-cache");
-        			headers.add("access-control-allow-origin", rootUrl);
-                    headers.add("access-control-allow-credentials", "true");
-                    JsonObject respBody = new JsonObject();
-                    respBody.addProperty("data", "ConnChanged");
-    				respBody.addProperty("status", "210");
-    				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-        		}
+        		credentials.setCurrConnId(credentials.getConnectionIds(connId));
 	        	SrcObject obj = credentials.getSrcObj();
 	            if (obj.getRefresh().equals("YES")) {
 	                ret = Utilities.token(credentials.getSrcObj().getRefreshToken(),credentials.getSrcToken());
@@ -323,7 +312,7 @@ public class DataController {
 	//    					ret = code(accessCode);
 	//    				}
 	                } else {
-	                	//next code is saveValues 
+	                	//next piece of code is for saveValues 
 	                	try {
 	        				credentials.getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
 	        			} catch (Exception e) {
@@ -450,12 +439,12 @@ public class DataController {
         			if(choice.equalsIgnoreCase("view")) {
         				Gson gson=new Gson();				
         	            JsonObject respBody = new JsonObject();
-        				respBody.addProperty("status", "211");
+        				respBody.addProperty("status", "21");
         				respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
         				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
         			}
-        			else {
-        				String tableName=credentials.getConnectionId()+"_"+object.getLabel();
+        			else if(truncateAndPush()) {
+        				String tableName=credentials.getCurrConnId().getConnectionId()+"_"+object.getLabel();
 
                         System.out.println("SourceController-driver: "+credentials.getDestObj().getDrivers());
 
@@ -467,9 +456,15 @@ public class DataController {
                                 HttpMethod.POST,httpEntity,Boolean.class);
                         
         	            JsonObject respBody = new JsonObject();
-        				respBody.addProperty("status", "212");
+        				respBody.addProperty("status", "22");
         				respBody.addProperty("data", "Successfullypushed");
         				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+        			}
+        			else {
+        				 JsonObject respBody = new JsonObject();
+         				respBody.addProperty("status", "23");
+         				respBody.addProperty("data", "Unsuccessful");
+         				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
         			}
     			}
     			
@@ -480,6 +475,24 @@ public class DataController {
     		}
     		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
     	
+    }
+    private boolean truncateAndPush() {
+    	try {
+			if (con == null || con.isClosed())
+				connection();
+			PreparedStatement stmt;
+			stmt = con.prepareStatement("SELECT * FROM "+credentials.getCurrConnId().getConnectionId()+";");
+			ResultSet res = stmt.executeQuery();
+			if(res.getInt(credentials.getCurrConnId().getConnectionId())!=0) {
+				stmt = con.prepareStatement("TRUNCATE TABLE "+credentials.getCurrConnId().getConnectionId()+";");
+				stmt.execute();
+			}			
+			return true;
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	return false;
     }
 
 

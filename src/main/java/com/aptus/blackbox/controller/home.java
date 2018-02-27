@@ -349,27 +349,91 @@ public class home {
 	@RequestMapping(method = RequestMethod.GET, value = "/isvalid")
 	private ResponseEntity<String> isValid(@RequestParam("type") String type,
 			@RequestParam("srcdestId") String srcDestId, HttpSession session) {
-		boolean isvalid = false;
-		System.out.println(type+" "+srcDestId);
-		if(type.equals("source")){
-			if(!credentials.getSrcName().equalsIgnoreCase(srcDestId)) {
-				credentials.setSrcValid(false);
-			}
-			isvalid=credentials.isSrcValid();
-		}
-		else if(type.equals("destination")) {
-			if(!credentials.getDestName().equalsIgnoreCase(srcDestId)) {
-				credentials.setDestValid(false);
-			}
-			isvalid=credentials.isDestValid();
-		}
-		JsonObject jobject = new JsonObject();
-		jobject.addProperty("isvalid",isvalid);
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", rootUrl);
 		headers.add("access-control-allow-credentials", "true");
-		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobject.toString());
+		try {
+			if(Utilities.isSessionValid(session,credentials)) {
+				boolean isvalid = false;
+				System.out.println(type+" "+srcDestId);
+				if(type.equals("source")){
+					if(!credentials.getSrcName().equalsIgnoreCase(srcDestId)) {
+						credentials.setSrcValid(false);
+					}
+					isvalid=credentials.isSrcValid();
+				}
+				else if(type.equals("destination")) {
+					if(!credentials.getDestName().equalsIgnoreCase(srcDestId)) {
+						credentials.setDestValid(false);
+					}
+					isvalid=credentials.isDestValid();
+				}
+				JsonObject jobject = new JsonObject();
+				jobject.addProperty("isvalid",isvalid);
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobject.toString());
+			}
+			else {
+				System.out.println("Session expired!");			
+				String url=homeUrl;
+				headers.setLocation(URI.create(url));
+				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return new ResponseEntity<String>("Error",headers ,HttpStatus.BAD_GATEWAY);
 	}
-
+	
+	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection")
+	private ResponseEntity<String>checkConnection(@RequestParam("connId") String connId,HttpSession httpsession)	{
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-credentials", "true");
+		try {			
+			JsonObject respBody = new JsonObject();
+			if(Utilities.isSessionValid(httpsession,credentials)) {
+				if(credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {				
+					respBody.addProperty("data", "Same");
+					respBody.addProperty("status", "14");
+					
+				}
+				else {
+					if(credentials.getConnectionIds(connId).getSourceName().
+							equalsIgnoreCase(credentials.getCurrConnId().getSourceName()) &&
+					   credentials.getConnectionIds(connId).getDestName().
+							equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
+						respBody.addProperty("data", "DifferentEndpoints");
+						respBody.addProperty("status", "15");
+					}
+					else if(credentials.getConnectionIds(connId).getSourceName().
+							equalsIgnoreCase(credentials.getCurrConnId().getSourceName())) {
+						respBody.addProperty("data", "DifferentDestination");
+						respBody.addProperty("status", "12");
+					}
+					else if(credentials.getConnectionIds(connId).getDestName().
+							equalsIgnoreCase(credentials.getCurrConnId().getDestName()))	{
+						respBody.addProperty("data", "DifferentSource");
+						respBody.addProperty("status", "11");
+					}
+					else {
+						respBody.addProperty("data", "DifferentAll");
+						respBody.addProperty("status", "13");
+					}
+				}
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			}
+			else {
+				System.out.println("Session expired!");			
+				String url=homeUrl;
+				headers.setLocation(URI.create(url));
+				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return new ResponseEntity<String>("Error",headers ,HttpStatus.BAD_GATEWAY);
+	}
 }

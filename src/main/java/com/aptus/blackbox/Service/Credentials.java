@@ -16,7 +16,8 @@ import com.aptus.blackbox.index.SrcObject;
 @Scope(proxyMode = ScopedProxyMode.TARGET_CLASS,value="session")
 public class Credentials implements Serializable {
 	
-	private String userId,srcName,destName,connectionId;
+	private String userId,srcName,destName;
+	private ConnObj currConnId;
 	private Map<String,ConnObj>connectionIds=new HashMap<>();
 	private Map<String,String> sessionId=new HashMap<>();
 	private boolean userExist,usrSrcExist,usrDestExist;
@@ -110,16 +111,17 @@ public class Credentials implements Serializable {
 	public void setDestValid(boolean destValid) {
 		this.destValid = destValid;
 	}
-	public Map<String,ConnObj> getConnectionIds() {
-		return connectionIds;
+	public ConnObj getConnectionIds(String connId) {
+		return connectionIds.get(connId);
 	}
 	public void setConnectionIds(String connectionId,ConnObj obj) {
 		this.connectionIds.put(connectionId, obj);
 	}
-	public String getConnectionId() {
-		return connectionId;
+	public ConnObj getCurrConnId() {
+		return currConnId;
 	}
-	public void setConnectionId(String connectionId) {
-		this.connectionId = connectionId;
+	public void setCurrConnId(ConnObj currConnId) {
+		this.currConnId = currConnId;
 	}
+	
 }

@@ -57,6 +57,10 @@ public class SourceController {
 	private ResponseEntity<String> source(HttpSession session) {
 		ResponseEntity<String> ret = null;
 		try {
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("Cache-Control", "no-cache");
+			headers.add("access-control-allow-origin", rootUrl);
+            headers.add("access-control-allow-credentials", "true");
 			if(Utilities.isSessionValid(session,credentials)) {
 				SrcObject obj = init();
 				if (obj.getSteps().compareTo("TWO") == 0) {
@@ -69,7 +73,6 @@ public class SourceController {
 			}
 			else {
 				System.out.println("Session expired!");
-				HttpHeaders headers = new HttpHeaders();
 				String url=baseUrl;
 				headers.setLocation(URI.create(url));
 				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
@@ -105,8 +108,11 @@ public class SourceController {
 		
 		ResponseEntity<String> ret = null;
 		//System.out.println(srcname+" "+destname);
-		try
-		{
+		try	{
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("Cache-Control", "no-cache");
+			headers.add("access-control-allow-origin", rootUrl);
+			headers.add("access-control-allow-credentials", "true");
 			if(Utilities.isSessionValid(session,credentials)) {
 				if(validateCredentials==null||endPoints==null||refreshToken==null) {
 					init();
@@ -115,7 +121,6 @@ public class SourceController {
 				String body="",b1="",endpnts="",conId;
 				conId=credentials.getUserId()+"_"+credentials.getSrcName()+"_"+credentials.getDestName()
 						+"_"+String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
-				credentials.setConnectionId(conId);
 				for(Map.Entry<String,String> mp:credentials.getSrcToken().entrySet()) {
 					b1+="{\"key\":\""+String.valueOf(mp.getKey())+"\",\"value\":\""+String.valueOf(mp.getValue())+"\"},";
 				}
@@ -184,20 +189,12 @@ public class SourceController {
 				}
 				//ret = data(credentials.getSrcName());
 				//System.out.println(ret.getBody());
-				HttpHeaders headers = new HttpHeaders();
-				headers.add("Cache-Control", "no-cache");
-				headers.add("access-control-allow-origin", rootUrl);
-				headers.add("access-control-allow-credentials", "true");
 				String url=baseUrl;
 				headers.setLocation(URI.create(url));
 				return new ResponseEntity<String>("",headers ,HttpStatus.OK);
 			}
 			else {
 				System.out.println("Session expired!");
-				HttpHeaders headers = new HttpHeaders();
-				headers.add("Cache-Control", "no-cache");
-				headers.add("access-control-allow-origin", rootUrl);
-				headers.add("access-control-allow-credentials", "true");
 				String url=baseUrl;
 				headers.setLocation(URI.create(url));
 				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.OK);
