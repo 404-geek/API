@@ -151,7 +151,7 @@ public class DataController {
 					credentials.setConnectionIds(conObj.getConnectionId(), conObj);
 				}
 				//System.out.println(credentials.getConnectionIds().values());
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString().replace("\\\"", "\""));
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}
 			else {
 				System.out.println("Session expired!");
@@ -486,16 +486,20 @@ public class DataController {
     }
     
     @RequestMapping(method = RequestMethod.GET, value = "/checkconnection")
-	private ResponseEntity<String>checkConnection(@RequestParam("connId") String connId,HttpSession httpsession)	{
+	private ResponseEntity<String>checkConnection(@RequestParam("choice") String choice,
+			@RequestParam("connId") String connId,HttpSession httpsession)	{
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", rootUrl);
 		headers.add("access-control-allow-credentials", "true");
+		ResponseEntity<String> out = null;
+		Gson gson=new Gson();
 		try {			
 			JsonObject respBody = new JsonObject();
 			if(Utilities.isSessionValid(httpsession,credentials)) {
-				if(credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {				
-					respBody.addProperty("data", "Same");
+				if(credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {
+					out=selectAction(choice, connId, httpsession);
+					respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
 					respBody.addProperty("status", "14");
 					
 				}
@@ -504,7 +508,8 @@ public class DataController {
 							equalsIgnoreCase(credentials.getCurrConnId().getSourceName()) &&
 					   credentials.getConnectionIds(connId).getDestName().
 							equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
-						respBody.addProperty("data", "DifferentEndpoints");
+						out=selectAction(choice, connId, httpsession);
+						respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
 						respBody.addProperty("status", "15");
 					}
 					else if(credentials.getConnectionIds(connId).getSourceName().
