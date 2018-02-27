@@ -1,11 +1,12 @@
 package com.aptus.blackbox.index;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ConnObj implements Serializable {
 	private String sourceName,destName,connectionId;
-	private List<String> endPoints;
+	private List<String> endPoints=new ArrayList<String>();
 	public String getSourceName() {
 		return sourceName;
 	}
@@ -27,8 +28,8 @@ public class ConnObj implements Serializable {
 	public List<String> getEndPoints() {
 		return endPoints;
 	}
-	public void setEndPoints(List<String> endPoints) {
-		this.endPoints = endPoints;
+	public void setEndPoints(String endPoint) {
+		this.endPoints.add(endPoint);
 	}
 	@Override
 	public String toString() {

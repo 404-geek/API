@@ -124,9 +124,15 @@ public class SourceController {
 				for(Map.Entry<String,String> mp:credentials.getSrcToken().entrySet()) {
 					b1+="{\"key\":\""+String.valueOf(mp.getKey())+"\",\"value\":\""+String.valueOf(mp.getValue())+"\"},";
 				}
+				ConnObj currobj = new ConnObj();
 				for(UrlObject obj:endPoints) {
 					endpnts+="\""+obj.getLabel()+"\",";
+					currobj.setEndPoints(obj.getLabel());
 				}
+				currobj.setConnectionId(conId);
+				currobj.setSourceName(credentials.getSrcName());
+				currobj.setDestName(credentials.getDestName());
+				credentials.setCurrConnId(currobj);
 				endpnts = endpnts.substring(0, endpnts.length()-1).toLowerCase();
 				System.out.println(b1);
 				if(!b1.isEmpty())
