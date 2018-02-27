@@ -32,6 +32,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.Service.Credentials;
 import com.aptus.blackbox.index.ConnObj;
+import com.aptus.blackbox.index.Cursor;
 import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.SrcObject;
 import com.aptus.blackbox.index.UrlObject;
@@ -427,18 +428,45 @@ public class DataController {
         			
         			//call destination validation and push data 
         			
-   ////null and empty case+ three more cases+bodu cursor(dropbox).......and a lot more     			
-//        			while(true) {
-//        				List<Cursor> page =object.getPagination();
-//        				JsonObject ele = new Gson().fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
-//        				for(Cursor cur:page) {
-//        					String arr[] = cur.getKey().split(".");
-//        					for(String jobj:arr)
-//        						JsonElement je =  
-//        				}
-//        			}
+                    //null and empty case+ three more cases+bodu cursor(dropbox).......and a lot more 
         			
-        			//System.out.println(out.getBody());
+        			
+        			while(true) {
+        				String pData=null;
+        				String newurl = url;
+        				List<Cursor> page =object.getPagination();        				
+        				for(Cursor cur:page) {
+        					JsonObject ele = new Gson().fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
+        					String arr[] = cur.getKey().split(".");
+        					for(String jobj:arr) {
+        		                if(ele.get(jobj)!=null && ele.get(jobj).isJsonObject() )  {
+        		                    System.out.println(jobj);
+        		                    ele=ele.get(jobj).getAsJsonObject();
+        		                }
+        		                else {
+        		                    System.out.println(ele.get(jobj));
+        		                    pData = ele.get(jobj).getAsString();
+        		                    break;
+        		                }
+        					}
+        					if(pData!=null) {
+        						if(cur.getType().equalsIgnoreCase("url")) {
+        							newurl = pData;
+        						}
+        						else if(cur.getType().equalsIgnoreCase("append")) {
+        							newurl+="&"+cur.getParam()+"="+pData;
+        						}
+        						else {
+        							newurl+="&"+cur.getParam()+"="+Integer.parseInt(pData)+1;
+        						}
+        						break;
+        					}	
+        				}
+        				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+        				out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
+        			}        			
+        			
+        			System.out.println(out.getBody());
         			 //System.out.println(out.getBody());
         			headers = new HttpHeaders();
     				headers.add("Cache-Control", "no-cache");
