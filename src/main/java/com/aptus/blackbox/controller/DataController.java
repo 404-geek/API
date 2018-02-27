@@ -424,7 +424,7 @@ public class DataController {
         			System.out.println("Method : "+method);
         			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
         			System.out.println("----------------------------"+uri);
-        			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
+        			out = restTemplate.exchange(uri, method, httpEntity, String.class);
         			
         			//call destination validation and push data 
         			
@@ -462,12 +462,13 @@ public class DataController {
 //        						break;
 //        					}	
 //        				}
-//        				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-//        				out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
-//        			}        			
+//        				System.out.println(newurl);
+//        				uri = UriComponentsBuilder.fromUriString(newurl).build().encode().toUri();
+//        				out = restTemplate.exchange(uri, method, httpEntity, String.class);
+//        			}        	
         			
         			System.out.println(out.getBody());
-        			 //System.out.println(out.getBody());
+        			//System.out.println(out.getBody());
         			headers = new HttpHeaders();
     				headers.add("Cache-Control", "no-cache");
     				headers.add("access-control-allow-origin", rootUrl);
@@ -527,8 +528,7 @@ public class DataController {
 			if(Utilities.isSessionValid(httpsession,credentials)) {
 				if(credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {
 					out=selectAction(choice, connId, httpsession);
-					respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
-					respBody.addProperty("status", "14");
+					respBody=gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
 					
 				}
 				else {
@@ -537,8 +537,7 @@ public class DataController {
 					   credentials.getConnectionIds(connId).getDestName().
 							equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
 						out=selectAction(choice, connId, httpsession);
-						respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
-						respBody.addProperty("status", "15");
+						respBody=gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
 					}
 					else if(credentials.getConnectionIds(connId).getSourceName().
 							equalsIgnoreCase(credentials.getCurrConnId().getSourceName())) {
