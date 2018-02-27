@@ -546,15 +546,17 @@ public class DataController {
 			if (con == null || con.isClosed())
 				connection();
 			PreparedStatement stmt;
-			stmt = con.prepareStatement("SELECT * FROM "+credentials.getCurrConnId().getConnectionId()+";");
+			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_schema =" 
+					+ destObj.getValue_quote_open()+ credentials.getCurrConnId().getConnectionId()
+					+destObj.getValue_quote_close()+";");
 			ResultSet res = stmt.executeQuery();
-			if(res.getInt(credentials.getCurrConnId().getConnectionId())!=0) {
+			res.first();
+			if(res.getInt("COUNT")!=0) {
 				stmt = con.prepareStatement("TRUNCATE TABLE "+credentials.getCurrConnId().getConnectionId()+";");
 				stmt.execute();
 			}			
 			return true;
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     	return false;
