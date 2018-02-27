@@ -1,0 +1,141 @@
+{
+	"name": "FACEBOOK",
+	"authType": "REST2.0",
+	"status": "active",
+	"steps": "TWO",
+	"refresh": "NO",
+	"requestToken": {
+		"label": "RequestToken",
+		"type": "URL_BUTTON",
+		"url": "",
+		"params": [],
+		"method": "",
+		"header": [],
+		"signature":[],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"accessCode": {
+		"label": "AuthorizeToken",
+		"type": "URL_BUTTON",
+		"url": "https://www.facebook.com/v2.11/dialog/oauth",
+		"params": [
+			{
+				"key": "client_id",
+				"value": "144641526235821",
+				"valueList": []
+			},
+			{
+				"key": "redirect_uri",
+				"value": "http://localhost:8080/oauth2/s2",
+				"valueList": []
+			},
+			{
+				"key": "response_type",
+				"value": "code",
+				"valueList": []
+			},
+			{
+				"key": "state",
+				"value": "124578921",
+				"valueList": []
+			}
+		],
+		"method": "GET",
+		"header": [],
+		"signature":[],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"accessToken": {
+		"label": "AccessToken",
+		"type": "URL_BUTTON",
+		"url": "https://graph.facebook.com/v2.11/oauth/access_token",
+		"params": [
+			{
+				"key": "client_id",
+				"value": "144641526235821",
+				"valueList": []
+			},
+			{
+				"key": "redirect_uri",
+				"value": "http://localhost:8080/oauth2/s2",
+				"valueList": []
+			},
+			{
+				"key": "client_secret",
+				"value": "b7a555dc4bde09e00b33924c409bb0fa",
+				"valueList": []
+			},
+			{
+				"key": "code",
+				"value": "codeValue",
+				"valueList": []
+			}
+		],
+		"method": "GET",
+		"header": [],
+		"signature":[],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"refreshToken": {
+		"label": "RefreshToken",
+		"type": "URL_BUTTON",
+		"url": "",
+		"params": [],
+		"method": "",
+		"header": [],
+		"signature":[],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"validateCredentials": {
+		"label": "validateCredentials",
+		"url": "https://graph.facebook.com/v2.11/me",
+		"params": [
+			{
+				"key": "access_token",
+				"value": "codeValue",
+				"valueList": []
+			},
+			{
+				"key": "fields",
+				"value": "id,name,friends",
+				"valueList": []
+			}
+		],
+		"method": "GET",
+		"header": [],
+		"responseBody": [],
+		"signature":[],
+		"responseString": ""
+	},
+	"endPoints": [
+		{
+			"label": "id",
+			"url": "https://graph.facebook.com/v2.11/me",
+			"params": [
+				{
+					"key": "access_token",
+					"value": "codeValue",
+					"valueList": []
+				},
+				{
+					"key": "fields",
+					"value": "id,name,friends",
+					"valueList": []
+				}
+			],
+			"method": "GET",
+			"header": [],
+			"signature":[],
+			"responseBody": [],
+			"responseString": "",
+			"pagination":[
+					{"key":"paging.next","param":"","type":"url"},
+					{"key":"paging.cursors.after","param":"after","type":"append"}
+				]
+		}
+	]
+}	

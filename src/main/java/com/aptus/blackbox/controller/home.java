@@ -334,7 +334,6 @@ public class home {
 			}
 			else {
 				System.out.println("Session expired!");
-				headers = new HttpHeaders();
 				String url=homeUrl;
 				headers.setLocation(URI.create(url));
 				s = new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);

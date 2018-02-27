@@ -1,0 +1,93 @@
+{
+	"name": "YOUTUBE",
+	"authType": "REST2.0",
+	"status": "active",
+	"steps":"TWO",	
+	"refresh":"NO",
+	"requestToken":{
+				"label": "RequestToken",
+				"type": "URL_BUTTON",
+				"url": "",
+				"params":[],
+				"method": "",
+				"header": [],
+				"responseBody": [],
+				"responseString":""
+			},
+	"accessCode": {
+				"label": "AuthorizeToken",
+				"type": "URL_BUTTON",
+				"url": "https://accounts.google.com/o/oauth2/v2/auth",
+				"params":[
+						{"key":"response_type","value":"code","valueList":[]},
+						{"key":"client_id","value":"576140038075-7l7tu5b22kre861if890k3ud8rl0h7ql.apps.googleusercontent.com","valueList":[]},
+						{"key":"redirect_uri","value":"http://localhost:8080/oauth2/s2","valueList":[]},
+						{"key":"scope","value":"https://www.googleapis.com/auth/youtube.readonly","valueList":[]}
+						],
+				"method": "GET",
+				"header": [],
+				"responseBody": [],
+				"responseString":""
+			},
+	"accessToken": {
+			"label": "AccessToken",
+			"type": "URL_BUTTON",
+			"url": "https://www.googleapis.com/oauth2/v4/token",
+			"params":[
+					{"key":"grant_type","value":"authorization_code","valueList":[]},
+					{"key":"client_id","value":"576140038075-7l7tu5b22kre861if890k3ud8rl0h7ql.apps.googleusercontent.com","valueList":[]},
+					{"key":"redirect_uri","value":"http://localhost:8080/oauth2/s2","valueList":[]},
+					{"key":"client_secret","value":"_VxN9LHVbGP0So3JTqBiQXmG","valueList":[]},
+					{"key":"code","value":"codeValue","valueList":[]}
+					],
+			"method": "POST",
+			"header": [
+				{
+					"key": "Host",
+					"value": "www.googleapis.com"
+				,"valueList":[]},
+				{
+					"key": "Content-Type",
+					"value": "application/x-www-form-urlencoded"
+				,"valueList":[]}
+			],
+			"responseBody": [],
+				"responseString":""
+					},
+	"refreshToken":{
+				"label": "RefreshToken",
+				"type": "URL_BUTTON",
+				"url": "",
+				"params":[],
+				"method": "",
+				"header": [],
+				"responseBody": [],
+				"responseString":""
+			},
+	"validateCredentials": {
+	"label": "validateCredentials",
+		"url": "https://www.googleapis.com/youtube/v3/subscriptions",
+		"params":[
+		       {"key": "part","value": "snippet%2CcontentDetails","valueList":[]},
+			   {"key": "mine","value": "true","valueList":[]},
+			   {"key": "access_token","value": "codeValue","valueList":[]}
+			],
+		"method": "GET",
+		"header": [],
+		"responseBody": [],
+				"responseString":""
+	},
+	"endPoints": [{
+	"label": "subscribers",
+		"url": "https://www.googleapis.com/youtube/v3/subscriptions",
+		"params":[
+		       {"key": "part","value": "snippet%2CcontentDetails","valueList":[]},
+			   {"key": "mine","value": "true","valueList":[]},
+			   {"key": "access_token","value": "codeValue","valueList":[]}
+			],
+		"method": "GET",
+		"header": [],
+		"responseBody": [],
+				"responseString":""
+	}]
+}	

@@ -133,10 +133,18 @@ public class DataController {
 				System.out.println(out.getBody());
 				Gson gson=new Gson();								
 				JsonObject respBody = new JsonObject();
-				respBody.add("data",gson.fromJson(out.getBody(), JsonElement.class));
 				respBody.addProperty("status", "200");
+				respBody.add("data",gson.fromJson(out.getBody(), JsonElement.class));
+				
 				ConnObj conObj = new ConnObj();
 				JsonElement data = gson.fromJson(out.getBody(), JsonElement.class);
+				
+			    url = mongoUrl+"/credentials/SrcDstlist/srcdestlist";
+			    uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+				out  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
+				respBody.add("images",gson.fromJson(out.getBody(), JsonElement.class));
+				
+				
 				JsonArray srcdestId = data.getAsJsonObject().get("srcdestId").getAsJsonArray();
 				for(JsonElement ele:srcdestId) {
 					conObj = gson.fromJson(ele, ConnObj.class);

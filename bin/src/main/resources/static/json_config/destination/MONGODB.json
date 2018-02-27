@@ -1,0 +1,17 @@
+{
+			"_id":"MONGODB",
+	        "drivers":"mongodb.jdbc.MongoDriver",
+			"urlprefix":"jdbc:mongo://",
+			"dbnameseparator":"/",
+			"type_varchar":"VARCHAR",
+			"type_text":"BLOB",
+			"type_integer":"INTEGER",
+			"type_real":"REAL",
+            "type_time":"TIME",
+            "type_date":"DATE",
+            "type_dateTime":"TIMESTAMP",
+			"identifier_quote_open":"",
+			"identifier_quote_close":"",
+			"value_quote_open":"'",
+			"value_quote_close":"'"
+}

@@ -1,0 +1,18 @@
+{
+"_id":"MICROSOFT SQL SERVER",
+	        "drivers":"com.microsoft.sqlserver.jdbc.SQLServerDriver",
+			"urlprefix":"jdbc:sqlserver://",
+			"dbnameseparator":";databaseName=",
+			"type_varchar":"VARCHAR",
+			"type_text":"BLOB",
+			"type_integer":"INTEGER",
+			"type_real":"REAL",
+            "type_time":"TIME",
+            "type_date":"DATE",
+            "type_dateTime":"TIMESTAMP",
+			"identifier_quote_open":"[",
+			"identifier_quote_close":"]",
+			"value_quote_open":"'",
+			"value_quote_close":"'"
+}
+

@@ -1,0 +1,184 @@
+{
+	"name": "LINKEDIN",
+	"authType": "REST2.0",
+	"status": "active",
+	"steps": "TWO",
+	"refresh": "NO",
+	"requestToken": {
+		"label": "RequestToken",
+		"type": "URL_BUTTON",
+		"url": "",
+		"params": [],
+		"method": "",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"accessCode": {
+		"label": "AuthorizeToken",
+		"type": "URL_BUTTON",
+		"url": "https://www.linkedin.com/oauth/v2/authorization",
+		"params": [
+			{
+				"key": "response_type",
+				"value": "code",
+				"valueList": []
+			},
+			{
+				"key": "client_id",
+				"value": "781i5lw5bxu0u4",
+				"valueList": []
+			},
+			{
+				"key": "redirect_uri",
+				"value": "http://localhost:8080/oauth2/s2",
+				"valueList": []
+			},
+			{
+				"key": "state",
+				"value": "987654321",
+				"valueList": []
+			},
+			{
+				"key": "scope",
+				"value": "r_basicprofile",
+				"valueList": []
+			}
+		],
+		"method": "GET",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"accessToken": {
+		"label": "AccessToken",
+		"type": "URL_BUTTON",
+		"url": "https://www.linkedin.com/oauth/v2/accessToken",
+		"params": [
+			{
+				"key": "grant_type",
+				"value": "authorization_code",
+				"valueList": []
+			},
+			{
+				"key": "client_id",
+				"value": "781i5lw5bxu0u4",
+				"valueList": []
+			},
+			{
+				"key": "redirect_uri",
+				"value": "http://localhost:8080/oauth2/s2",
+				"valueList": []
+			},
+			{
+				"key": "client_secret",
+				"value": "HiAAHc1IHCGveqer",
+				"valueList": []
+			},
+			{
+				"key": "code",
+				"value": "codeValue",
+				"valueList": []
+			}
+		],
+		"method": "POST",
+		"header": [
+			{
+				"key": "Host",
+				"value": "www.linkedin.com",
+				"valueList": []
+			},
+			{
+				"key": "Content-Type",
+				"value": "application/x-www-form-urlencoded",
+				"valueList": []
+			}
+		],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"refreshToken": {
+		"label": "RefreshToken",
+		"type": "URL_BUTTON",
+		"url": "",
+		"params": [],
+		"method": "",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"validateCredentials": {
+		"label": "Validate Credentials",
+		"url": "https://api.linkedin.com/v1/people/~",
+		"params": [],
+		"method": "GET",
+		"header": [
+			{
+				"key": "x-li-format",
+				"value": "json",
+				"valueList": []
+			},
+			{
+				"key": "Host",
+				"value": "api.linkedin.com",
+				"valueList": []
+			},
+			{
+				"key": "Connection",
+				"value": "Keep-Alive",
+				"valueList": []
+			},
+			{
+				"key": "Authorization",
+				"value": "Bearer",
+				"valueList": [
+					{
+						"key": "access_token",
+						"value": "codeValueSpace",
+						"valueList": []
+					}
+				]
+			}
+		],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"endPoints": [
+		{
+			"label": "userinfo",
+			"url": "https://api.linkedin.com/v1/people/~",
+			"params": [],
+			"method": "GET",
+			"header": [
+				{
+					"key": "x-li-format",
+					"value": "json",
+					"valueList": []
+				},
+				{
+					"key": "Host",
+					"value": "api.linkedin.com",
+					"valueList": []
+				},
+				{
+					"key": "Connection",
+					"value": "Keep-Alive",
+					"valueList": []
+				},
+				{
+					"key": "Authorization",
+					"value": "Bearer",
+					"valueList": [
+						{
+							"key": "access_token",
+							"value": "codeValueSpace",
+							"valueList": []
+						}
+					]
+				}
+			],
+			"responseBody": [],
+			"responseString": ""
+		}
+	]
+}	

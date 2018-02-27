@@ -1,0 +1,153 @@
+{
+	"name": "ZOHOHELPDESK",
+	"authType": "REST2.0",
+	"status": "active",
+	"steps": "TWO",
+	"refresh": "NO",
+	"requestToken": {
+		"label": "RequestToken",
+		"type": "URL_BUTTON",
+		"url": "",
+		"params": [],
+		"method": "",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"accessCode": {
+		"label": "AuthorizeToken",
+		"type": "URL_BUTTON",
+		"url": "https://accounts.zoho.com/oauth/v2/auth",
+		"params": [
+			{
+				"key": "response_type",
+				"value": "code",
+				"valueList": []
+			},
+			{
+				"key": "client_id",
+				"value": "1000.B87PC0Y1PJKS478545YQOMT14E3PFN",
+				"valueList": []
+			},
+			{
+				"key": "redirect_uri",
+				"value": "http://localhost:8080/oauth2/s2",
+				"valueList": []
+			},
+			{
+				"key": "scope",
+				"value": "Desk.tickets.ALL,Desk.basic.READ",
+				"valueList": []
+			},
+			{
+				"key": "access_type",
+				"value": "offline",
+				"valueList": []
+			}
+		],
+		"method": "GET",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"accessToken": {
+		"label": "AccessToken",
+		"type": "URL_BUTTON",
+		"url": "https://accounts.zoho.com/oauth/v2/token",
+		"params": [
+			{
+				"key": "client_id",
+				"value": "1000.B87PC0Y1PJKS478545YQOMT14E3PFN",
+				"valueList": []
+			},
+			{
+				"key": "client_secret",
+				"value": "4fcbfed4d9de966d2fe150908c1b61941809c137ac",
+				"valueList": []
+			},
+			{
+				"key": "redirect_uri",
+				"value": "http://localhost:8080/oauth2/s2",
+				"valueList": []
+			},
+			{
+				"key": "grant_type",
+				"value": "authorization_code",
+				"valueList": []
+			},
+			{
+				"key": "code",
+				"value": "codeValue",
+				"valueList": []
+			}
+		],
+		"method": "POST",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"refreshToken": {
+		"label": "RefreshToken",
+		"type": "URL_BUTTON",
+		"url": "",
+		"params": [],
+		"method": "",
+		"header": [],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"validateCredentials": {
+		"label": "validateCredentials",
+		"url": "https://desk.zoho.com/api/v1/organizations",
+		"params": [],
+		"method": "GET",
+		"header": [
+			{
+				"key": "response_type",
+				"value": "code",
+				"valueList": []
+			},
+			{
+				"key": "Authorization",
+				"value": "Zoho-oauthtoken ",
+				"valueList": [
+					{
+						"key": "access_token",
+						"value": "codeValueSpace",
+						"valueList": []
+					}
+				]
+			}
+		],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"endPoints": [
+		{
+			"label": "organisation",
+			"url": "https://desk.zoho.com/api/v1/organizations",
+			"params": [],
+			"method": "GET",
+			"header": [
+				{
+					"key": "response_type",
+					"value": "code",
+					"valueList": []
+				},
+				{
+					"key": "Authorization",
+					"value": "Zoho-oauthtoken ",
+					"valueList": [
+						{
+							"key": "access_token",
+							"value": "codeValueSpace",
+							"valueList": []
+						}
+					]
+				}
+			],
+			"responseBody": [],
+			"responseString": ""
+		}
+	]
+}	

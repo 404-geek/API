@@ -1,0 +1,134 @@
+{
+	"name": "TWITTER",
+	"authType": "REST1.0",
+	"status": "active",
+	"steps":"THREE",	
+	"refresh":"NO",
+	"requestToken":{
+				"label": "RequestToken",
+				"type": "URL_BUTTON",
+				"url": "https://api.twitter.com/oauth/request_token",
+				"params":[],
+				"method": "POST",
+				"header": [
+					{"key":"oauth_callback","value":"http://localhost:8080/oauth2/s2","valueList":[]},
+					{"key":"oauth_version","value":"1.0","valueList":[]},
+					{"key":"Authorization","value":"OAuth","valueList":[
+											{"key":"oauth_consumer_key","value":"GViISOVdAivg6omrQIIw8nYTO","valueList":[]},
+											{"key":"oauth_signature_method","value":"HMAC-SHA1","valueList":[]},
+											{"key":"oauth_timestamp","value":"codeValue","valueList":[]},
+											{"key":"oauth_nonce","value":"K7ny27JTpKVsTgdyLdDfmQQWVLERj2zAK5BslRsqyw","valueList":[]},
+											{"key":"oauth_version","value":"1.0","valueList":[]},
+											{"key":"oauth_signature","value":"codeValue","valueList":[]}
+										]
+					}
+				],
+				"signature":[
+					{"key":"oauth_consumer_secret","value":"RkCKQyxlkwYrGRzBNQBeCaydgVREf389z9fOXVM7e40mxbCej6","valueList":[]}
+				],
+				"responseBody": [],
+				"responseString": ""
+			},
+	"accessCode": {
+				"label": "AuthorizeToken",
+				"type": "URL_BUTTON",
+				"url": "https://api.twitter.com/oauth/authenticate",
+				"params":[
+					{"key":"oauth_token","value":"codeValue","valueList":[]}
+				],
+				"signature":[
+					{"key":"oauth_consumer_secret","value":"RkCKQyxlkwYrGRzBNQBeCaydgVREf389z9fOXVM7e40mxbCej6","valueList":[]}
+				],
+				"method": "GET",
+				"header": [],
+				"responseBody": [],
+				"responseString": ""
+			},
+	"accessToken": {
+			"label": "AccessToken",
+			"type": "URL_BUTTON",
+			"url": "https://api.twitter.com/oauth/access_token",
+			"params":[
+				{"key":"oauth_verifier","value":"codeValue","valueList":[]}
+				],
+			"method": "",
+			"header": [
+				{"key":"Authorization","value":"OAuth","valueList":[
+											{"key":"oauth_consumer_key","value":"GViISOVdAivg6omrQIIw8nYTO","valueList":[]},
+											{"key":"oauth_signature_method","value":"HMAC-SHA1","valueList":[]},
+											{"key":"oauth_timestamp","value":"codeValue","valueList":[]},
+											{"key":"oauth_nonce","value":"K7ny27JTpKVsTgdyLdDfmQQWVLERj2zAK5BslRsqyw","valueList":[]},
+											{"key":"oauth_version","value":"1.0","valueList":[]},
+											{"key":"oauth_token","value":"codeValue","valueList":[]},
+											{"key":"oauth_signature","value":"codeValue","valueList":[]}
+										]
+					}
+			],
+			"signature":[
+					{"key":"oauth_consumer_secret","value":"RkCKQyxlkwYrGRzBNQBeCaydgVREf389z9fOXVM7e40mxbCej6","valueList":[]}
+				],
+			"responseBody": [],
+			"responseString": ""
+					},
+	"refreshToken":{
+				"label": "RefreshToken",
+				"type": "URL_BUTTON",
+				"url": "",
+				"params":[],
+				"signature":[],
+				"method": "",
+				"header": [],
+				"responseBody": [],
+				"responseString": ""
+			},
+	"validateCredentials": {
+		"label": "validateCredentials",
+		"url": "https://api.twitter.com/1.1/users/lookup.json",
+		"params":[
+					{"key":"user_id","value":"711987548134846464","valueList":[]}
+				],
+		"method": "GET",
+		"header": [
+					{"key":"oauth_token","value":"codeValue","valueList":[]},
+					{"key":"Authorization","value":"OAuth","valueList":[
+											{"key":"oauth_consumer_key","value":"GViISOVdAivg6omrQIIw8nYTO","valueList":[]},
+											{"key":"oauth_signature_method","value":"HMAC-SHA1","valueList":[]},
+											{"key":"oauth_timestamp","value":"codeValue","valueList":[]},
+											{"key":"oauth_nonce","value":"K7ny27JTpKVsTgdyLdDfmQQWVLERj2zAK5BslRsqyw","valueList":[]},
+											{"key":"oauth_version","value":"1.0","valueList":[]},
+											{"key":"oauth_signature","value":"codeValue","valueList":[]}
+										]
+					}
+				],
+		"signature":[
+				{"key":"oauth_consumer_secret","value":"RkCKQyxlkwYrGRzBNQBeCaydgVREf389z9fOXVM7e40mxbCej6","valueList":[]}
+			],
+		"responseBody": [],
+		"responseString": ""
+	},
+	"endPoints": [{
+		"label": "validateCredentials",
+		"url": "https://api.twitter.com/1.1/users/lookup.json",
+		"params":[
+					{"key":"user_id","value":"711987548134846464","valueList":[]}
+				],
+		"method": "GET",
+		"header": [
+					{"key":"oauth_token","value":"codeValue","valueList":[]},
+					{"key":"Authorization","value":"OAuth","valueList":[
+											{"key":"oauth_consumer_key","value":"GViISOVdAivg6omrQIIw8nYTO","valueList":[]},
+											{"key":"oauth_signature_method","value":"HMAC-SHA1","valueList":[]},
+											{"key":"oauth_timestamp","value":"codeValue","valueList":[]},
+											{"key":"oauth_nonce","value":"K7ny27JTpKVsTgdyLdDfmQQWVLERj2zAK5BslRsqyw","valueList":[]},
+											{"key":"oauth_version","value":"1.0","valueList":[]},
+											{"key":"oauth_signature","value":"codeValue","valueList":[]}
+										]
+					}
+				],
+		"signature":[
+					{"key":"oauth_consumer_secret","value":"RkCKQyxlkwYrGRzBNQBeCaydgVREf389z9fOXVM7e40mxbCej6","valueList":[]}
+				],
+		"responseBody": [],
+		"responseString": ""
+	}]
+}	
