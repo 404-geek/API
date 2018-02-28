@@ -32,6 +32,9 @@ import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.common.net.UrlEscapers;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 @RestController
 //@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS,value="session")
@@ -101,11 +104,15 @@ public class SourceController {
 		System.out.println(endPoints.toString());
 		return obj;
 	}
+	
+	@RequestMapping(value="/deletedatasource")
+	private ResponseEntity<String> deleteDataSource(@RequestParam("connids") String connids,HttpSession session){
+		return null;
+	}
+	
 	@RequestMapping(method = RequestMethod.GET, value = "/createdatasource")
-	private ResponseEntity<String> createDataSource(HttpSession session)
-	{
-		
-		
+	private ResponseEntity<String> createDataSource(@RequestParam("filteredendpoints") String filteredEndpoints,HttpSession session)
+	{		
 		ResponseEntity<String> ret = null;
 		//System.out.println(srcname+" "+destname);
 		try	{
@@ -116,18 +123,19 @@ public class SourceController {
 			if(Utilities.isSessionValid(session,credentials)) {
 				if(validateCredentials==null||endPoints==null||refreshToken==null) {
 					init();
-				}
-			
+				}			
 				String body="",b1="",endpnts="",conId;
 				conId=credentials.getUserId()+"_"+credentials.getSrcName()+"_"+credentials.getDestName()
 						+"_"+String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
 				for(Map.Entry<String,String> mp:credentials.getSrcToken().entrySet()) {
 					b1+="{\"key\":\""+String.valueOf(mp.getKey())+"\",\"value\":\""+String.valueOf(mp.getValue())+"\"},";
 				}
+				Gson gson =new Gson();
+				JsonArray endpoints = gson.fromJson(filteredEndpoints, JsonElement.class).getAsJsonObject().get("endpoints").getAsJsonArray();
 				ConnObj currobj = new ConnObj();
-				for(UrlObject obj:endPoints) {
-					endpnts+="\""+obj.getLabel()+"\",";
-					currobj.setEndPoints(obj.getLabel());
+				for(JsonElement obj:endpoints) {
+					endpnts+="\""+obj.getAsString()+"\",";
+					currobj.setEndPoints(obj.getAsString());
 				}
 				currobj.setConnectionId(conId);
 				currobj.setSourceName(credentials.getSrcName());

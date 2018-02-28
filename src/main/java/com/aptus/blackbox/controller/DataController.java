@@ -107,7 +107,7 @@ public class DataController {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
-			con.close();
+			if(con!=null)con.close();
 		}
 		return null;
 	}
@@ -405,6 +405,7 @@ public class DataController {
     {
     	ResponseEntity<String> out = null;
     		try {
+    			Gson gson=new Gson();
     			RestTemplate restTemplate = new RestTemplate();
     			for(UrlObject object:endpoints) {
     				String url = Utilities.buildUrl(object, credentials.getSrcToken());
@@ -423,58 +424,70 @@ public class DataController {
         			HttpMethod method = (object.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
         			System.out.println("Method : "+method);
         			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-        			System.out.println("----------------------------"+uri);
+        			System.out.println(uri);
         			out = restTemplate.exchange(uri, method, httpEntity, String.class);
         			
         			//call destination validation and push data 
         			
                     //null and empty case+ three more cases+bodu cursor(dropbox).......and a lot more 
         			
+        			System.out.println("\n--------------------------------------------------------------\n");
         			
-//        			while(true) {
-//        				String pData=null;
-//        				String newurl = url;
-//        				List<Cursor> page =object.getPagination();        				
-//        				for(Cursor cur:page) {
-//        					JsonObject ele = new Gson().fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
-//        					String arr[] = cur.getKey().split(".");
-//        					for(String jobj:arr) {
-//        		                if(ele.get(jobj)!=null && ele.get(jobj).isJsonObject() )  {
-//        		                    System.out.println(jobj);
-//        		                    ele=ele.get(jobj).getAsJsonObject();
-//        		                }
-//        		                else {
-//        		                    System.out.println(ele.get(jobj));
-//        		                    pData = ele.get(jobj).getAsString();
-//        		                    break;
-//        		                }
-//        					}
-//        					if(pData!=null) {
-//        						if(cur.getType().equalsIgnoreCase("url")) {
-//        							newurl = pData;
-//        						}
-//        						else if(cur.getType().equalsIgnoreCase("append")) {
-//        							newurl+="&"+cur.getParam()+"="+pData;
-//        						}
-//        						else {
-//        							newurl+="&"+cur.getParam()+"="+Integer.parseInt(pData)+1;
-//        						}
-//        						break;
-//        					}	
-//        				}
-//        				System.out.println(newurl);
-//        				uri = UriComponentsBuilder.fromUriString(newurl).build().encode().toUri();
-//        				out = restTemplate.exchange(uri, method, httpEntity, String.class);
-//        			}        	
-        			
-        			System.out.println(out.getBody());
+        			while(true) {
+        				String pData=null;
+        				String newurl = url;
+        				List<Cursor> page =object.getPagination();        				
+        				for(Cursor cur:page) {
+        					JsonObject ele = gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
+        					String arr[] = cur.getKey().split("::");
+        					for(String jobj:arr) {
+        		                if(ele.get(jobj)!=null && ele.get(jobj).isJsonObject() )  {
+        		                    System.out.println(jobj);
+        		                    ele=ele.get(jobj).getAsJsonObject();
+        		                }
+        		                else {
+        		                    System.out.println(ele.get(jobj));
+        		                    pData = ele.get(jobj)==null?null:ele.get(jobj).getAsString();
+        		                    break;
+        		                }
+        					}
+        					if(pData!=null) {
+        						if(cur.getType().equalsIgnoreCase("url")) {
+        							newurl = pData;
+        						}
+        						else if(cur.getType().equalsIgnoreCase("append")) {
+        							newurl+=newurl.contains("?")?"&"+cur.getParam()+"="+pData:"?"+cur.getParam()+"="+pData;
+        							//newurl+="&"+cur.getParam()+"="+pData;
+        						}
+        						else {
+        							newurl+=newurl.contains("?")?"&"+cur.getParam()+"="+pData:"?"+cur.getParam()+"="+(Integer.parseInt(pData)+1);
+        							//newurl+="&"+cur.getParam()+"="+Integer.parseInt(pData)+1;
+        						}
+        						System.out.println(newurl);
+        						break;
+        					}	
+        				}
+        				System.out.println(newurl);
+        				
+        				if(pData==null) {
+        					System.out.println("break pData");
+        					break;
+        				}
+        				uri = UriComponentsBuilder.fromUriString(newurl).build().encode().toUri();
+        				out = restTemplate.exchange(uri, method, httpEntity, String.class);
+        				if(out.getBody()==null) {
+        					System.out.println("break out.getBody");
+        					break;
+        				}
+        			}        	
+        			System.out.println("\n--------------------------------------------------------------\n");
+        			//System.out.println(out.getBody());
         			//System.out.println(out.getBody());
         			headers = new HttpHeaders();
     				headers.add("Cache-Control", "no-cache");
     				headers.add("access-control-allow-origin", rootUrl);
     	            headers.add("access-control-allow-credentials", "true");
-        			if(choice.equalsIgnoreCase("view")) {
-        				Gson gson=new Gson();				
+        			if(choice.equalsIgnoreCase("view")) {				
         	            JsonObject respBody = new JsonObject();
         				respBody.addProperty("status", "21");
         				respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
@@ -541,15 +554,19 @@ public class DataController {
 					}
 					else if(credentials.getConnectionIds(connId).getSourceName().
 							equalsIgnoreCase(credentials.getCurrConnId().getSourceName())) {
+						credentials.setDestValid(false);
 						respBody.addProperty("data", "DifferentDestination");
 						respBody.addProperty("status", "12");
 					}
 					else if(credentials.getConnectionIds(connId).getDestName().
 							equalsIgnoreCase(credentials.getCurrConnId().getDestName()))	{
+						credentials.setSrcValid(false);
 						respBody.addProperty("data", "DifferentSource");
 						respBody.addProperty("status", "11");
 					}
 					else {
+						credentials.setDestValid(false);
+						credentials.setSrcValid(false);
 						respBody.addProperty("data", "DifferentAll");
 						respBody.addProperty("status", "13");
 					}

@@ -1,12 +1,13 @@
 package com.aptus.blackbox.controller;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -23,8 +24,10 @@ import com.aptus.blackbox.Service.Credentials;
 import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.Parser;
 import com.aptus.blackbox.index.SrcObject;
+import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -385,5 +388,37 @@ public class home {
 		return new ResponseEntity<String>("Error",headers ,HttpStatus.BAD_GATEWAY);
 	}
 	
-	
+	@RequestMapping(value="/filterendpoints")
+	private ResponseEntity<String> filterendpoints(HttpSession session){
+		
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-credentials", "true");
+		try {			
+			if(Utilities.isSessionValid(session,credentials)) {
+				JsonObject jobj = new JsonObject();
+				JsonArray endpoints=new JsonArray();
+				for(UrlObject obj:credentials.getSrcObj().getEndPoints()) {
+					endpoints.add(obj.getLabel());
+				}
+				jobj.add("endpoints", endpoints);
+				jobj.addProperty("status", "200");
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobj.toString());
+			}
+			else
+			{
+				System.out.println("Session expired!");			
+				String url=homeUrl;
+				headers.setLocation(URI.create(url));
+				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+			}
+		}
+		catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return new ResponseEntity<String>("Error",headers ,HttpStatus.BAD_GATEWAY);
+	}
+		
 }

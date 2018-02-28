@@ -253,7 +253,7 @@ public class Utilities {
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			System.out.println("----------------------------"+uri);
 			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
-			System.out.println(out.getBody());
+			//System.out.println(out.getBody());
 		} 
 		catch(HttpClientErrorException e) {
 			System.out.println(e.getMessage());
