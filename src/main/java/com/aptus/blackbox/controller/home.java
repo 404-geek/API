@@ -136,6 +136,7 @@ public class home {
 	 */
 	private void srcDestId(String type, String srcdestId) {
 		//change return type to void
+		System.out.println(type+ " "+srcdestId);
 		if (type.equalsIgnoreCase("source")) {
 			srcObj = new Parser("source",srcdestId.toUpperCase(),mongoUrl).getSrcProp();
 			credentials.setSrcObj(srcObj);
@@ -165,6 +166,7 @@ public class home {
 		int res = 0;
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
+				System.out.println(srcdestId);
 				srcDestId(type,srcdestId);
 				String name;
 				RestTemplate restTemplate = new RestTemplate();

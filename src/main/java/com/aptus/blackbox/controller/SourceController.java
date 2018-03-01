@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -106,16 +107,18 @@ public class SourceController {
 	}
 	
 	@RequestMapping(value="/deletedatasource")
-	private ResponseEntity<String> deleteDataSource(@RequestParam("connids") String connids,HttpSession session){
+	private ResponseEntity<String> deleteDataSource(@RequestParam("connid") String connids,HttpSession session){
 		return null;
 	}
 	
-	@RequestMapping(method = RequestMethod.GET, value = "/createdatasource")
-	private ResponseEntity<String> createDataSource(@RequestParam("filteredendpoints") String filteredEndpoints,HttpSession session)
+	@RequestMapping(method = RequestMethod.POST, value = "/createdatasource")
+	private ResponseEntity<String> createDataSource(@RequestParam Map<String,String> filteredEndpoints,HttpSession session)
 	{		
 		ResponseEntity<String> ret = null;
 		//System.out.println(srcname+" "+destname);
 		try	{
+			System.out.println(filteredEndpoints.getClass());
+			System.out.println(filteredEndpoints.get("filteredendpoints")+" "+filteredEndpoints.keySet());
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
 			headers.add("access-control-allow-origin", rootUrl);
@@ -131,7 +134,7 @@ public class SourceController {
 					b1+="{\"key\":\""+String.valueOf(mp.getKey())+"\",\"value\":\""+String.valueOf(mp.getValue())+"\"},";
 				}
 				Gson gson =new Gson();
-				JsonArray endpoints = gson.fromJson(filteredEndpoints, JsonElement.class).getAsJsonObject().get("endpoints").getAsJsonArray();
+				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class).getAsJsonObject().get("endpoints").getAsJsonArray();
 				ConnObj currobj = new ConnObj();
 				for(JsonElement obj:endpoints) {
 					endpnts+="\""+obj.getAsString()+"\",";

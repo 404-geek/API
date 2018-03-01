@@ -1,28 +1,28 @@
-$(document).ready(function() {
+$(document).ready(function () {
 
 	$.ajax({
 		crossOrigin: true,
-      	type: "GET",
+		type: "GET",
 		url: "http://localhost:8080/getsrcdest",
 		cache: false,
 		xhrFields: {
 			withCredentials: true
 		},
-		success: function( data ) {
+		success: function (data) {
 			var obj = JSON.parse(data);
 			var sources = obj.source;
 			var destinations = obj.destination;
 			var sourcehtml = "";
 			var destinationhtml = "";
 
-			$.each( sources, function( key, source ) {
+			$.each(sources, function (key, source) {
 				sourcehtml += '<div id="' + key + '" class="d-inline-block border selector"><div class="m-2"><img class="rounded-circle" width="75" height="75" src="' + source.logo + '"><p class="text-center">' + source.name + '</p></div></div>';
 			});
 
-			$.each( destinations, function( key, destination ) {
+			$.each(destinations, function (key, destination) {
 				destinationhtml += '<div id="' + key + '" class="d-inline-block border selector"><div class="m-2"><img width="75" height="75" class="rounded-circle" src="' + destination.logo + '"><p class="text-center">' + destination.name + '</p></div></div>';
 			});
-		
+
 			/*
 			for(var i=0; i<sources.length; i++) {
 				var source = sources[i];
@@ -41,28 +41,30 @@ $(document).ready(function() {
 			$("#destinations").html(destinationhtml);
 
 
-			$("#sources > .selector").click(function(){
+			$("#sources > .selector").click(function () {
 				$("#sources div").removeClass("selected");
 				$("#selectedSourceLinkValidate").off();
 				$("#selectedSourceLinkAuthenticate").off();
 				$("#datasource").hide();
-				
+
 				$("#sourceValidatedIndicator").hide();
 				$("#sourceNotValidatedIndicator").hide();
 				console.log("source: " + this.id);
 				$("#sources > #" + this.id).addClass("selected");
 				var id = this.id;
-				$.each( sources, function( key, source ) {
-					if(id == key) {
+				$.each(sources, function (key, source) {
+					if (id == key) {
+
 						$("#selectedSource").html('<div class="d-inline-block border"><div class="m-2"><img class="rounded-circle" width="75" height="75" src="' + source.logo + '"><p class="text-center">' + source.name + '</p></div></div>');
 						var url = 'http://localhost:8080/validate?type=source&srcdestId=' + key;
-						$("#selectedSourceLinkAuthenticate").click(function(){
+						console.log(url);
+						$("#selectedSourceLinkAuthenticate").click(function () {
 							window.open(url, "_blank", 'width=800, height=600, menubar=no, resizable=no, scrollbars=no, status=no, toolbar=no, location=no');
 						});
 						src = key;
 						console.log(url);
 
-						$("#selectedSourceLinkValidate").click(function(){
+						$("#selectedSourceLinkValidate").click(function () {
 							$.ajax({
 								crossOrigin: true,
 								type: "GET",
@@ -71,62 +73,62 @@ $(document).ready(function() {
 								xhrFields: {
 									withCredentials: true
 								},
-								success: function(data) {
+								success: function (data) {
 									var obj = JSON.parse(data);
 									$("#datasource").hide();
-									if(obj.isvalid == true) {
+									if (obj.isvalid == true) {
 										console.log("source validated");
 										$("#sourceValidatedIndicator").show();
 										$("#sourceNotValidatedIndicator").hide();
-										
+
 									}
 									else {
 										console.log("source not validated");
 										$("#sourceValidatedIndicator").hide();
 										$("#sourceNotValidatedIndicator").show();
-										
+
 									}
 
-									if(($('#sourceValidatedIndicator').css('display') != 'none') && ($('#destinationValidatedIndicator').css('display') != 'none')){
-										$("#datasource").show(); 
+									if (($('#sourceValidatedIndicator').css('display') != 'none') && ($('#destinationValidatedIndicator').css('display') != 'none')) {
+										$("#datasource").show();
 									}
-									
+
 								}
 							});
 						});
-						
+
 						$("#selectRow").show();
 						$("#selectedSourceLinkValidate").show();
 						$("#selectedSourceLinkAuthenticate").show();
 					}
 				});
-				
+
 			});
 
-			$("#destinations > .selector").click(function(){
+			$("#destinations > .selector").click(function () {
 				$("#destinations div").removeClass("selected");
 				$("#selectedDestinationFormSubmit").off();
 				$("#selectedDestinationLinkValidate").off();
 				$("#selectedDestinationLinkAuthenticate").off();
-				
+
 				$("#destinationValidatedIndicator").hide();
 				$("#destinationNotValidatedIndicator").hide();
 				console.log("destination: " + this.id);
 				$("#destinations > #" + this.id).addClass("selected");
 				var id = this.id;
-				$.each( destinations, function( key, destination ) {
+				$.each(destinations, function (key, destination) {
 					console.log(id + " " + key);
-					if(id == key) {
+					if (id == key) {
 						$("#selectedDestination").html('<div class="d-inline-block border"><div class="m-2"><img class="rounded-circle" width="75" height="75" src="' + destination.logo + '"><p class="text-center">' + destination.name + '</p></div></div>');
 						var srcdestid = key;
-						$("#destination-form").submit(function(e){
+						$("#destination-form").submit(function (e) {
 							e.preventDefault();
 							$('#destinationFormModal').modal('hide');
 							var url = 'http://localhost:8080/validate?type=destination&srcdestId=' + srcdestid + "&database_name=" + $('#InputDatabaseName').val() + "&db_username=" + $('#InputUsername').val() + "&db_password=" + $('#InputPassword').val() + "&server_host=" + $('#InputHostname').val() + "&server_port=" + $('#InputPort').val();
 							window.open(url, "_blank", 'width=800, height=600, menubar=no, resizable=no, scrollbars=no, status=no, toolbar=no, location=no');
 						});
 						var dst = key;
-						$("#selectedDestinationLinkValidate").click(function(){
+						$("#selectedDestinationLinkValidate").click(function () {
 							$.ajax({
 								crossOrigin: true,
 								type: "GET",
@@ -135,10 +137,10 @@ $(document).ready(function() {
 								xhrFields: {
 									withCredentials: true
 								},
-								success: function(data) {
+								success: function (data) {
 									$("#datasource").hide();
 									var obj = JSON.parse(data);
-									if(obj.isvalid == true) {
+									if (obj.isvalid == true) {
 										console.log("destination validated");
 										$("#destinationNotValidatedIndicator").hide();
 										$("#destinationValidatedIndicator").show();
@@ -148,14 +150,14 @@ $(document).ready(function() {
 										$("#destinationValidatedIndicator").hide();
 										$("#destinationNotValidatedIndicator").show();
 									}
-									if(($('#sourceValidatedIndicator').css('display') != 'none') && ($('#destinationValidatedIndicator').css('display') != 'none')){
-										$("#datasource").show(); 
+									if (($('#sourceValidatedIndicator').css('display') != 'none') && ($('#destinationValidatedIndicator').css('display') != 'none')) {
+										$("#datasource").show();
 									}
 								}
-								
+
 							});
 						});
-						
+
 						$("#selectRow").show();
 						$("#selectedDestinationLinkValidate").show();
 						$("#selectedDestinationLinkAuthenticate").show();
@@ -163,7 +165,29 @@ $(document).ready(function() {
 				});
 			});
 
-			$("#datasource").click(function() {
+			$('#filterModal').on('show.bs.modal', function (e) {
+				var endpointhtml = "";
+				$.ajax({
+					crossOrigin: true,
+					type: "GET",
+					url: "http://localhost:8080/filterendpoints",
+					cache: false,
+					xhrFields: {
+						withCredentials: true
+					},
+					success: function (data) {
+						var obj = JSON.parse(data);
+						for(var i=0; i<obj.endpoints.length; i++){
+							endpointhtml += '<div class="form-check"><input class="form-check-input" type="checkbox" value="' + obj.endpoints[i] + '" id="defaultCheck1"><label class="form-check-label" for="defaultCheck1">' + obj.endpoints[i] + '</label></div>';
+						}
+						endpointhtml += '<div class="form-check"><input class="form-check-input" type="checkbox" value="xyz" id="defaultCheck1"><label class="form-check-label" for="defaultCheck1">' + obj.endpoints[i] + '</label></div>';
+						endpointhtml += '<div class="form-check"><input class="form-check-input" type="checkbox" value="abc" id="defaultCheck1"><label class="form-check-label" for="defaultCheck1">' + obj.endpoints[i] + '</label></div>'
+						$("#filter-modal-body").html(endpointhtml);
+					}
+				});
+			});
+
+			/*$("#submitFilters").click(function () {
 				$.ajax({
 					crossOrigin: true,
 					type: "GET",
@@ -172,14 +196,38 @@ $(document).ready(function() {
 					xhrFields: {
 						withCredentials: true
 					},
-					success: function(data) {
+					success: function (data) {
 						window.location.href = "connections.html"
 					}
 				});
-				
+
+			});
+*/
+			$("#submitFilters").click(function(event){
+				event.preventDefault();
+				var filters = $("#filter-modal-body input:checkbox:checked").map(function(){
+				  return $(this).val();
+				}).get();
+				var obj = {
+					"endpoints": filters
+				}
+				console.log(JSON.stringify(obj));
+				$.ajax({
+					crossOrigin: true,
+					data: {"filteredendpoints": JSON.stringify(obj)},
+					type: "POST",
+					url: "http://localhost:8080/createdatasource",
+					cache: false,
+					xhrFields: {
+						withCredentials: true
+					},
+					success: function (data) {
+						window.location.href = "connections.html"
+					}
+				});
 			});
 		}
-		
+
 	});
 
 });
