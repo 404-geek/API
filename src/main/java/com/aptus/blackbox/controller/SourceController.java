@@ -323,7 +323,7 @@ public class SourceController {
 			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 			saveValues(out);
 			out = Utilities.token(validateCredentials,credentials.getSrcToken());
-			System.out.println(out.getBody());
+			//System.out.println(out.getBody());
 			headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
 			headers.add("access-control-allow-origin", rootUrl);
