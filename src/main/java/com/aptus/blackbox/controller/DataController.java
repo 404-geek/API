@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -42,12 +43,12 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 
 @RestController
 public class DataController {
 	private String  tableName;
 	private Connection con = null;
-
 	
 	@Value("${spring.mongodb.ipAndPort}")
 	private String mongoUrl;
@@ -85,11 +86,16 @@ public class DataController {
 				destCred.put("server_port", server_port);
 				//tableName = "user";
 				credentials.setDestToken(destCred);			
-				this.destObj = credentials.getDestObj();
-				this.destToken = credentials.getDestToken();			
+				destObj = credentials.getDestObj();
+				destToken = credentials.getDestToken();			
 				if (!checkDB(destToken.get("database_name"))) {
+					credentials.setDestValid(false);
+					System.out.println("Invalid database credentials");
 					// invalid
 				}
+				credentials.setDestValid(true);
+				System.out.println("Database credentials validated");
+				credentials.setDestToken(destCred);
 				String url=homeUrl;
 				headers.setLocation(URI.create(url+"/close.html"));				
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
@@ -194,6 +200,7 @@ public class DataController {
 			String pass = destToken.get("db_password");
 			PreparedStatement preparedStmt;
 			if (checkDB(destToken.get("database_name"))) {
+				credentials.setDestValid(true);
 				JFlat x = new JFlat(jsonString);
 				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 				// System.out.println(json2csv);
@@ -237,6 +244,7 @@ public class DataController {
 				con.close();
 				return true;
 			}
+			credentials.setDestValid(false);
 		} catch (Exception e) {
 			System.err.println("Got an exception!");
 			System.err.println(e.getMessage());
@@ -279,10 +287,10 @@ public class DataController {
 			System.out.println(query);
 			ResultSet res = stmt.executeQuery(query);
 			if (res.next()) {
-				credentials.setDestValid(true);
+				con.close();
 				return true;
 			}
-			credentials.setDestValid(false);
+			con.close();
 			return false;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -436,37 +444,39 @@ public class DataController {
         			while(true) {
         				String pData=null;
         				String newurl = url;
-        				List<Cursor> page =object.getPagination();        				
-        				for(Cursor cur:page) {
-        					JsonObject ele = gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
-        					String arr[] = cur.getKey().split("::");
-        					for(String jobj:arr) {
-        		                if(ele.get(jobj)!=null && ele.get(jobj).isJsonObject() )  {
-        		                    System.out.println(jobj);
-        		                    ele=ele.get(jobj).getAsJsonObject();
-        		                }
-        		                else {
-        		                    System.out.println(ele.get(jobj));
-        		                    pData = ele.get(jobj)==null?null:ele.get(jobj).getAsString();
-        		                    break;
-        		                }
-        					}
-        					if(pData!=null) {
-        						if(cur.getType().equalsIgnoreCase("url")) {
-        							newurl = pData;
-        						}
-        						else if(cur.getType().equalsIgnoreCase("append")) {
-        							newurl+=newurl.contains("?")?"&"+cur.getParam()+"="+pData:"?"+cur.getParam()+"="+pData;
-        							//newurl+="&"+cur.getParam()+"="+pData;
-        						}
-        						else {
-        							newurl+=newurl.contains("?")?"&"+cur.getParam()+"="+pData:"?"+cur.getParam()+"="+(Integer.parseInt(pData)+1);
-        							//newurl+="&"+cur.getParam()+"="+Integer.parseInt(pData)+1;
-        						}
-        						System.out.println(newurl);
-        						break;
-        					}	
-        				}
+        				List<Cursor> page =object.getPagination();
+        				if(page!=null) {
+        					for(Cursor cur:page) {
+            					JsonObject ele = gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
+            					String arr[] = cur.getKey().split("::");
+            					for(String jobj:arr) {
+            		                if(ele.get(jobj)!=null && ele.get(jobj).isJsonObject() )  {
+            		                    System.out.println(jobj);
+            		                    ele=ele.get(jobj).getAsJsonObject();
+            		                }
+            		                else {
+            		                    System.out.println(ele.get(jobj));
+            		                    pData = ele.get(jobj)==null?null:ele.get(jobj).getAsString();
+            		                    break;
+            		                }
+            					}
+            					if(pData!=null) {
+            						if(cur.getType().equalsIgnoreCase("url")) {
+            							newurl = pData;
+            						}
+            						else if(cur.getType().equalsIgnoreCase("append")) {
+            							newurl+=newurl.contains("?")?"&"+cur.getParam()+"="+pData:"?"+cur.getParam()+"="+pData;
+            							//newurl+="&"+cur.getParam()+"="+pData;
+            						}
+            						else {
+            							newurl+=newurl.contains("?")?"&"+cur.getParam()+"="+pData:"?"+cur.getParam()+"="+(Integer.parseInt(pData)+1);
+            							//newurl+="&"+cur.getParam()+"="+Integer.parseInt(pData)+1;
+            						}
+            						System.out.println(newurl);
+            						break;
+            					}	
+            				}
+        				}        				
         				System.out.println(newurl);
         				
         				if(pData==null) {
@@ -538,8 +548,15 @@ public class DataController {
 		Gson gson=new Gson();
 		try {			
 			JsonObject respBody = new JsonObject();
+			System.out.println(credentials);
 			if(Utilities.isSessionValid(httpsession,credentials)) {
-				if(credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {
+				if(credentials.getCurrConnId()==null) {
+					credentials.setDestValid(false);
+					credentials.setSrcValid(false);
+					respBody.addProperty("data", "DifferentAll");
+					respBody.addProperty("status", "13");
+				}
+				else if(credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {
 					out=selectAction(choice, connId, httpsession);
 					respBody=gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
 					
@@ -605,7 +622,48 @@ public class DataController {
 		}
     	return false;
     }
-
-
-
+    
+    @RequestMapping("/fetchdbs")
+    private ResponseEntity<String> fetchDBs(@RequestParam("destId") String destId,HttpSession session){
+    	ResponseEntity<String> out = null;
+    	HttpHeaders headers = new HttpHeaders();
+		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-credentials", "true");
+    	try {
+	    		if(Utilities.isSessionValid(session,credentials)) {
+	    			String name = credentials.getDestName();
+	    			String filter = "{\"_id\":{\"$regex\":\".*"+name.toLowerCase() + ".*\"}}";					
+	    			String url = mongoUrl+"/credentials/destinationCredentials?filter=" + filter;		 
+	    			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+	    			
+	    			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
+	    			RestTemplate restTemplate = new RestTemplate();
+	    			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
+	    			JsonObject respBody = new JsonObject();
+	    			respBody.addProperty("status", "200");
+    				respBody.add("data", new Gson().fromJson(out.getBody(), JsonElement.class));
+	    			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+	    		}
+	    		else {
+					System.out.println("Session expired!");			
+					String url=homeUrl;
+					headers.setLocation(URI.create(url));
+					return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+				}
+			}
+    	catch(HttpClientErrorException e) {
+            JsonObject respBody = new JsonObject();
+            respBody.addProperty("data", "Error");
+            respBody.addProperty("status", "404");
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+        }
+    	catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    	return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+    }
 }
