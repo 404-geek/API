@@ -17,12 +17,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -106,10 +106,62 @@ public class SourceController {
 		return obj;
 	}
 	
-	@RequestMapping(value="/deletedatasource")
-	private ResponseEntity<String> deleteDataSource(@RequestParam("connid") String connids,HttpSession session){
-		return null;
-	}
+	@RequestMapping(method = RequestMethod.GET, value = "/deletedatasource")
+    private ResponseEntity<String> deleteDataSource(HttpSession session, @RequestParam("connId") String connId) {
+        ResponseEntity<String> out = null;
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Cache-Control", "no-cache");
+        headers.add("access-control-allow-origin", rootUrl);
+        headers.add("access-control-allow-credentials", "true");
+        try {         
+            HttpEntity<?> httpEntity;
+            if (Utilities.isSessionValid(session, credentials)) {
+                String url = mongoUrl + "/credentials/userCredentials/" + credentials.getUserId();
+                // String body="{ \n" +
+                // " \"$pull\": {\"srcdestId\":{\"connectionId\":
+                // \"suku_facebook_mysql_1519808724244\"}} \n" +
+                // "}";
+                // body.add("$pull",new JsonObject().add("srcdestId", new
+                // JsonObject().addProperty("connectionId","suku_facebook_mysql_1519808724244")
+                // ));
+                // body.addProperty(property, value);
+                JsonObject obj1 = new JsonObject();
+                obj1.addProperty("connectionId", connId);
+                JsonObject obj2 = new JsonObject();
+                obj2.add("srcdestId", obj1);
+                JsonObject body = new JsonObject();
+                body.add("$pull", obj2);
+                URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+                httpEntity = new HttpEntity<Object>(body, headers);
+                RestTemplate restTemplate = new RestTemplate();
+                out = restTemplate.exchange(URI.create(url), HttpMethod.PATCH, httpEntity, String.class);
+                if (out.getStatusCode().is2xxSuccessful()) {                   
+                    System.out.println(connId + "***********Deleted!!!!**************");
+                    JsonObject respBody = new JsonObject();
+                    respBody.addProperty("data", "Same");
+                    respBody.addProperty("status", "14");
+                    return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+                }
+                else {
+                    System.out.println("Session expired!");
+                    url = baseUrl;
+                    headers.setLocation(URI.create(url));
+                    return new ResponseEntity<String>("Sorry! Your session has expired", headers, HttpStatus.OK);
+                }
+            }
+        }
+        catch(HttpClientErrorException e) {
+            JsonObject respBody = new JsonObject();
+            respBody.addProperty("data", "Error");
+            respBody.addProperty("status", "404");
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }   
+        return new ResponseEntity<String>("Error",headers ,HttpStatus.BAD_GATEWAY);
+    }
 	
 	@RequestMapping(method = RequestMethod.POST, value = "/createdatasource")
 	private ResponseEntity<String> createDataSource(@RequestParam Map<String,String> filteredEndpoints,HttpSession session)
