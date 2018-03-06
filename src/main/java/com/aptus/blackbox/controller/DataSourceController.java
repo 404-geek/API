@@ -83,8 +83,14 @@ public class DataSourceController {
 			@RequestParam(value ="server_port",required=false) String server_port){
 		ResponseEntity<String> out = null;
 		int res = 0;
+		HttpHeaders headers = new HttpHeaders();
+		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
+				credentials.setCurrConnId(null);
 				System.out.println(srcdestId);
 				srcDestId(type,srcdestId);
 				String name;
@@ -101,12 +107,7 @@ public class DataSourceController {
 				}						
 				url = mongoUrl+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
 				 
-				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				HttpHeaders headers = new HttpHeaders();
-				// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-				headers.add("Cache-Control", "no-cache");
-				headers.add("access-control-allow-origin", rootUrl);
-				headers.add("access-control-allow-credentials", "true");
+				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();				
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
 				System.out.println(out.getBody());
@@ -124,16 +125,16 @@ public class DataSourceController {
 			}
 			else {
 				System.out.println("Session expired!");
-				HttpHeaders headers = new HttpHeaders();
-				String url=homeUrl;
-				headers.setLocation(URI.create(url));
-				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("home.verifyuser");
 		}
-		return out;
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 
 	private ResponseEntity<String> initialiser(String type,String database_name,String db_username,String db_password,String server_host,String server_port) {
@@ -262,16 +263,17 @@ public class DataSourceController {
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobject.toString());
 			}
 			else {
-				System.out.println("Session expired!");			
-				String url=homeUrl;
-				headers.setLocation(URI.create(url));
-				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+				System.out.println("Session expired!");
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
 			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return new ResponseEntity<String>("Error",headers ,HttpStatus.BAD_GATEWAY);
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 	@RequestMapping(method = RequestMethod.GET, value = "/deletedatasource")
     private ResponseEntity<String> deleteDataSource(HttpSession session, @RequestParam("connId") String connId) {
@@ -314,10 +316,11 @@ public class DataSourceController {
                     return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
                 }
                 else {
-                    System.out.println("Session expired!");
-                    url = baseUrl;
-                    headers.setLocation(URI.create(url));
-                    return new ResponseEntity<String>("Sorry! Your session has expired", headers, HttpStatus.OK);
+    				System.out.println("Session expired!");
+        			JsonObject respBody = new JsonObject();
+        			respBody.addProperty("message", "Sorry! Your session has expired");
+    				respBody.addProperty("status", "33");
+    				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
                 }
             }
         }
@@ -331,177 +334,331 @@ public class DataSourceController {
         catch (Exception e) {
             e.printStackTrace();
         }   
-        return new ResponseEntity<String>("Error",headers ,HttpStatus.BAD_GATEWAY);
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
     }
 	
 	@RequestMapping(method = RequestMethod.POST, value = "/createdatasource")
-	private ResponseEntity<String> createDataSource(@RequestParam Map<String,String> filteredEndpoints,HttpSession session)
-	{		
+	private ResponseEntity<String> createDataSource(@RequestParam Map<String, String> filteredEndpoints,
+			HttpSession session) {
 		ResponseEntity<String> ret = null;
-		//System.out.println(srcname+" "+destname);
-		try	{
+		try {
 			System.out.println(filteredEndpoints.getClass());
-			System.out.println(filteredEndpoints.get("filteredendpoints")+" "+filteredEndpoints.keySet());
+			System.out.println(filteredEndpoints.get("filteredendpoints") + " " + filteredEndpoints.keySet());
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
 			headers.add("access-control-allow-origin", rootUrl);
 			headers.add("access-control-allow-credentials", "true");
-			if(Utilities.isSessionValid(session,credentials)) {
-//				if(validateCredentials==null||endPoints==null||refreshToken==null) {
-//					init();
-//				}			
-				String body="",sourceBody="",destBody="",endpnts="",conId;
-				conId=credentials.getUserId()+"_"+credentials.getSrcName()+"_"+credentials.getDestName()
-						+"_"+String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
-				for(Map.Entry<String,String> mp:credentials.getSrcToken().entrySet()) {
-					sourceBody+="{\"key\":\""+String.valueOf(mp.getKey())+"\","
-							+ "\"value\":\""+String.valueOf(mp.getValue())+"\"},";
+			if (Utilities.isSessionValid(session, credentials)) {
+				// if(validateCredentials==null||endPoints==null||refreshToken==null) {
+				// init();
+				// }
+				JsonArray sourceBody,destBody;
+				String endpnts = "", conId;
+				
+				sourceBody = new JsonArray();
+				destBody =  new JsonArray();
+				
+				conId = credentials.getUserId() + "_" + credentials.getSrcName() + "_" + credentials.getDestName() + "_"
+						+ String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
+				for (Map.Entry<String, String> mp : credentials.getSrcToken().entrySet()) {
+					JsonObject tmp = new JsonObject();
+					tmp.addProperty("key", String.valueOf(mp.getKey()));
+					tmp.addProperty("value", String.valueOf(mp.getValue()));
+					sourceBody.add(tmp);
 				}
-				for(Map.Entry<String,String> mp:credentials.getDestToken().entrySet()) {
-					destBody+="{\"key\":\""+String.valueOf(mp.getKey())+"\","
-							+ "\"value\":\""+String.valueOf(mp.getValue())+"\"},";
+				for (Map.Entry<String, String> mp : credentials.getDestToken().entrySet()) {
+					JsonObject tmp = new JsonObject();
+					tmp.addProperty("key", String.valueOf(mp.getKey()));
+					tmp.addProperty("value", String.valueOf(mp.getValue()));
+					destBody.add(tmp);
 				}
-				Gson gson =new Gson();
+				Gson gson = new Gson();
 				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
 						.getAsJsonObject().get("endpoints").getAsJsonArray();
 				ConnObj currobj = new ConnObj();
-				for(JsonElement obj:endpoints) {
-					endpnts+="\""+obj.getAsString()+"\",";
+				for (JsonElement obj : endpoints) {
+					endpnts += obj.getAsString() + ",";
 					currobj.setEndPoints(obj.getAsString());
 				}
 				currobj.setConnectionId(conId);
 				currobj.setSourceName(credentials.getSrcName());
 				currobj.setDestName(credentials.getDestName());
 				credentials.setCurrConnId(currobj);
-				endpnts = endpnts.substring(0, endpnts.length()-1).toLowerCase();
+				endpnts = endpnts.substring(0, endpnts.length() - 1).toLowerCase();
 				System.out.println(sourceBody);
 				System.out.println(destBody);
-				if((!sourceBody.isEmpty())&&(!destBody.isEmpty())) {
-					sourceBody=sourceBody.substring(0,sourceBody.length()-1);
-					destBody=destBody.substring(0,destBody.length()-1);
+				
+
+				
+				JsonObject jsonObj;
+
+				JsonArray endPointsArray = new JsonArray();
+				endPointsArray.add(endpnts);
+
+				JsonArray eachArray = new JsonArray();
+
+				JsonObject values = new JsonObject();
+				values.addProperty("sourceName", credentials.getSrcName().toLowerCase());
+				values.addProperty("destName", credentials.getDestName().toLowerCase());
+				values.addProperty("connectionId", conId.toLowerCase());
+				values.add("endPoints", endPointsArray);
+
+				eachArray.add(values);
+
+				JsonObject eachObj = new JsonObject();
+				eachObj.add("$each", eachArray);
+
+				jsonObj = new JsonObject();
+				jsonObj.add("srcdestId", eachObj);
+
+				if (credentials.isUserExist()) {
+					// userCredentials
+					JsonObject addToSetObj = new JsonObject();
+					addToSetObj.add("$addToSet", jsonObj);
+					postpatchMetaData(addToSetObj, "user", "PATCH");
+				} else {
+					// userCredentials
+					jsonObj.addProperty("_id", credentials.getUserId().toLowerCase());
+					postpatchMetaData(jsonObj, "user", "POST");
 				}
-				if(credentials.isUserExist())
-				{
-					//sourceCredentials
-					body= "{\"credentials\":["+sourceBody+"]}";
-					
-					postpatchMetaData(body,"source","PATCHapp");
-					
-					//userCredentials
-					body = "{\"$addToSet\":"
-							+ "{\"srcdestId\":"
-							+ "{\"$each\":["
-							+ "{\"sourceName\": \""+credentials.getSrcName().toLowerCase()+"\","
-							+ "\"destName\":\""+credentials.getDestName().toLowerCase()+"\","
-							+ "\"connectionId\": \""+conId.toLowerCase()+"\","
-							+ "\"endPoints\":["+endpnts+"]}"
-							+ "]}}}";
-					
-					postpatchMetaData(body,"user","PATCH");
-					
-					//destCredentials
-					body= "{\"credentials\":["+destBody+"]}";
-					
-					postpatchMetaData(body,"destination","PATCHapp");
-					
-				}
-				else {
-					//userCredentials
-					body = "{ \"_id\" : \""+credentials.getUserId().toLowerCase()+"\","
-							+ "\"srcdestId\" : [ "
-							+ "{ \"sourceName\" : \""+credentials.getSrcName().toLowerCase()+"\" , "
-							+ "\"destName\" : \""+credentials.getDestName().toLowerCase()+"\","
-							+ "\"connectionId\":\""+conId.toLowerCase()+"\","
-							+ "\"endPoints\":["+endpnts+"]}"
-							+ "]}";
-					
-					postpatchMetaData(body,"user","POST");
-					
-					//sourceCredentials
-					body= "{\n" + 
-							"	\"_id\" : \""+credentials.getUserId().toLowerCase()
-							+"_"+credentials.getSrcName().toLowerCase()+"\",\n" + 
-							"	\"credentials\":["+sourceBody+"]\n" +
-							"}";
-					 
-					postpatchMetaData(body,"source","POST");
-					
-					//destCredentials
-					body= "{\n" + 
-							"	\"_id\" : \""+credentials.getUserId().toLowerCase()
-							+"_"+credentials.getDestName().toLowerCase()
-							+"_"+credentials.getDestToken().get("database_name")+"\",\n" +
-							"				\"credentials\":["+destBody+"]\n" + 
-							"}";
-					
-					postpatchMetaData(body,"destination","POST");
-				}
-				//ret = data(credentials.getSrcName());
-				//System.out.println(ret.getBody());
-				String url=baseUrl;
+
+				// sourceCredentials
+				jsonObj = new JsonObject();
+				jsonObj.addProperty("_id",
+						credentials.getUserId().toLowerCase() + "_" + credentials.getSrcName().toLowerCase());
+				jsonObj.add("credentials", sourceBody);
+				postpatchMetaData(jsonObj, "source", "POST");
+
+				// destCredentials
+				jsonObj = new JsonObject();
+				
+				jsonObj.addProperty("_id",
+						credentials.getUserId().toLowerCase() + "_" + credentials.getDestName().toLowerCase() + "_"
+								+ credentials.getDestToken().get("database_name"));
+				jsonObj.add("credentials", destBody);
+				postpatchMetaData(jsonObj, "destination", "POST");
+
+				// ret = data(credentials.getSrcName());
+				// System.out.println(ret.getBody());
+				String url = baseUrl;
 				headers.setLocation(URI.create(url));
-				return new ResponseEntity<String>("",headers ,HttpStatus.OK);
-			}
-			else {
+				return new ResponseEntity<String>("", headers, HttpStatus.OK);
+			} else {
 				System.out.println("Session expired!");
-				String url=baseUrl;
+				String url = baseUrl;
 				headers.setLocation(URI.create(url));
-				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.OK);
+				return new ResponseEntity<String>("Sorry! Your session has expired", headers, HttpStatus.OK);
 			}
-		}
-		catch(Exception e)
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return ret;
 	}
-	private void postpatchMetaData(String body,String type,String method)
-	   {
-	       try {
-	           ResponseEntity<String> out = null;
-	           String url="";
-	           String appname = "";
-	           RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-	           HttpMethod met=null;
-	           System.out.println(body);
-	           String filter="";
-	           if(method.equalsIgnoreCase("POST")) {
-	               url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials";
-	               met = HttpMethod.POST;
-	           }                
-	           else if(method.equalsIgnoreCase("PATCH")) {
-	               url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase();
-	               met = HttpMethod.PATCH;
-	           }
-	           else if(method.equalsIgnoreCase("PATCHapp")) {
-	        	   url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase()+"_"+appname.toLowerCase();
-	        	   if(type.equalsIgnoreCase("source")) {
-	        		   appname = credentials.getSrcName();	        		   
-	        	   }
-	        	   else {
-	        		   appname = credentials.getDestName();
-	        		   url +="_"+credentials.getDestToken().get("database_name");
-	        	   }	        	   
-	        	   met = HttpMethod.PATCH;
-	           }
-	           System.out.println(url+"\n"+met);
-	           HttpHeaders headers =new HttpHeaders();
-	           headers.add("Content-Type","application/json") ;
-	           headers.add("Cache-Control", "no-cache");
-	           headers.add("access-control-allow-origin", rootUrl);
-	            headers.add("access-control-allow-credentials", "true");
-	           HttpEntity<?> httpEntity = new HttpEntity<Object>(body,headers);
-	           out = restTemplate.exchange(url, met, httpEntity, String.class,filter);
-	           if (out.getStatusCode().is2xxSuccessful()) {
-	               credentials.setUserExist(true);
-	            }
-	       }
-	       catch(Exception e) {
-	           e.printStackTrace();
-	           System.out.println("source.postpatchmetadata");
-	       }
-	       return;    
-	   }
+	private void postpatchMetaData(JsonObject body, String type, String method) {
+		try {
+
+			System.out.println("postpatchMetaData:\nBody: "+body.toString()+"\nType: "+type+"\nMethod"+method);
+			ResponseEntity<String> out = null;
+			String url = "";
+			String appname = "";
+			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+			HttpMethod met = null;
+			String filter = "";
+			if (method.equalsIgnoreCase("POST")) {
+				url = mongoUrl + "/credentials/" + type.toLowerCase() + "Credentials";
+				met = HttpMethod.POST;
+			} else if (method.equalsIgnoreCase("PATCH")) {
+				url = mongoUrl + "/credentials/" + type.toLowerCase() + "Credentials/"
+						+ credentials.getUserId().toLowerCase();
+				met = HttpMethod.PATCH;
+			} 
+			System.out.println(url + "\n" + met);
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("Content-Type", "application/json");
+			headers.add("Cache-Control", "no-cache");
+			headers.add("access-control-allow-origin", rootUrl);
+			headers.add("access-control-allow-credentials", "true");
+			HttpEntity<?> httpEntity = new HttpEntity<Object>(body.toString(), headers);
+			out = restTemplate.exchange(url, met, httpEntity, String.class, filter);
+			if (out.getStatusCode().is2xxSuccessful()) {
+				credentials.setUserExist(true);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("source.postpatchmetadata");
+		}
+		return;
+	}
+
+//	@RequestMapping(method = RequestMethod.POST, value = "/createdatasource")
+//	private ResponseEntity<String> createDataSource(@RequestParam Map<String,String> filteredEndpoints,HttpSession session)
+//	{		
+//		ResponseEntity<String> ret = null;
+//		//System.out.println(srcname+" "+destname);
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", rootUrl);
+//		headers.add("access-control-allow-credentials", "true");
+//		try	{
+//			System.out.println(filteredEndpoints.getClass());
+//			System.out.println(filteredEndpoints.get("filteredendpoints")+" "+filteredEndpoints.keySet());
+//			if(Utilities.isSessionValid(session,credentials)) {
+////				if(validateCredentials==null||endPoints==null||refreshToken==null) {
+////					init();
+////				}			
+//				String body="",sourceBody="",destBody="",endpnts="",conId;
+//				conId=credentials.getUserId()+"_"+credentials.getSrcName()+"_"+credentials.getDestName()
+//						+"_"+String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
+//				for(Map.Entry<String,String> mp:credentials.getSrcToken().entrySet()) {
+//					sourceBody+="{\"key\":\""+String.valueOf(mp.getKey())+"\","
+//							+ "\"value\":\""+String.valueOf(mp.getValue())+"\"},";
+//				}
+//				for(Map.Entry<String,String> mp:credentials.getDestToken().entrySet()) {
+//					destBody+="{\"key\":\""+String.valueOf(mp.getKey())+"\","
+//							+ "\"value\":\""+String.valueOf(mp.getValue())+"\"},";
+//				}
+//				Gson gson =new Gson();
+//				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
+//						.getAsJsonObject().get("endpoints").getAsJsonArray();
+//				ConnObj currobj = new ConnObj();
+//				for(JsonElement obj:endpoints) {
+//					endpnts+="\""+obj.getAsString()+"\",";
+//					currobj.setEndPoints(obj.getAsString());
+//				}
+//				currobj.setConnectionId(conId);
+//				currobj.setSourceName(credentials.getSrcName());
+//				currobj.setDestName(credentials.getDestName());
+//				credentials.setCurrConnId(currobj);
+//				endpnts = endpnts.substring(0, endpnts.length()-1).toLowerCase();
+//				System.out.println(sourceBody);
+//				System.out.println(destBody);
+//				if((!sourceBody.isEmpty())&&(!destBody.isEmpty())) {
+//					sourceBody=sourceBody.substring(0,sourceBody.length()-1);
+//					destBody=destBody.substring(0,destBody.length()-1);
+//				}
+//				if(credentials.isUserExist())
+//				{
+//					//sourceCredentials
+//					body= "{\"credentials\":["+sourceBody+"]}";
+//					
+//					postpatchMetaData(body,"source","PATCHapp");
+//					
+//					//userCredentials
+//					body = "{\"$addToSet\":"
+//							+ "{\"srcdestId\":"
+//							+ "{\"$each\":["
+//							+ "{\"sourceName\": \""+credentials.getSrcName().toLowerCase()+"\","
+//							+ "\"destName\":\""+credentials.getDestName().toLowerCase()+"\","
+//							+ "\"connectionId\": \""+conId.toLowerCase()+"\","
+//							+ "\"endPoints\":["+endpnts+"]}"
+//							+ "]}}}";
+//					
+//					postpatchMetaData(body,"user","PATCH");
+//					
+//					//destCredentials
+//					body= "{\"credentials\":["+destBody+"]}";
+//					
+//					postpatchMetaData(body,"destination","PATCHapp");
+//					
+//				}
+//				else {
+//					//userCredentials
+//					body = "{ \"_id\" : \""+credentials.getUserId().toLowerCase()+"\","
+//							+ "\"srcdestId\" : [ "
+//							+ "{ \"sourceName\" : \""+credentials.getSrcName().toLowerCase()+"\" , "
+//							+ "\"destName\" : \""+credentials.getDestName().toLowerCase()+"\","
+//							+ "\"connectionId\":\""+conId.toLowerCase()+"\","
+//							+ "\"endPoints\":["+endpnts+"]}"
+//							+ "]}";
+//					
+//					postpatchMetaData(body,"user","POST");
+//					
+//					//sourceCredentials
+//					body= "{\n" + 
+//							"	\"_id\" : \""+credentials.getUserId().toLowerCase()
+//							+"_"+credentials.getSrcName().toLowerCase()+"\",\n" + 
+//							"	\"credentials\":["+sourceBody+"]\n" +
+//							"}";
+//					 
+//					postpatchMetaData(body,"source","POST");
+//					
+//					//destCredentials
+//					body= "{\n" + 
+//							"	\"_id\" : \""+credentials.getUserId().toLowerCase()
+//							+"_"+credentials.getDestName().toLowerCase()
+//							+"_"+credentials.getDestToken().get("database_name")+"\",\n" +
+//							"				\"credentials\":["+destBody+"]\n" + 
+//							"}";
+//					
+//					postpatchMetaData(body,"destination","POST");
+//				}
+//				//ret = data(credentials.getSrcName());
+//				//System.out.println(ret.getBody());
+//				String url=baseUrl;
+//				headers.setLocation(URI.create(url));
+//				return new ResponseEntity<String>("",headers ,HttpStatus.OK);
+//			}
+//			else {
+//   				System.out.println("Session expired!");
+//    			JsonObject respBody = new JsonObject();
+//    			respBody.addProperty("message", "Sorry! Your session has expired");
+//				respBody.addProperty("status", "33");
+//				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+//			}
+//		}
+//		catch(Exception e)
+//		{
+//			e.printStackTrace();
+//		}
+//		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+//	}
+//	private void postpatchMetaData(String body,String type,String method)
+//	   {
+//	       try {
+//	           ResponseEntity<String> out = null;
+//	           String url="";
+//	           String appname = "";
+//	           RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+//	           HttpMethod met=null;
+//	           System.out.println(body);
+//	           String filter="";
+//	           if(method.equalsIgnoreCase("POST")) {
+//	               url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials";
+//	               met = HttpMethod.POST;
+//	           }                
+//	           else if(method.equalsIgnoreCase("PATCH")) {
+//	               url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase();
+//	               met = HttpMethod.PATCH;
+//	           }
+//	           else if(method.equalsIgnoreCase("PATCHapp")) {
+//	        	   url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase()+"_"+appname.toLowerCase();
+//	        	   if(type.equalsIgnoreCase("source")) {
+//	        		   appname = credentials.getSrcName();	        		   
+//	        	   }
+//	        	   else {
+//	        		   appname = credentials.getDestName();
+//	        		   url +="_"+credentials.getDestToken().get("database_name");
+//	        	   }	        	   
+//	        	   met = HttpMethod.PATCH;
+//	           }
+//	           System.out.println(url+"\n"+met);
+//	           HttpHeaders headers =new HttpHeaders();
+//	           headers.add("Content-Type","application/json") ;
+//	           headers.add("Cache-Control", "no-cache");
+//	           headers.add("access-control-allow-origin", rootUrl);
+//	            headers.add("access-control-allow-credentials", "true");
+//	           HttpEntity<?> httpEntity = new HttpEntity<Object>(body,headers);
+//	           out = restTemplate.exchange(url, met, httpEntity, String.class,filter);
+//	           if (out.getStatusCode().is2xxSuccessful()) {
+//	               credentials.setUserExist(true);
+//	            }
+//	       }
+//	       catch(Exception e) {
+//	           e.printStackTrace();
+//	           System.out.println("source.postpatchmetadata");
+//	       }
+//	       return;    
+//	   }
 	
 	@RequestMapping(value="/getconnectionids")
 	private ResponseEntity<String> getConnectionIds(HttpSession session) {
@@ -546,10 +703,11 @@ public class DataSourceController {
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}
 			else {
-				System.out.println("Session expired!");
-				String url=homeUrl;
-				headers.setLocation(URI.create(url));
-				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+   				System.out.println("Session expired!");
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
 			}			
 		}
 		catch(HttpClientErrorException e) {
@@ -564,7 +722,7 @@ public class DataSourceController {
 		catch(Exception e){
 			e.printStackTrace();
 		}
-		return null;
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 	
 }

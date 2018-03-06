@@ -31,6 +31,10 @@ public class ConnObj implements Serializable {
 	public void setEndPoints(String endPoint) {
 		this.endPoints.add(endPoint);
 	}
+	public void setEndPoints(List<String> endPoint) {
+		this.endPoints.clear();
+		this.endPoints.addAll(endPoint);
+	}
 	@Override
 	public String toString() {
 		System.out.println();

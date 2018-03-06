@@ -1,8 +1,7 @@
 package com.aptus.blackbox.controller;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
@@ -21,9 +20,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.Service.Credentials;
-import com.aptus.blackbox.index.DestObject;
-import com.aptus.blackbox.index.Parser;
-import com.aptus.blackbox.index.SrcObject;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
@@ -85,10 +81,27 @@ public class home {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 		//store in credentials
 	}
-//	@RequestMapping(value="/signup")
-//	public void signup(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
+	
+//	@RequestMapping(method = RequestMethod.POST,value="/signup")
+//	public ResponseEntity<String> signup(@RequestParam Map<String,String> userInfo)
 //	{
-//		System.out.println(session.getId());
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", rootUrl);
+//        headers.add("access-control-allow-credentials", "true");
+//		try {
+//			String userId = userInfo.get("userId");
+//			JsonObject respBody = new JsonObject();
+//			if(!existUser(userId)) {
+//				respBody.addProperty("status", "61");
+//				respBody.addProperty("Message", "User already exists");
+//				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(null);
+//			}
+//			
+//		}
+//		catch(Exception e){
+//			
+//		}
 //	}
 	
 	
@@ -105,7 +118,7 @@ public class home {
 			//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 			String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
 			String url;
-			url = mongoUrl+"/credentials/userCredentials?filter=" + filter;
+			url = mongoUrl+"/credentials/userInfo?filter=" + filter;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			HttpHeaders headers = new HttpHeaders();
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -131,13 +144,13 @@ public class home {
 	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdest")
 	private ResponseEntity<String> getSrcDest(HttpSession session) {
 		ResponseEntity<String> s=null;
+		HttpHeaders headers = new HttpHeaders();
+		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+        headers.add("access-control-allow-credentials", "true");
 		try {
-			System.out.println(session.getId());
-			HttpHeaders headers = new HttpHeaders();
-			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", rootUrl);
-            headers.add("access-control-allow-credentials", "true");
+			System.out.println(session.getId());			
 			if(Utilities.isSessionValid(session,credentials)) {
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
@@ -151,22 +164,22 @@ public class home {
 			}
 			else {
 				System.out.println("Session expired!");
-				String url=homeUrl;
-				headers.setLocation(URI.create(url));
-				s = new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
-		
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
 			}
 		}
 		catch(Exception e) {
 			e.printStackTrace();
 		}
-		return s;
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 	
 	
 	@RequestMapping(value="/filterendpoints")
-	private ResponseEntity<String> filterendpoints(HttpSession session){
-		
+	private ResponseEntity<String> filterendpoints(HttpSession session)
+	{
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", rootUrl);
@@ -184,17 +197,18 @@ public class home {
 			}
 			else
 			{
-				System.out.println("Session expired!");			
-				String url=homeUrl;
-				headers.setLocation(URI.create(url));
-				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+				System.out.println("Session expired!");
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
 			}
 		}
 		catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return new ResponseEntity<String>("Error",headers ,HttpStatus.BAD_GATEWAY);
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 		
 }

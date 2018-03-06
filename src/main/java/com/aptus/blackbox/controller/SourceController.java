@@ -60,11 +60,11 @@ public class SourceController {
 	@RequestMapping(method = RequestMethod.GET, value = "/authsource")
 	private ResponseEntity<String> source(HttpSession session) {
 		ResponseEntity<String> ret = null;
-		try {
-			HttpHeaders headers = new HttpHeaders();
-			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", rootUrl);
-            headers.add("access-control-allow-credentials", "true");
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+        headers.add("access-control-allow-credentials", "true");
+		try {			
 			if(Utilities.isSessionValid(session,credentials)) {
 				SrcObject obj = init();
 				if (obj.getSteps().compareTo("TWO") == 0) {
@@ -77,15 +77,16 @@ public class SourceController {
 			}
 			else {
 				System.out.println("Session expired!");
-				String url=baseUrl;
-				headers.setLocation(URI.create(url));
-				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("source.source");
 		}
-		return ret;
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 	private SrcObject init() {			
 		SrcObject obj = credentials.getSrcObj();
