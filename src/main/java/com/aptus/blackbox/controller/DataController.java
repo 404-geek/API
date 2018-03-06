@@ -118,69 +118,7 @@ public class DataController {
 		return null;
 	}
 	
-	@RequestMapping(value="/getconnectionids")
-	private ResponseEntity<String> getConnectionIds(HttpSession session) {
-		String dataSource=null;
-		HttpHeaders headers = new HttpHeaders();			
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
-        headers.add("access-control-allow-credentials", "true");
-		try {
-			if(Utilities.isSessionValid(session,credentials)) {
-				ResponseEntity<String> out = null;
-				RestTemplate restTemplate = new RestTemplate();
-				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
-				String url = mongoUrl+"/credentials/userCredentials/"+credentials.getUserId();
-				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				HttpHeaders header = new HttpHeaders();
-				// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-				header.add("Cache-Control", "no-cache");
-				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
-				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				System.out.println(out.getBody());
-				Gson gson=new Gson();								
-				JsonObject respBody = new JsonObject();
-				respBody.addProperty("status", "200");
-				respBody.add("data",gson.fromJson(out.getBody(), JsonElement.class));
-				
-				ConnObj conObj = new ConnObj();
-				JsonElement data = gson.fromJson(out.getBody(), JsonElement.class);
-				
-			    url = mongoUrl+"/credentials/SrcDstlist/srcdestlist";
-			    uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				out  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-				respBody.add("images",gson.fromJson(out.getBody(), JsonElement.class));
-				
-				
-				JsonArray srcdestId = data.getAsJsonObject().get("srcdestId").getAsJsonArray();
-				for(JsonElement ele:srcdestId) {
-					conObj = gson.fromJson(ele, ConnObj.class);
-					credentials.setConnectionIds(conObj.getConnectionId(), conObj);
-				}
-				//System.out.println(credentials.getConnectionIds().values());
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			}
-			else {
-				System.out.println("Session expired!");
-				String url=homeUrl;
-				headers.setLocation(URI.create(url));
-				return new ResponseEntity<String>("Sorry! Your session has expired",headers ,HttpStatus.MOVED_PERMANENTLY);
-			}			
-		}
-		catch(HttpClientErrorException e) {
-			System.out.println(e.getMessage());
-			if(e.getMessage().startsWith("4")) {
-	            JsonObject respBody = new JsonObject();
-				respBody.addProperty("data", "null");
-				respBody.addProperty("status", "200");
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			}
-		}
-		catch(Exception e){
-			e.printStackTrace();
-		}
-		return null;
-	}
+	
 		
 	
 

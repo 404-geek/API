@@ -186,6 +186,23 @@ $(document).ready(function () {
 					}
 				});
 			});
+
+			/*$("#submitFilters").click(function () {
+				$.ajax({
+					crossOrigin: true,
+					type: "GET",
+					url: "http://localhost:8080/createdatasource",
+					cache: false,
+					xhrFields: {
+						withCredentials: true
+					},
+					success: function (data) {
+						window.location.href = "connections.html"
+					}
+				});
+
+			});
+*/
 			$("#submitFilters").click(function(event){
 				event.preventDefault();
 				var filters = $("#filter-modal-body input:checkbox:checked").map(function(){

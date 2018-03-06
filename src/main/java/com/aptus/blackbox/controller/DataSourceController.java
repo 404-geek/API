@@ -502,6 +502,7 @@ public class DataSourceController {
 	       }
 	       return;    
 	   }
+	
 	@RequestMapping(value="/getconnectionids")
 	private ResponseEntity<String> getConnectionIds(HttpSession session) {
 		String dataSource=null;
