@@ -288,14 +288,6 @@ public class DataSourceController {
                 String url = mongoUrl + "/credentials/userCredentials/" + credentials.getUserId();
                 System.out.println("DeleteDataSource");
                 System.out.println(url);
-                // String body="{ \n" +
-                // " \"$pull\": {\"srcdestId\":{\"connectionId\":
-                // \"suku_facebook_mysql_1519808724244\"}} \n" +
-                // "}";
-                // body.add("$pull",new JsonObject().add("srcdestId", new
-                // JsonObject().addProperty("connectionId","suku_facebook_mysql_1519808724244")
-                // ));
-                // body.addProperty(property, value);
                 JsonObject obj1 = new JsonObject();
                 obj1.addProperty("connectionId", connId);
                 JsonObject obj2 = new JsonObject();
@@ -387,30 +379,20 @@ public class DataSourceController {
 				endpnts = endpnts.substring(0, endpnts.length() - 1).toLowerCase();
 				System.out.println(sourceBody);
 				System.out.println(destBody);
-				
-
-				
 				JsonObject jsonObj;
-
 				JsonArray endPointsArray = new JsonArray();
 				endPointsArray.add(endpnts);
-
 				JsonArray eachArray = new JsonArray();
-
 				JsonObject values = new JsonObject();
 				values.addProperty("sourceName", credentials.getSrcName().toLowerCase());
 				values.addProperty("destName", credentials.getDestName().toLowerCase());
 				values.addProperty("connectionId", conId.toLowerCase());
 				values.add("endPoints", endPointsArray);
-
 				eachArray.add(values);
-
 				JsonObject eachObj = new JsonObject();
 				eachObj.add("$each", eachArray);
-
 				jsonObj = new JsonObject();
 				jsonObj.add("srcdestId", eachObj);
-
 				if (credentials.isUserExist()) {
 					// userCredentials
 					JsonObject addToSetObj = new JsonObject();
@@ -421,23 +403,19 @@ public class DataSourceController {
 					jsonObj.addProperty("_id", credentials.getUserId().toLowerCase());
 					postpatchMetaData(jsonObj, "user", "POST");
 				}
-
 				// sourceCredentials
 				jsonObj = new JsonObject();
 				jsonObj.addProperty("_id",
 						credentials.getUserId().toLowerCase() + "_" + credentials.getSrcName().toLowerCase());
 				jsonObj.add("credentials", sourceBody);
 				postpatchMetaData(jsonObj, "source", "POST");
-
 				// destCredentials
-				jsonObj = new JsonObject();
-				
+				jsonObj = new JsonObject();				
 				jsonObj.addProperty("_id",
 						credentials.getUserId().toLowerCase() + "_" + credentials.getDestName().toLowerCase() + "_"
 								+ credentials.getDestToken().get("database_name"));
 				jsonObj.add("credentials", destBody);
 				postpatchMetaData(jsonObj, "destination", "POST");
-
 				// ret = data(credentials.getSrcName());
 				// System.out.println(ret.getBody());
 				String url = baseUrl;

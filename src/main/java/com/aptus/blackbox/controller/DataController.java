@@ -569,7 +569,7 @@ public class DataController {
 		headers.add("access-control-allow-credentials", "true");
     	try {
 	    		if(Utilities.isSessionValid(session,credentials)) {
-	    			String name = credentials.getDestName();
+	    			String name = destId;
 	    			String filter = "{\"_id\":{\"$regex\":\".*"+name.toLowerCase() + ".*\"}}";					
 	    			String url = mongoUrl+"/credentials/destinationCredentials?filter=" + filter;		 
 	    			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
@@ -578,8 +578,9 @@ public class DataController {
 	    			RestTemplate restTemplate = new RestTemplate();
 	    			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
 	    			JsonObject respBody = new JsonObject();
+	    			JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
 	    			respBody.addProperty("status", "200");
-    				respBody.add("data", new Gson().fromJson(out.getBody(), JsonElement.class));
+    				respBody.add("data", obj.get("_embedded").getAsJsonArray());
 	    			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 	    		}
 	    		else {

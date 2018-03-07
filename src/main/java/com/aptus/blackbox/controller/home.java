@@ -1,6 +1,7 @@
 package com.aptus.blackbox.controller;
 
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -60,16 +62,29 @@ public class home {
 			headers.add("Cache-Control", "no-cache");
 			headers.add("access-control-allow-origin", rootUrl);
             headers.add("access-control-allow-credentials", "true");
-			if(existUser(user)){
+			JsonObject respBody = new JsonObject();
+			if(existUser(user,"userInfo")){
+				String url = mongoUrl+"/credentials/userInfo/"+user;
+				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+				HttpHeaders header = new HttpHeaders();
+				// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
+				RestTemplate restTemplate = new RestTemplate();
+				ResponseEntity<String> out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
+				JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
+				if(!obj.get("password").toString().equals(pass)) {
+					respBody.addProperty("id", user);
+					respBody.addProperty("status", "404");
+					return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
+				}
+				existUser(user, "userCredentials");
 				credentials.setSessionId(user,session.getId());
 				System.out.println(session.getId());
-				JsonObject respBody = new JsonObject();
 				respBody.addProperty("id", user);
 				respBody.addProperty("status", "200");
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}
 			else{
-				JsonObject respBody = new JsonObject();
 				respBody.addProperty("id", user);
 				respBody.addProperty("status", "404");
 				return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
@@ -82,34 +97,66 @@ public class home {
 		//store in credentials
 	}
 	
-//	@RequestMapping(method = RequestMethod.POST,value="/signup")
-//	public ResponseEntity<String> signup(@RequestParam Map<String,String> userInfo)
-//	{
-//		HttpHeaders headers = new HttpHeaders();
-//		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", rootUrl);
-//        headers.add("access-control-allow-credentials", "true");
-//		try {
-//			String userId = userInfo.get("userId");
-//			JsonObject respBody = new JsonObject();
-//			if(!existUser(userId)) {
-//				respBody.addProperty("status", "61");
-//				respBody.addProperty("Message", "User already exists");
-//				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(null);
-//			}
-//			
-//		}
-//		catch(Exception e){
-//			
-//		}
-//	}
+	@RequestMapping(value="/signup")
+	private ResponseEntity<String> signup(@RequestParam HashMap<String,String> params)
+	{
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+        headers.add("access-control-allow-credentials", "true");
+		try {			
+			System.out.println(params);	
+			String userId=params.get("_id");
+			JsonObject respBody = new JsonObject();			
+        	headers.add("Content-Type", "application/json");
+			if(existUser(userId,"userInfo")){			
+				System.out.println("User ID Exists");
+				respBody.addProperty("id", userId);
+				respBody.addProperty("status", "61");
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			}
+			else{
+				System.out.println("User ID Not Exists");
+				JsonObject body = new JsonObject();
+				for(Map.Entry<String, String> entry : params.entrySet()) {
+				    body.addProperty(entry.getKey(),entry.getValue());
+				}				
+				ResponseEntity<String> out = null;
+				String url = "";				
+				RestTemplate restTemplate = new RestTemplate();
+				url = mongoUrl + "/credentials/userInfo";				
+				System.out.println(url);
+				HttpEntity<?> httpEntity = new HttpEntity<Object>(body.toString(),headers);
+				out = restTemplate.exchange(url, HttpMethod.POST , httpEntity, String.class);
+				if (out.getStatusCode().is2xxSuccessful()) {
+					System.out.println("Pushed successfully!");
+				}				
+				respBody.addProperty("id",userId);
+				respBody.addProperty("status", "200");
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			}
+		} 
+		catch(HttpClientErrorException e) {
+            JsonObject respBody = new JsonObject();
+            respBody.addProperty("data", "Error");
+            respBody.addProperty("status", "404");
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+        }
+		catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+		//store in credentials
+	}
 	
 	
 	/* Input:user_id
 	 * Takes user_id as input, checks if user already exists and stores true/false accordingly in credentials.
 	 * Return type: void 
 	 */
-	private boolean existUser(String userId) {
+	private boolean existUser(String userId,String type) {
 		try {
 			boolean ret=false;
 			ResponseEntity<String> out = null;
@@ -118,7 +165,7 @@ public class home {
 			//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 			String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
 			String url;
-			url = mongoUrl+"/credentials/userInfo?filter=" + filter;
+			url = mongoUrl+"/credentials/"+type+"?filter=" + filter;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			HttpHeaders headers = new HttpHeaders();
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -130,8 +177,9 @@ public class home {
 			System.out.println(out.getBody());
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
-			credentials.setUserExist(jobj.get("_returned").getAsInt() == 0 ? false : true);
-			ret = credentials.isUserExist();
+			ret=jobj.get("_returned").getAsInt() == 0 ? false : true;
+			if(type.equalsIgnoreCase("usercredentials"))
+				credentials.setUserExist(ret);
 			return ret;
 		} catch (Exception e) {
 			e.printStackTrace();
