@@ -72,11 +72,11 @@ public class home {
 				RestTemplate restTemplate = new RestTemplate();
 				ResponseEntity<String> out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
 				JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
-				if(!obj.get("password").toString().equals(pass)) {
-					respBody.addProperty("id", user);
-					respBody.addProperty("status", "404");
-					return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
-				}
+//				if(!obj.get("password").toString().equals(pass)) {
+//					respBody.addProperty("id", user);
+//					respBody.addProperty("status", "404");
+//					return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
+//				}
 				existUser(user, "userCredentials");
 				credentials.setSessionId(user,session.getId());
 				System.out.println(session.getId());

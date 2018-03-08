@@ -121,7 +121,7 @@ public class DataSourceController {
 					credentials.setUsrDestExist(jobj.get("_returned").getAsInt() == 0 ? false : true);
 					System.out.println(url+" : "+credentials.isUsrDestExist());
 				}
-				out = initialiser(type,database_name,db_username,db_password,server_host,server_port);
+				return initialiser(type,database_name,db_username,db_password,server_host,server_port);
 			}
 			else {
 				System.out.println("Session expired!");
@@ -140,14 +140,15 @@ public class DataSourceController {
 	private ResponseEntity<String> initialiser(String type,String database_name,String db_username,String db_password,String server_host,String server_port) {
 		//add destination fetch and validation
 		ResponseEntity<String> out = null;
-		try {
-			HttpHeaders headers = new HttpHeaders();
-			headers = new HttpHeaders();
-			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", rootUrl);
-			headers.add("access-control-allow-credentials", "true");
+		HttpHeaders headers = new HttpHeaders();
+		headers = new HttpHeaders();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-credentials", "true");
+		try {			
 			if (credentials.isUsrSrcExist() || credentials.isUsrDestExist()) {				
-				if(type.equalsIgnoreCase("source")) {					
+				if(type.equalsIgnoreCase("source")) {
+					credentials.setDestValid(false);
 					fetchSrcCred(type);
 					System.out.println(srcObj+" "+credentials);
 					out = Utilities.token(srcObj.getValidateCredentials(),credentials.getSrcToken());
@@ -157,6 +158,7 @@ public class DataSourceController {
 						credentials.setSrcValid(true);
 						String url=homeUrl;
 						headers.setLocation(URI.create(url+"/close.html"));
+						//return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).headers(headers).body(null);
 						return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
 						//return  new ResponseEntity<String>("valid", null, HttpStatus.CREATED);
 						// tick
@@ -196,11 +198,12 @@ public class DataSourceController {
 				headers.setLocation(URI.create(url));
 				out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
 			}
+			return out;
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("home.init");
 		}
-		return out;
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 
 	private void fetchSrcCred(String type) {
@@ -365,6 +368,8 @@ public class DataSourceController {
 					destBody.add(tmp);
 				}
 				Gson gson = new Gson();
+//				String schedule = filteredEndpoints.get("schedule");
+//				String period = filteredEndpoints.get("period");
 				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
 						.getAsJsonObject().get("endpoints").getAsJsonArray();
 				ConnObj currobj = new ConnObj();
@@ -375,6 +380,8 @@ public class DataSourceController {
 				currobj.setConnectionId(conId);
 				currobj.setSourceName(credentials.getSrcName());
 				currobj.setDestName(credentials.getDestName());
+//				currobj.setPeriod(period);
+//				currobj.setScheduled(schedule);
 				credentials.setCurrConnId(currobj);
 				endpnts = endpnts.substring(0, endpnts.length() - 1).toLowerCase();
 				System.out.println(sourceBody);

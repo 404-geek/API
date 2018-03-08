@@ -72,6 +72,7 @@ public class DataController {
 			@RequestParam(value ="db_password") String db_password,
 			@RequestParam(value ="server_host") String server_host,
 			@RequestParam(value ="server_port") String server_port) throws SQLException { // @RequestParam("data") Map<String,String> data
+		credentials.setDestValid(false);
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", rootUrl);

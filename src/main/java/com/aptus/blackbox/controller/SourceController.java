@@ -59,6 +59,7 @@ public class SourceController {
 
 	@RequestMapping(method = RequestMethod.GET, value = "/authsource")
 	private ResponseEntity<String> source(HttpSession session) {
+		credentials.setSrcValid(false);
 		ResponseEntity<String> ret = null;
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
