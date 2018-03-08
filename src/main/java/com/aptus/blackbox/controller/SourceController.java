@@ -59,7 +59,7 @@ public class SourceController {
 
 	@RequestMapping(method = RequestMethod.GET, value = "/authsource")
 	private ResponseEntity<String> source(HttpSession session) {
-		credentials.setSrcValid(false);
+		credentials.setCurrSrcValid(false);
 		ResponseEntity<String> ret = null;
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
@@ -71,7 +71,7 @@ public class SourceController {
 				if (obj.getSteps().compareTo("TWO") == 0) {
 					ret = code(accessCode);
 				} else if (obj.getSteps().compareTo("THREE") == 0) {
-					ret = Utilities.token(requestToken,credentials.getSrcToken());
+					ret = Utilities.token(requestToken,credentials.getCurrSrcToken());
 					saveValues(ret);
 					ret = code(accessCode);
 				}
@@ -90,7 +90,7 @@ public class SourceController {
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 	private SrcObject init() {			
-		SrcObject obj = credentials.getSrcObj();
+		SrcObject obj = credentials.getCurrSrcObj();
 		System.out.println(obj.getName());
 		refresh = obj.getRefresh();
 		accessCode = obj.getAccessCode();
@@ -112,11 +112,11 @@ public class SourceController {
 		ResponseEntity<String> redirect = null;
 		HttpHeaders headers;
 		try {
-			String url = Utilities.buildUrl(object, credentials.getSrcToken());
+			String url = Utilities.buildUrl(object, credentials.getCurrSrcToken());
 
 			System.out.println(object.getLabel() + " = " + url);
 
-			headers = Utilities.buildHeader(object, credentials.getSrcToken());
+			headers = Utilities.buildHeader(object, credentials.getCurrSrcToken());
 			headers.setLocation(URI.create(url));
 			HttpEntity<?> httpEntity;
 			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
@@ -137,22 +137,22 @@ public class SourceController {
 	@RequestMapping(value = "/oauth2/s2")
 	@ResponseStatus(value = HttpStatus.OK)
 	private ResponseEntity<String> handlefooo(@RequestParam Map<String, String> parameters) {
-		credentials.getSrcToken().putAll(parameters);
-		System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
+		credentials.getCurrSrcToken().putAll(parameters);
+		System.out.println("token : " + credentials.getCurrSrcToken().keySet() + ":" + credentials.getCurrSrcToken().values());
 		System.out.println("parameters : " + parameters.keySet() + ":" + parameters.values());
 		ResponseEntity<String> out = null;
 		try {
-			String url = Utilities.buildUrl(accessToken, credentials.getSrcToken());
+			String url = Utilities.buildUrl(accessToken, credentials.getCurrSrcToken());
 			System.out.println(accessToken.getLabel() + " = " + url);
 
 			RestTemplate restTemplate = new RestTemplate();
 
-			HttpHeaders headers = Utilities.buildHeader(accessToken, credentials.getSrcToken());
+			HttpHeaders headers = Utilities.buildHeader(accessToken, credentials.getCurrSrcToken());
 			HttpEntity<?> httpEntity;
 			if (accessToken.getResponseString()!=null && !accessToken.getResponseString().isEmpty()) {
 				httpEntity = new HttpEntity<Object>(accessToken.getResponseString(), headers);
 			} else if (accessToken.getResponseBody()!=null && !accessToken.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> body = Utilities.buildBody(accessToken, credentials.getSrcToken());
+				MultiValueMap<String, String> body = Utilities.buildBody(accessToken, credentials.getCurrSrcToken());
 				httpEntity = new HttpEntity<Object>(body, headers);
 			} else {
 				httpEntity = new HttpEntity<Object>(headers);
@@ -162,7 +162,7 @@ public class SourceController {
 			 url =UrlEscapers.urlFragmentEscaper().escape(url);
 			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 			saveValues(out);
-			out = Utilities.token(validateCredentials,credentials.getSrcToken());
+			out = Utilities.token(validateCredentials,credentials.getCurrSrcToken());
 			//System.out.println(out.getBody());
 			headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
@@ -171,14 +171,14 @@ public class SourceController {
 			if (!out.getStatusCode().is2xxSuccessful()) {
 				System.out.println("invalid access token");
 				Utilities.invalid();
-				credentials.setSrcValid(false);				
+				credentials.setCurrSrcValid(false);				
 				url=homeUrl;
 				headers.setLocation(URI.create(url+"/close.html"));
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
 
 			} else {
 				Utilities.valid();
-				credentials.setSrcValid(true);
+				credentials.setCurrSrcValid(true);
 				url=homeUrl;
 				headers.setLocation(URI.create(url+"/close.html"));
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
@@ -194,14 +194,14 @@ public class SourceController {
 	private void saveValues(ResponseEntity<String> out) {
 		if (out.getBody() != null) {
 			try {
-				credentials.getSrcToken().putAll(new Gson().fromJson(out.getBody(), HashMap.class));
+				credentials.getCurrSrcToken().putAll(new Gson().fromJson(out.getBody(), HashMap.class));
 			} catch (Exception e) {
 				for (String s : out.getBody().toString().split("&")) {
 					System.out.println(s);
-					credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
+					credentials.getCurrSrcToken().put(s.split("=")[0], s.split("=")[1]);
 				}
 			}
-			System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
+			System.out.println("token : " + credentials.getCurrSrcToken().keySet() + ":" + credentials.getCurrSrcToken().values());
 		}
 	}
 }

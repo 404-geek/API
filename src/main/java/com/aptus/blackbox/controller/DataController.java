@@ -72,7 +72,7 @@ public class DataController {
 			@RequestParam(value ="db_password") String db_password,
 			@RequestParam(value ="server_host") String server_host,
 			@RequestParam(value ="server_port") String server_port) throws SQLException { // @RequestParam("data") Map<String,String> data
-		credentials.setDestValid(false);
+		credentials.setCurrDestValid(false);
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", rootUrl);
@@ -86,17 +86,17 @@ public class DataController {
 				destCred.put("server_host", server_host);
 				destCred.put("server_port", server_port);
 				//tableName = "user";
-				credentials.setDestToken(destCred);			
-				destObj = credentials.getDestObj();
-				destToken = credentials.getDestToken();			
-				if (!checkDB(destToken.get("database_name"))) {
-					credentials.setDestValid(false);
+				credentials.setCurrDestToken(destCred);			
+				destObj = credentials.getCurrDestObj();
+				destToken = credentials.getCurrDestToken();			
+				if (!checkDB(destToken.get("database_name"),destToken,destObj)) {
+					credentials.setCurrDestValid(false);
 					System.out.println("Invalid database credentials");
 					// invalid
 				}
-				credentials.setDestValid(true);
+				credentials.setCurrDestValid(true);
 				System.out.println("Database credentials validated");
-				credentials.setDestToken(destCred);
+				credentials.setCurrDestToken(destCred);
 				String url=homeUrl;
 				headers.setLocation(URI.create(url+"/close.html"));				
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
@@ -120,23 +120,23 @@ public class DataController {
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}	
 
-	@RequestMapping(method = RequestMethod.POST, value = "/pushtodb")
-	public boolean jsontodatabase(@RequestBody String  jsonString,@RequestParam("tableName") String tableName) throws SQLException {
+	public boolean pushDB(String  jsonString, String tableName) throws SQLException {
 		System.out.println("pushDBController-driver: "+destObj.getDrivers());
 		this.tableName=tableName;
 		try {
 			System.out.println("TABLENAME: "+tableName);
 			//System.out.println("JSONSTRING: "+jsonString);
+			
 			String host = destToken.get("server_host");
 			String port = destToken.get("server_port");
 			String dbase = destToken.get("database_name");
 			String user = destToken.get("db_username");
 			String pass = destToken.get("db_password");
 			PreparedStatement preparedStmt;
-			if (checkDB(destToken.get("database_name"))) {
+			if (checkDB(destToken.get("database_name"),destToken,destObj)) {
 				if (con == null || con.isClosed())
-					connection();
-				credentials.setDestValid(true);
+					connection(destToken,destObj);
+				credentials.setCurrDestValid(true);
 				JFlat x = new JFlat(jsonString);
 				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 				// System.out.println(json2csv);
@@ -180,19 +180,17 @@ public class DataController {
 				con.close();
 				return true;
 			}
-			credentials.setDestValid(false);
+			credentials.setCurrDestValid(false);
 		} catch (Exception e) {
 			System.err.println("Got an exception!");
 			System.err.println(e.getMessage());
 			e.printStackTrace();
-		}
-				
-		
+		}		
 		return false;
 	}
 
 	
-	public void connection() throws SQLException {
+	public void connection(Map<String,String> destToken,DestObject destObj) throws SQLException {
 		try {
 			
 			System.out.println("DataController-driver: "+destObj.getDrivers());
@@ -212,11 +210,11 @@ public class DataController {
 		}
 	}
 
-	public boolean checkDB(String dbase) throws SQLException {
+	public boolean checkDB(String dbase,Map<String,String> destToken,DestObject destObj) throws SQLException {
 
 		try {
 			if (con == null || con.isClosed())
-				connection();
+				connection(destToken, destObj);
 			Statement stmt = con.createStatement();
 			String query = "SELECT count(*) FROM information_schema.tables WHERE table_schema =" 
 			+ destObj.getValue_quote_open()+ dbase+destObj.getValue_quote_close()+";";
@@ -249,53 +247,41 @@ public class DataController {
         try {
         	if(Utilities.isSessionValid(httpsession,credentials)) {
         		credentials.setCurrConnId(credentials.getConnectionIds(connId));
-	        	SrcObject obj = credentials.getSrcObj();
+	        	SrcObject obj = credentials.getCurrSrcObj();
 	            if (obj.getRefresh().equals("YES")) {
 	            	
-	                ret = Utilities.token(credentials.getSrcObj().getRefreshToken(),credentials.getSrcToken());
+	                ret = Utilities.token(credentials.getCurrSrcObj().getRefreshToken(),credentials.getCurrSrcToken());
 	                if (!ret.getStatusCode().is2xxSuccessful()) {	                	
 	                    JsonObject respBody = new JsonObject();
 	        			respBody.addProperty("message", "Re-authorize");
 	    				respBody.addProperty("status", "51");
 	    				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
-	//    				if (obj.getSteps().compareTo("TWO") == 0) {
-	//    					ret = code(accessCode);
-	//    				} else if (obj.getSteps().compareTo("THREE") == 0) {
-	//    					ret = Utilities.token(requestToken,credentials.getSrcToken());
-	//    					saveValues(ret);
-	//    					ret = code(accessCode);
-	//    				}
+
 	                } else {
 	                	
 	                	//next piece of code is for saveValues 
 	                	try {
-	        				credentials.getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
+	        				credentials.getCurrSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
 	        			} catch (Exception e) {
 	        				for (String s : ret.getBody().toString().split("&")) {
 	        					System.out.println(s);
-	        					credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
+	        					credentials.getCurrSrcToken().put(s.split("=")[0], s.split("=")[1]);
 	        				}
 	        			}
-	        			System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
+	        			System.out.println("token : " + credentials.getCurrSrcToken().keySet() + ":" + credentials.getCurrSrcToken().values());
 	                    ret = validateData(obj.getValidateCredentials(), obj.getEndPoints(),choice);
 	                }
 	            } else {
-	                ret = Utilities.token(obj.getValidateCredentials(),credentials.getSrcToken());
+	                ret = Utilities.token(obj.getValidateCredentials(),credentials.getCurrSrcToken());
 	                if (!ret.getStatusCode().is2xxSuccessful()) {
-	                	credentials.setSrcValid(false);
+	                	credentials.setCurrSrcValid(false);
 	                    JsonObject respBody = new JsonObject();
 	        			respBody.addProperty("message", "Re-authorize");
 	    				respBody.addProperty("status", "51");
 	    				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
-	//    				if (obj.getSteps().compareTo("TWO") == 0) {
-	//    					ret = code(accessCode);
-	//    				} else if (obj.getSteps().compareTo("THREE") == 0) {
-	//    					ret = Utilities.token(requestToken,credentials.getSrcToken());
-	//    					saveValues(ret);
-	//    					ret = code(accessCode);
-	//    				}
+
 	                } else {
-	                	credentials.setSrcValid(true);
+	                	credentials.setCurrSrcValid(true);
 	                    //ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
 	                	
 	                    return fetchEndpointsData(obj.getEndPoints(),choice);
@@ -324,14 +310,13 @@ public class DataController {
 		header.add("access-control-allow-origin", rootUrl);
         header.add("access-control-allow-credentials", "true");
         try {
-            ret = Utilities.token(valid,credentials.getSrcToken());
+            ret = Utilities.token(valid,credentials.getCurrSrcToken());
             if (!ret.getStatusCode().is2xxSuccessful()) {            	
                 JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Contact Support");
 				respBody.addProperty("status", "52");
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(respBody.toString());
             } else {
-                //ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
             	
                 return fetchEndpointsData(endPoints,choice);
             }
@@ -354,15 +339,15 @@ public class DataController {
     			Gson gson=new Gson();
     			RestTemplate restTemplate = new RestTemplate();
     			for(UrlObject object:endpoints) {
-    				String url = Utilities.buildUrl(object, credentials.getSrcToken());
+    				String url = Utilities.buildUrl(object, credentials.getCurrSrcToken());
         			System.out.println(object.getLabel() + " = " + url);
 
-        			HttpHeaders headers = Utilities.buildHeader(object, credentials.getSrcToken());
+        			HttpHeaders headers = Utilities.buildHeader(object, credentials.getCurrSrcToken());
         			HttpEntity<?> httpEntity;
         			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
         				httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
         			} else if (!object.getResponseBody().isEmpty()) {
-        				MultiValueMap<String, String> body = Utilities.buildBody(object, credentials.getSrcToken());
+        				MultiValueMap<String, String> body = Utilities.buildBody(object, credentials.getCurrSrcToken());
         				httpEntity = new HttpEntity<Object>(body, headers);
         			} else {
         				httpEntity = new HttpEntity<Object>(headers);
@@ -439,19 +424,14 @@ public class DataController {
         			else if(truncateAndPush()) {
         				String tableName=credentials.getCurrConnId().getConnectionId()+"_"+object.getLabel();
 
-                        System.out.println("SourceController-driver: "+credentials.getDestObj().getDrivers());
+                        System.out.println("SourceController-driver: "+credentials.getCurrDestObj().getDrivers());
 
-                        url = "http://localhost:8080/pushtodb?tableName="+tableName;
-
-                        httpEntity = new HttpEntity<Object>(out.getBody(),null);
-
-                        ResponseEntity<Boolean> res= restTemplate.exchange(URI.create(url),
-                                HttpMethod.POST,httpEntity,Boolean.class);
-                        
-        	            JsonObject respBody = new JsonObject();
-        				respBody.addProperty("status", "22");
-        				respBody.addProperty("data", "Successfullypushed");
-        				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+                        if(pushDB(out.getBody().toString(), tableName)) {
+                        	JsonObject respBody = new JsonObject();
+            				respBody.addProperty("status", "22");
+            				respBody.addProperty("data", "Successfullypushed");
+            				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+                        }        	            
         			}
         			else {
         				 JsonObject respBody = new JsonObject();
@@ -483,8 +463,8 @@ public class DataController {
 			System.out.println(credentials);
 			if(Utilities.isSessionValid(httpsession,credentials)) {
 				if(credentials.getCurrConnId()==null) {
-					credentials.setDestValid(false);
-					credentials.setSrcValid(false);
+					credentials.setCurrDestValid(false);
+					credentials.setCurrSrcValid(false);
 					respBody.addProperty("data", "DifferentAll");
 					respBody.addProperty("status", "13");
 				}
@@ -502,19 +482,19 @@ public class DataController {
 					}
 					else if(credentials.getConnectionIds(connId).getSourceName().
 							equalsIgnoreCase(credentials.getCurrConnId().getSourceName())) {
-						credentials.setDestValid(false);
+						credentials.setCurrDestValid(false);
 						respBody.addProperty("data", "DifferentDestination");
 						respBody.addProperty("status", "12");
 					}
 					else if(credentials.getConnectionIds(connId).getDestName().
 							equalsIgnoreCase(credentials.getCurrConnId().getDestName()))	{
-						credentials.setSrcValid(false);
+						credentials.setCurrSrcValid(false);
 						respBody.addProperty("data", "DifferentSource");
 						respBody.addProperty("status", "11");
 					}
 					else {
-						credentials.setDestValid(false);
-						credentials.setSrcValid(false);
+						credentials.setCurrDestValid(false);
+						credentials.setCurrSrcValid(false);
 						respBody.addProperty("data", "DifferentAll");
 						respBody.addProperty("status", "13");
 					}
@@ -542,7 +522,7 @@ public class DataController {
     private boolean truncateAndPush() {
     	try {
 			if (con == null || con.isClosed())
-				connection();
+				connection(destToken,destObj);
 			PreparedStatement stmt;
 			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_schema =" 
 					+ destObj.getValue_quote_open()+ credentials.getCurrConnId().getConnectionId()

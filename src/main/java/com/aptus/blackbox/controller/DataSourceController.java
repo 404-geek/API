@@ -58,15 +58,15 @@ public class DataSourceController {
 		System.out.println(type+ " "+srcdestId);
 		if (type.equalsIgnoreCase("source")) {
 			srcObj = new Parser("source",srcdestId.toUpperCase(),mongoUrl).getSrcProp();
-			credentials.setSrcObj(srcObj);
-			credentials.setSrcName(srcdestId.toLowerCase());
-			credentials.setSrcValid(false);
+			credentials.setCurrSrcObj(srcObj);
+			credentials.setCurrSrcName(srcdestId.toLowerCase());
+			credentials.setCurrSrcValid(false);
 			
 		} else {
 			destObj = new Parser("destination",srcdestId.toUpperCase(),mongoUrl).getDestProp();
-			credentials.setDestObj(destObj);
-			credentials.setDestName(srcdestId.toLowerCase());
-			credentials.setDestValid(false);
+			credentials.setCurrDestObj(destObj);
+			credentials.setCurrDestName(srcdestId.toLowerCase());
+			credentials.setCurrDestValid(false);
 		}
 		return;
 	}
@@ -98,11 +98,11 @@ public class DataSourceController {
 				String filter;
 				String url;
 				if (type.equalsIgnoreCase("source")) {
-					name = credentials.getSrcName();
+					name = credentials.getCurrSrcName();
 					filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase()+"_"+name.toLowerCase() + "\"}";
 				}					
 				else {
-					name = credentials.getDestName();
+					name = credentials.getCurrDestName();
 					filter = "{\"_id\":{\"$regex\":\".*"+name.toLowerCase() + ".*\"}}";
 				}						
 				url = mongoUrl+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
@@ -148,14 +148,14 @@ public class DataSourceController {
 		try {			
 			if (credentials.isUsrSrcExist() || credentials.isUsrDestExist()) {				
 				if(type.equalsIgnoreCase("source")) {
-					credentials.setDestValid(false);
+					credentials.setCurrDestValid(false);
 					fetchSrcCred(type);
 					System.out.println(srcObj+" "+credentials);
-					out = Utilities.token(srcObj.getValidateCredentials(),credentials.getSrcToken());
+					out = Utilities.token(srcObj.getValidateCredentials(),credentials.getCurrSrcToken());
 					if (out.getStatusCode().is2xxSuccessful()) {
 						System.out.println(type + "tick");
 						Utilities.valid();
-						credentials.setSrcValid(true);
+						credentials.setCurrSrcValid(true);
 						String url=homeUrl;
 						headers.setLocation(URI.create(url+"/close.html"));
 						//return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).headers(headers).body(null);
@@ -171,7 +171,7 @@ public class DataSourceController {
 					}
 				}
 				else {
-					credentials.setDestValid(false);
+					credentials.setCurrDestValid(false);
 					String url =  baseUrl+"/authdestination?"+
 							"database_name="+database_name+
 							"&db_username="+db_username+
@@ -211,7 +211,7 @@ public class DataSourceController {
 		int res = 0;
 		String userid = credentials.getUserId(), appId;
 		try {
-			appId = credentials.getSrcName();
+			appId = credentials.getCurrSrcName();
 			RestTemplate restTemplate = new RestTemplate();
 			String url = mongoUrl+"/credentials/" + type + "Credentials/" + userid.toLowerCase()+"_"+appId.toLowerCase();
 			HttpHeaders headers = new HttpHeaders();
@@ -228,9 +228,9 @@ public class DataSourceController {
 						value=ob.getAsJsonObject().get("value").toString();
 				key=key.substring(1, key.length()-1);
 				value=value.substring(1, value.length()-1);
-				credentials.setSrcToken(key,value);
+				credentials.setCurrSrcToken(key,value);
 			}
-			System.out.println(credentials.getSrcToken().keySet()+" : "+credentials.getSrcToken().values());
+			System.out.println(credentials.getCurrSrcToken().keySet()+" : "+credentials.getCurrSrcToken().values());
 			//Add destination fetching			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -250,16 +250,16 @@ public class DataSourceController {
 				boolean isvalid = false;
 				System.out.println(type+" "+srcDestId);
 				if(type.equals("source")){
-					if(!credentials.getSrcName().equalsIgnoreCase(srcDestId)) {
-						credentials.setSrcValid(false);
+					if(!credentials.getCurrSrcName().equalsIgnoreCase(srcDestId)) {
+						credentials.setCurrSrcValid(false);
 					}
-					isvalid=credentials.isSrcValid();
+					isvalid=credentials.isCurrSrcValid();
 				}
 				else if(type.equals("destination")) {
-					if(!credentials.getDestName().equalsIgnoreCase(srcDestId)) {
-						credentials.setDestValid(false);
+					if(!credentials.getCurrDestName().equalsIgnoreCase(srcDestId)) {
+						credentials.setCurrDestValid(false);
 					}
-					isvalid=credentials.isDestValid();
+					isvalid=credentials.isCurrDestValid();
 				}
 				JsonObject jobject = new JsonObject();
 				jobject.addProperty("isvalid",isvalid);
@@ -353,23 +353,23 @@ public class DataSourceController {
 				sourceBody = new JsonArray();
 				destBody =  new JsonArray();
 				
-				conId = credentials.getUserId() + "_" + credentials.getSrcName() + "_" + credentials.getDestName() + "_"
+				conId = credentials.getUserId() + "_" + credentials.getCurrSrcName() + "_" + credentials.getCurrDestName() + "_"
 						+ String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
-				for (Map.Entry<String, String> mp : credentials.getSrcToken().entrySet()) {
+				for (Map.Entry<String, String> mp : credentials.getCurrSrcToken().entrySet()) {
 					JsonObject tmp = new JsonObject();
 					tmp.addProperty("key", String.valueOf(mp.getKey()));
 					tmp.addProperty("value", String.valueOf(mp.getValue()));
 					sourceBody.add(tmp);
 				}
-				for (Map.Entry<String, String> mp : credentials.getDestToken().entrySet()) {
+				for (Map.Entry<String, String> mp : credentials.getCurrDestToken().entrySet()) {
 					JsonObject tmp = new JsonObject();
 					tmp.addProperty("key", String.valueOf(mp.getKey()));
 					tmp.addProperty("value", String.valueOf(mp.getValue()));
 					destBody.add(tmp);
 				}
 				Gson gson = new Gson();
-//				String schedule = filteredEndpoints.get("schedule");
-//				String period = filteredEndpoints.get("period");
+				String schedule = filteredEndpoints.get("scheduled");
+				String period = filteredEndpoints.get("period");
 				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
 						.getAsJsonObject().get("endpoints").getAsJsonArray();
 				ConnObj currobj = new ConnObj();
@@ -378,10 +378,10 @@ public class DataSourceController {
 					currobj.setEndPoints(obj.getAsString());
 				}
 				currobj.setConnectionId(conId);
-				currobj.setSourceName(credentials.getSrcName());
-				currobj.setDestName(credentials.getDestName());
-//				currobj.setPeriod(period);
-//				currobj.setScheduled(schedule);
+				currobj.setSourceName(credentials.getCurrSrcName());
+				currobj.setDestName(credentials.getCurrDestName());
+				currobj.setPeriod(period);
+				currobj.setScheduled(schedule);
 				credentials.setCurrConnId(currobj);
 				endpnts = endpnts.substring(0, endpnts.length() - 1).toLowerCase();
 				System.out.println(sourceBody);
@@ -391,8 +391,8 @@ public class DataSourceController {
 				endPointsArray.add(endpnts);
 				JsonArray eachArray = new JsonArray();
 				JsonObject values = new JsonObject();
-				values.addProperty("sourceName", credentials.getSrcName().toLowerCase());
-				values.addProperty("destName", credentials.getDestName().toLowerCase());
+				values.addProperty("sourceName", credentials.getCurrSrcName().toLowerCase());
+				values.addProperty("destName", credentials.getCurrDestName().toLowerCase());
 				values.addProperty("connectionId", conId.toLowerCase());
 				values.add("endPoints", endPointsArray);
 				eachArray.add(values);
@@ -413,14 +413,14 @@ public class DataSourceController {
 				// sourceCredentials
 				jsonObj = new JsonObject();
 				jsonObj.addProperty("_id",
-						credentials.getUserId().toLowerCase() + "_" + credentials.getSrcName().toLowerCase());
+						credentials.getUserId().toLowerCase() + "_" + credentials.getCurrSrcName().toLowerCase());
 				jsonObj.add("credentials", sourceBody);
 				postpatchMetaData(jsonObj, "source", "POST");
 				// destCredentials
 				jsonObj = new JsonObject();				
 				jsonObj.addProperty("_id",
-						credentials.getUserId().toLowerCase() + "_" + credentials.getDestName().toLowerCase() + "_"
-								+ credentials.getDestToken().get("database_name"));
+						credentials.getUserId().toLowerCase() + "_" + credentials.getCurrDestName().toLowerCase() + "_"
+								+ credentials.getCurrDestToken().get("database_name"));
 				jsonObj.add("credentials", destBody);
 				postpatchMetaData(jsonObj, "destination", "POST");
 				// ret = data(credentials.getSrcName());
@@ -474,176 +474,6 @@ public class DataSourceController {
 		}
 		return;
 	}
-
-//	@RequestMapping(method = RequestMethod.POST, value = "/createdatasource")
-//	private ResponseEntity<String> createDataSource(@RequestParam Map<String,String> filteredEndpoints,HttpSession session)
-//	{		
-//		ResponseEntity<String> ret = null;
-//		//System.out.println(srcname+" "+destname);
-//		HttpHeaders headers = new HttpHeaders();
-//		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", rootUrl);
-//		headers.add("access-control-allow-credentials", "true");
-//		try	{
-//			System.out.println(filteredEndpoints.getClass());
-//			System.out.println(filteredEndpoints.get("filteredendpoints")+" "+filteredEndpoints.keySet());
-//			if(Utilities.isSessionValid(session,credentials)) {
-////				if(validateCredentials==null||endPoints==null||refreshToken==null) {
-////					init();
-////				}			
-//				String body="",sourceBody="",destBody="",endpnts="",conId;
-//				conId=credentials.getUserId()+"_"+credentials.getSrcName()+"_"+credentials.getDestName()
-//						+"_"+String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
-//				for(Map.Entry<String,String> mp:credentials.getSrcToken().entrySet()) {
-//					sourceBody+="{\"key\":\""+String.valueOf(mp.getKey())+"\","
-//							+ "\"value\":\""+String.valueOf(mp.getValue())+"\"},";
-//				}
-//				for(Map.Entry<String,String> mp:credentials.getDestToken().entrySet()) {
-//					destBody+="{\"key\":\""+String.valueOf(mp.getKey())+"\","
-//							+ "\"value\":\""+String.valueOf(mp.getValue())+"\"},";
-//				}
-//				Gson gson =new Gson();
-//				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
-//						.getAsJsonObject().get("endpoints").getAsJsonArray();
-//				ConnObj currobj = new ConnObj();
-//				for(JsonElement obj:endpoints) {
-//					endpnts+="\""+obj.getAsString()+"\",";
-//					currobj.setEndPoints(obj.getAsString());
-//				}
-//				currobj.setConnectionId(conId);
-//				currobj.setSourceName(credentials.getSrcName());
-//				currobj.setDestName(credentials.getDestName());
-//				credentials.setCurrConnId(currobj);
-//				endpnts = endpnts.substring(0, endpnts.length()-1).toLowerCase();
-//				System.out.println(sourceBody);
-//				System.out.println(destBody);
-//				if((!sourceBody.isEmpty())&&(!destBody.isEmpty())) {
-//					sourceBody=sourceBody.substring(0,sourceBody.length()-1);
-//					destBody=destBody.substring(0,destBody.length()-1);
-//				}
-//				if(credentials.isUserExist())
-//				{
-//					//sourceCredentials
-//					body= "{\"credentials\":["+sourceBody+"]}";
-//					
-//					postpatchMetaData(body,"source","PATCHapp");
-//					
-//					//userCredentials
-//					body = "{\"$addToSet\":"
-//							+ "{\"srcdestId\":"
-//							+ "{\"$each\":["
-//							+ "{\"sourceName\": \""+credentials.getSrcName().toLowerCase()+"\","
-//							+ "\"destName\":\""+credentials.getDestName().toLowerCase()+"\","
-//							+ "\"connectionId\": \""+conId.toLowerCase()+"\","
-//							+ "\"endPoints\":["+endpnts+"]}"
-//							+ "]}}}";
-//					
-//					postpatchMetaData(body,"user","PATCH");
-//					
-//					//destCredentials
-//					body= "{\"credentials\":["+destBody+"]}";
-//					
-//					postpatchMetaData(body,"destination","PATCHapp");
-//					
-//				}
-//				else {
-//					//userCredentials
-//					body = "{ \"_id\" : \""+credentials.getUserId().toLowerCase()+"\","
-//							+ "\"srcdestId\" : [ "
-//							+ "{ \"sourceName\" : \""+credentials.getSrcName().toLowerCase()+"\" , "
-//							+ "\"destName\" : \""+credentials.getDestName().toLowerCase()+"\","
-//							+ "\"connectionId\":\""+conId.toLowerCase()+"\","
-//							+ "\"endPoints\":["+endpnts+"]}"
-//							+ "]}";
-//					
-//					postpatchMetaData(body,"user","POST");
-//					
-//					//sourceCredentials
-//					body= "{\n" + 
-//							"	\"_id\" : \""+credentials.getUserId().toLowerCase()
-//							+"_"+credentials.getSrcName().toLowerCase()+"\",\n" + 
-//							"	\"credentials\":["+sourceBody+"]\n" +
-//							"}";
-//					 
-//					postpatchMetaData(body,"source","POST");
-//					
-//					//destCredentials
-//					body= "{\n" + 
-//							"	\"_id\" : \""+credentials.getUserId().toLowerCase()
-//							+"_"+credentials.getDestName().toLowerCase()
-//							+"_"+credentials.getDestToken().get("database_name")+"\",\n" +
-//							"				\"credentials\":["+destBody+"]\n" + 
-//							"}";
-//					
-//					postpatchMetaData(body,"destination","POST");
-//				}
-//				//ret = data(credentials.getSrcName());
-//				//System.out.println(ret.getBody());
-//				String url=baseUrl;
-//				headers.setLocation(URI.create(url));
-//				return new ResponseEntity<String>("",headers ,HttpStatus.OK);
-//			}
-//			else {
-//   				System.out.println("Session expired!");
-//    			JsonObject respBody = new JsonObject();
-//    			respBody.addProperty("message", "Sorry! Your session has expired");
-//				respBody.addProperty("status", "33");
-//				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-//			}
-//		}
-//		catch(Exception e)
-//		{
-//			e.printStackTrace();
-//		}
-//		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-//	}
-//	private void postpatchMetaData(String body,String type,String method)
-//	   {
-//	       try {
-//	           ResponseEntity<String> out = null;
-//	           String url="";
-//	           String appname = "";
-//	           RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-//	           HttpMethod met=null;
-//	           System.out.println(body);
-//	           String filter="";
-//	           if(method.equalsIgnoreCase("POST")) {
-//	               url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials";
-//	               met = HttpMethod.POST;
-//	           }                
-//	           else if(method.equalsIgnoreCase("PATCH")) {
-//	               url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase();
-//	               met = HttpMethod.PATCH;
-//	           }
-//	           else if(method.equalsIgnoreCase("PATCHapp")) {
-//	        	   url =mongoUrl+"/credentials/"+type.toLowerCase()+"Credentials/"+credentials.getUserId().toLowerCase()+"_"+appname.toLowerCase();
-//	        	   if(type.equalsIgnoreCase("source")) {
-//	        		   appname = credentials.getSrcName();	        		   
-//	        	   }
-//	        	   else {
-//	        		   appname = credentials.getDestName();
-//	        		   url +="_"+credentials.getDestToken().get("database_name");
-//	        	   }	        	   
-//	        	   met = HttpMethod.PATCH;
-//	           }
-//	           System.out.println(url+"\n"+met);
-//	           HttpHeaders headers =new HttpHeaders();
-//	           headers.add("Content-Type","application/json") ;
-//	           headers.add("Cache-Control", "no-cache");
-//	           headers.add("access-control-allow-origin", rootUrl);
-//	            headers.add("access-control-allow-credentials", "true");
-//	           HttpEntity<?> httpEntity = new HttpEntity<Object>(body,headers);
-//	           out = restTemplate.exchange(url, met, httpEntity, String.class,filter);
-//	           if (out.getStatusCode().is2xxSuccessful()) {
-//	               credentials.setUserExist(true);
-//	            }
-//	       }
-//	       catch(Exception e) {
-//	           e.printStackTrace();
-//	           System.out.println("source.postpatchmetadata");
-//	       }
-//	       return;    
-//	   }
 	
 	@RequestMapping(value="/getconnectionids")
 	private ResponseEntity<String> getConnectionIds(HttpSession session) {
