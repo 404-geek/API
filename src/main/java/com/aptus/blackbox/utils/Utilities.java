@@ -29,7 +29,7 @@ import com.aptus.blackbox.Service.Credentials;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.index.objects;
 
-import sun.misc.BASE64Encoder;
+import sun.misc.*;
 
 public class Utilities {
 	public static boolean isSessionValid(HttpSession session,Credentials credentials)
@@ -257,7 +257,7 @@ public class Utilities {
 		} 
 		catch(HttpClientErrorException e) {
 			System.out.println(e.getMessage());
-			if(e.getMessage().startsWith("4")) {
+			if(!e.getMessage().startsWith("2")) {
 				out =  new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 			}
 		}

@@ -105,6 +105,11 @@
     		<version>1.0.3</version>
 		</dependency>
 
+		<dependency>
+			<groupId>cn.yerl.web</groupId>
+			<artifactId>spring-boot-starter-logger</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

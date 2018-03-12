@@ -57,6 +57,7 @@ public class DataSourceController {
 		//change return type to void
 		System.out.println(type+ " "+srcdestId);
 		if (type.equalsIgnoreCase("source")) {
+			
 			srcObj = new Parser("source",srcdestId.toUpperCase(),mongoUrl).getSrcProp();
 			credentials.setCurrSrcObj(srcObj);
 			credentials.setCurrSrcName(srcdestId.toLowerCase());
@@ -152,6 +153,8 @@ public class DataSourceController {
 					fetchSrcCred(type);
 					System.out.println(srcObj+" "+credentials);
 					out = Utilities.token(srcObj.getValidateCredentials(),credentials.getCurrSrcToken());
+					System.out.println("OUt:"+out);
+					System.out.println("OUt:"+out.getStatusCode());
 					if (out.getStatusCode().is2xxSuccessful()) {
 						System.out.println(type + "tick");
 						Utilities.valid();

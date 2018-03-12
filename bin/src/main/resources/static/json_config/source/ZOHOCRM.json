@@ -99,7 +99,7 @@
 	
 	"validateCredentials": {
 		"label": "validateCredentials",
-		"url": "https://www.zohoapis.com/crm/v2/Leads?page=3",
+		"url": "https://www.zohoapis.com/crm/v2/Leads",
 		"params": [],
 		"method": "GET",
 		"header": [
@@ -125,7 +125,36 @@
 	},
 	"endPoints": [
 		{
-			"label": "zoho.org",
+			"label": "zoho_accounts",
+			"url": "https://www.zohoapis.com/crm/v2/Accounts",
+			"params": [],
+			"method": "GET",
+			"header": [
+				{
+					"key": "response_type",
+					"value": "code",
+					"valueList": []
+				},
+				{
+					"key": "Authorization",
+					"value": "Zoho-oauthtoken ",
+					"valueList": [
+						{
+							"key": "access_token",
+							"value": "codeValueSpace",
+							"valueList": []
+						}
+					]
+				}
+			],
+			"responseBody": [],
+			"responseString": "",
+			"pagination":[
+					{"key":"info.page","param":"page","type":"inc"}
+				]
+		},
+		{
+			"label": "zoho_leads",
 			"url": "https://www.zohoapis.com/crm/v2/Leads",
 			"params": [],
 			"method": "GET",
