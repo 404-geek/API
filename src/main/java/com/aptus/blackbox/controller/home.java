@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
+import javax.ws.rs.core.Application;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +23,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.Service.Credentials;
+import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
@@ -53,6 +56,10 @@ public class home {
 	
 	@Autowired
 	private Credentials credentials;
+	
+	@Autowired
+	private ApplicationCredentials applicationCredentials;
+
 
 	@RequestMapping(value="/login")
 	private ResponseEntity<String> login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
@@ -79,6 +86,8 @@ public class home {
 //					return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
 //				}
 				existUser(user, "userCredentials");
+				applicationCredentials.setApplicationCred(user, new ScheduleInfo());
+				applicationCredentials.getApplicationCred().get(user).setLastAccessTime(session.getLastAccessedTime());
 				credentials.setSessionId(user,session.getId());
 				System.out.println(session.getId());
 				respBody.addProperty("id", user);
@@ -300,6 +309,7 @@ public class home {
 		try {
 			System.out.println(session.getId());			
 			if(Utilities.isSessionValid(session,credentials)) {
+				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
 				String url = mongoUrl+"/credentials/SrcDstlist/srcdestlist";			 
@@ -334,6 +344,7 @@ public class home {
 		headers.add("access-control-allow-credentials", "true");
 		try {			
 			if(Utilities.isSessionValid(session,credentials)) {
+				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				JsonObject jobj = new JsonObject();
 				JsonArray endpoints=new JsonArray();
 				for(UrlObject obj:credentials.getCurrSrcObj().getEndPoints()) {

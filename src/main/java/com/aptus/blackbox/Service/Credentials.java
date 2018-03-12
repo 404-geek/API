@@ -29,7 +29,7 @@ public class Credentials implements Serializable {
 	private Map<String,String> currDestToken=new HashMap<>();
 	private SrcObject currSrcObj;
 	private DestObject currDestObj;
-	private Map<String,SchedulingObjects> schedulingObjects = new HashMap<String,SchedulingObjects>();
+	
 	public Map<String, String> getSessionId() {
 		return sessionId;
 	}
@@ -127,16 +127,5 @@ public class Credentials implements Serializable {
 	public void setCurrConnId(ConnObj currConnId) {
 		this.currConnId = currConnId;
 	}
-	public Map<String,SchedulingObjects> getSchedulingObjects() {
-		return schedulingObjects;
-	}
-	public void setSchedulingObjects(Map<String,SchedulingObjects> schedulingObjects) {
-		this.schedulingObjects.putAll(schedulingObjects);
-	}
-	public void setSchedulingObjects(SchedulingObjects schedulingObjects,String connectionId) {
-		this.schedulingObjects.put(connectionId, schedulingObjects);
-	}
-	public void unSetSchedulingObjects(String connectionId) {
-		this.schedulingObjects.remove(connectionId);
-	}
+	
 }

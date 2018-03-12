@@ -1,7 +1,7 @@
 package com.aptus.blackbox;
 
 import java.io.IOException;
-import com.aptus.blackbox.index.Parser;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 

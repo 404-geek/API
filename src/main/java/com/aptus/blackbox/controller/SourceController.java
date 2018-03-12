@@ -26,6 +26,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.Service.Credentials;
 import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.SrcObject;
@@ -52,6 +53,9 @@ public class SourceController {
 
 	@Autowired
 	private Credentials credentials;
+	@Autowired
+	private ApplicationCredentials applicationCredentials;
+
 
 	private String refresh;
 	private UrlObject accessCode, accessToken, requestToken, refreshToken, validateCredentials;
@@ -67,6 +71,7 @@ public class SourceController {
         headers.add("access-control-allow-credentials", "true");
 		try {			
 			if(Utilities.isSessionValid(session,credentials)) {
+				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				SrcObject obj = init();
 				if (obj.getSteps().compareTo("TWO") == 0) {
 					ret = code(accessCode);

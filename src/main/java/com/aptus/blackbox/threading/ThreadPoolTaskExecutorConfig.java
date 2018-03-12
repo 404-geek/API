@@ -10,22 +10,18 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import com.aptus.blackbox.Service.Credentials;
 
 @Configuration
-	public class ThreadPoolTaskExecutorConfig {
-	
-	@Autowired
-	private Credentials credentials;
-	
-	private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPoolTaskExecutorConfig.class);
-	
-	    @Bean
-	    public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
-	    	
-	        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-	        executor.setCorePoolSize(4);
-	        executor.setMaxPoolSize(4);
-	        executor.setThreadNamePrefix("default_task_executor_thread");
-	        executor.initialize();
-	        LOGGER.info("ThreadPoolTaskExecutorConfig Configured");
-	        return executor;
-	    }
-	}
+public class ThreadPoolTaskExecutorConfig {
+
+private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPoolTaskExecutorConfig.class);
+
+    @Bean
+    public ThreadPoolTaskExecutor threadPoolTaskExecutor() {	    	
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(4);
+        executor.setMaxPoolSize(4);
+        executor.setThreadNamePrefix("default_task_executor_thread");
+        executor.initialize();
+        LOGGER.info("ThreadPoolTaskExecutorConfig Configured");
+        return executor;
+    }
+}

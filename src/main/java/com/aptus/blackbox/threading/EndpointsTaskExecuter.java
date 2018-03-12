@@ -44,8 +44,6 @@ public class EndpointsTaskExecuter implements Runnable{
 	private  ResponseEntity<String> out;
 	private DestObject destObj;
 	private Map<String,String> destToken;
-	@Autowired
-	private Credentials credentials;
 	
 	@Value("${homepage.url}")
 	private String homeUrl;
@@ -63,9 +61,7 @@ public class EndpointsTaskExecuter implements Runnable{
 		this.endpoint=endpoints;
 		this.choice=choice;
 		this.connectionId=connectionId;
-		System.out.println("credentials"+credentials);
-		LOGGER.info("Credential", credentials);
-		SchedulingObjects currObject = credentials.getSchedulingObjects().get(connectionId);
+		SchedulingObjects currObject = null;
 		this.destObj=currObject.getDestObj();
 		this.destToken = currObject.getDestToken();
 	}
@@ -82,7 +78,6 @@ public class EndpointsTaskExecuter implements Runnable{
 	
 	@Override
 	public void run() {
-		Thread.currentThread().setName(name);
 		RestTemplate restTemplate =new RestTemplate();
 		Gson gson=new Gson();
 		
