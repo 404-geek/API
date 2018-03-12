@@ -286,7 +286,7 @@ public class home {
 			if(Utilities.isSessionValid(session,credentials)) {
 				JsonObject jobj = new JsonObject();
 				JsonArray endpoints=new JsonArray();
-				for(UrlObject obj:credentials.getSrcObj().getEndPoints()) {
+				for(UrlObject obj:credentials.getCurrSrcObj().getEndPoints()) {
 					endpoints.add(obj.getLabel());
 				}
 				jobj.add("endpoints", endpoints);

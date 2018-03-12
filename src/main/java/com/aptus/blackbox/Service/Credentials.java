@@ -1,7 +1,9 @@
 package com.aptus.blackbox.Service;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.context.annotation.Scope;
@@ -10,22 +12,24 @@ import org.springframework.stereotype.Service;
 
 import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.DestObject;
+import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.SrcObject;
 
 @Service
 @Scope(proxyMode = ScopedProxyMode.TARGET_CLASS,value="session")
 public class Credentials implements Serializable {
 	
-	private String userId,srcName,destName;
+	private String userId,currSrcName,currDestName;
 	private ConnObj currConnId;
 	private Map<String,ConnObj>connectionIds=new HashMap<>();
 	private Map<String,String> sessionId=new HashMap<>();
 	private boolean userExist,usrSrcExist,usrDestExist;
-	private boolean srcValid,destValid;
-	private Map<String,String> srcToken=new HashMap<>();
-	private Map<String,String> destToken=new HashMap<>();
-	private SrcObject srcObj;
-	private DestObject destObj;
+	private boolean currSrcValid,currDestValid;
+	private Map<String,String> currSrcToken=new HashMap<>();
+	private Map<String,String> currDestToken=new HashMap<>();
+	private SrcObject currSrcObj;
+	private DestObject currDestObj;
+	private Map<String,SchedulingObjects> schedulingObjects = new HashMap<String,SchedulingObjects>();
 	public Map<String, String> getSessionId() {
 		return sessionId;
 	}
@@ -51,35 +55,35 @@ public class Credentials implements Serializable {
 	public void setUsrDestExist(boolean usrDestExist) {
 		this.usrDestExist = usrDestExist;
 	}
-	public String getSrcName() {
-		return srcName;
+	public String getCurrSrcName() {
+		return currSrcName;
 	}
-	public void setSrcName(String srcName) {
-		this.srcName = srcName;
+	public void setCurrSrcName(String srcName) {
+		this.currSrcName = srcName;
 	}
-	public String getDestName() {
-		return destName;
+	public String getCurrDestName() {
+		return currDestName;
 	}
-	public void setDestName(String destName) {
-		this.destName = destName;
+	public void setCurrDestName(String destName) {
+		this.currDestName = destName;
 	}
-	public Map<String,String> getDestToken() {
-		return destToken;
+	public Map<String,String> getCurrDestToken() {
+		return currDestToken;
 	}
-	public void setDestToken(Map<String,String> destToken) {
-		this.destToken.putAll(destToken);
+	public void setCurrDestToken(Map<String,String> destToken) {
+		this.currDestToken.putAll(destToken);
 	}
-	public void setDestToken(String key,String value) {
-		this.destToken.put(key, value);
+	public void setCurrDestToken(String key,String value) {
+		this.currDestToken.put(key, value);
 	}
-	public Map<String,String> getSrcToken() {
-		return srcToken;
+	public Map<String,String> getCurrSrcToken() {
+		return currSrcToken;
 	}
-	public void setSrcToken(Map<String,String> srcToken) {
-		this.srcToken.putAll(srcToken);
+	public void setCurrSrcToken(Map<String,String> srcToken) {
+		this.currSrcToken.putAll(srcToken);
 	}
-	public void setSrcToken(String key,String value) {
-		this.srcToken.put(key, value);
+	public void setCurrSrcToken(String key,String value) {
+		this.currSrcToken.put(key, value);
 	}
 	public String getUserId() {
 		return userId;
@@ -87,29 +91,29 @@ public class Credentials implements Serializable {
 	public void setUserId(String userId) {
 		this.userId = userId;
 	}
-	public SrcObject getSrcObj() {
-		return srcObj;
+	public SrcObject getCurrSrcObj() {
+		return currSrcObj;
 	}
-	public void setSrcObj(SrcObject srcObj) {
-		this.srcObj = srcObj;
+	public void setCurrSrcObj(SrcObject srcObj) {
+		this.currSrcObj = srcObj;
 	}
-	public DestObject getDestObj() {
-		return destObj;
+	public DestObject getCurrDestObj() {
+		return currDestObj;
 	}
-	public void setDestObj(DestObject destObj) {
-		this.destObj = destObj;
+	public void setCurrDestObj(DestObject destObj) {
+		this.currDestObj = destObj;
 	}
-	public boolean isSrcValid() {
-		return srcValid;
+	public boolean isCurrSrcValid() {
+		return currSrcValid;
 	}
-	public void setSrcValid(boolean srcValid) {
-		this.srcValid = srcValid;
+	public void setCurrSrcValid(boolean srcValid) {
+		this.currSrcValid = srcValid;
 	}
-	public boolean isDestValid() {
-		return destValid;
+	public boolean isCurrDestValid() {
+		return currDestValid;
 	}
-	public void setDestValid(boolean destValid) {
-		this.destValid = destValid;
+	public void setCurrDestValid(boolean destValid) {
+		this.currDestValid = destValid;
 	}
 	public ConnObj getConnectionIds(String connId) {
 		return connectionIds.get(connId);
@@ -123,5 +127,16 @@ public class Credentials implements Serializable {
 	public void setCurrConnId(ConnObj currConnId) {
 		this.currConnId = currConnId;
 	}
-	
+	public Map<String,SchedulingObjects> getSchedulingObjects() {
+		return schedulingObjects;
+	}
+	public void setSchedulingObjects(Map<String,SchedulingObjects> schedulingObjects) {
+		this.schedulingObjects.putAll(schedulingObjects);
+	}
+	public void setSchedulingObjects(SchedulingObjects schedulingObjects,String connectionId) {
+		this.schedulingObjects.put(connectionId, schedulingObjects);
+	}
+	public void unSetSchedulingObjects(String connectionId) {
+		this.schedulingObjects.remove(connectionId);
+	}
 }
