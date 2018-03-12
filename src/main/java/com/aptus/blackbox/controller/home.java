@@ -202,6 +202,56 @@ public class home {
 	}
 	
 	
+	
+	@RequestMapping(value="/update")
+	private ResponseEntity<String> login(@RequestParam HashMap<String,String> params,HttpSession session)
+	{
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+        headers.add("access-control-allow-credentials", "true");
+        headers.add("Content-Type", "application/json");
+		try {
+			if(Utilities.isSessionValid(session,credentials)) {
+			System.out.println("updating" + params);			
+			JsonObject respBody = new JsonObject();
+			String userId=params.get("_id").toString();
+			String url = mongoUrl+"/credentials/userInfo/"+ userId;
+			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+			JsonObject body = new JsonObject();
+
+			for(Map.Entry<String, String> entry : params.entrySet()) {
+			    body.addProperty(entry.getKey(),entry.getValue());
+			}
+			HttpHeaders header = new HttpHeaders();
+			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+			HttpEntity<?> httpEntity = new HttpEntity<Object>(body.toString(),headers);
+			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+			ResponseEntity<String> out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
+				
+			JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
+			System.out.println(session.getId());
+			respBody.addProperty("id", userId);
+			respBody.addProperty("status", "200");
+			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			}
+			else{
+				System.out.println("Session expired!");
+				JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
+			}
+		
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+		//store in credentials
+	}
+	
+	
 	/* Input:user_id
 	 * Takes user_id as input, checks if user already exists and stores true/false accordingly in credentials.
 	 * Return type: void 

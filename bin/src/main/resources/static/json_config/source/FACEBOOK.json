@@ -133,7 +133,7 @@
 			"responseBody": [],
 			"responseString": "",
 			"pagination":[
-					{"key":"paging.next","param":"","type":"url"},
+					{"key":"paging.next","param":"next","type":"url"},
 					{"key":"paging.cursors.after","param":"after","type":"append"}
 				]
 		}
