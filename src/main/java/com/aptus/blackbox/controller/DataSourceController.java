@@ -22,6 +22,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.Service.Credentials;
 import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.DestObject;
@@ -46,6 +47,8 @@ public class DataSourceController {
 	@Autowired
 	private Credentials credentials;
 	
+	@Autowired
+	private ApplicationCredentials applicationCredentials;
 	private SrcObject srcObj;
 	private DestObject destObj;
 	/*
@@ -91,6 +94,7 @@ public class DataSourceController {
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
+        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				credentials.setCurrConnId(null);
 				System.out.println(srcdestId);
 				srcDestId(type,srcdestId);
@@ -250,6 +254,7 @@ public class DataSourceController {
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
+        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				boolean isvalid = false;
 				System.out.println(type+" "+srcDestId);
 				if(type.equals("source")){
@@ -291,6 +296,7 @@ public class DataSourceController {
         try {         
             HttpEntity<?> httpEntity;
             if (Utilities.isSessionValid(session, credentials)) {
+        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
                 String url = mongoUrl + "/credentials/userCredentials/" + credentials.getUserId();
                 System.out.println("DeleteDataSource");
                 System.out.println(url);
@@ -350,6 +356,7 @@ public class DataSourceController {
 				// if(validateCredentials==null||endPoints==null||refreshToken==null) {
 				// init();
 				// }
+        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				JsonArray sourceBody,destBody;
 				String endpnts = "", conId;
 				
@@ -397,6 +404,8 @@ public class DataSourceController {
 				values.addProperty("sourceName", credentials.getCurrSrcName().toLowerCase());
 				values.addProperty("destName", credentials.getCurrDestName().toLowerCase());
 				values.addProperty("connectionId", conId.toLowerCase());
+				values.addProperty("scheduled", schedule);
+				values.addProperty("period", period);
 				values.add("endPoints", endPointsArray);
 				eachArray.add(values);
 				JsonObject eachObj = new JsonObject();
@@ -487,6 +496,7 @@ public class DataSourceController {
         headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
+        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				ResponseEntity<String> out = null;
 				RestTemplate restTemplate = new RestTemplate();
 				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));

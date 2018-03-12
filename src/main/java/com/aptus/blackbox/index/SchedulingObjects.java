@@ -6,6 +6,7 @@ import java.util.Map;
 
 public class SchedulingObjects implements Serializable{
 	private boolean SrcValid,DestValid;
+	private String status,message,threadName,sourceThread,destThread;
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
 	private SrcObject SrcObj;
@@ -45,6 +46,36 @@ public class SchedulingObjects implements Serializable{
 	}
 	public void setDestObj(DestObject destObj) {
 		DestObj = destObj;
+	}
+	public String getStatus() {
+		return status;
+	}
+	public void setStatus(String status) {
+		this.status = status;
+	}
+	public String getMessage() {
+		return message;
+	}
+	public void setMessage(String message) {
+		this.message = message;
+	}
+	public String getThreadName() {
+		return threadName;
+	}
+	public void setThreadName(String threadName) {
+		this.threadName = threadName;
+	}
+	public String getSourceThread() {
+		return sourceThread;
+	}
+	public void setSourceThread(String sourceThread) {
+		this.sourceThread = sourceThread;
+	}
+	public String getDestThread() {
+		return destThread;
+	}
+	public void setDestThread(String destThread) {
+		this.destThread = destThread;
 	}
 
 }

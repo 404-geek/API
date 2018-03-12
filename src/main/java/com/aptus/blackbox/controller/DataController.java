@@ -31,6 +31,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.Service.Credentials;
 import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.Cursor;
@@ -61,6 +62,8 @@ public class DataController {
 
 	@Autowired
 	private Credentials credentials;
+	@Autowired
+	private ApplicationCredentials applicationCredentials;
 	/*
 	 * 
 	 */
@@ -81,6 +84,7 @@ public class DataController {
 		headers.add("access-control-allow-credentials", "true");
 		try {			
 			if(Utilities.isSessionValid(session,credentials)) {
+				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				HashMap<String, String> destCred = new HashMap<>();
 				destCred.put("database_name", database_name);
 				destCred.put("db_username", db_username);
@@ -248,6 +252,7 @@ public class DataController {
         header.add("access-control-allow-credentials", "true");
         try {
         	if(Utilities.isSessionValid(httpsession,credentials)) {
+        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(httpsession.getLastAccessedTime());
         		credentials.setCurrConnId(credentials.getConnectionIds(connId));
 	        	SrcObject obj = credentials.getCurrSrcObj();
 	            if (obj.getRefresh().equals("YES")) {
@@ -464,6 +469,7 @@ public class DataController {
 			JsonObject respBody = new JsonObject();
 			System.out.println(credentials);
 			if(Utilities.isSessionValid(httpsession,credentials)) {
+				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(httpsession.getLastAccessedTime());
 				if(credentials.getCurrConnId()==null) {
 					credentials.setCurrDestValid(false);
 					credentials.setCurrSrcValid(false);
@@ -552,6 +558,7 @@ public class DataController {
 		headers.add("access-control-allow-credentials", "true");
     	try {
 	    		if(Utilities.isSessionValid(session,credentials)) {
+	        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 	    			String name = destId;
 	    			String filter = "{\"_id\":{\"$regex\":\".*"+name.toLowerCase() + ".*\"}}";					
 	    			String url = mongoUrl+"/credentials/destinationCredentials?filter=" + filter;		 
