@@ -7,6 +7,8 @@ import java.util.Map;
 public class SchedulingObjects implements Serializable{
 	private boolean SrcValid,DestValid;
 	private String status,message,threadName,sourceThread,destThread;
+	private long lastPushed,nextPush;
+	private Map<String,Status>endPointStatus = new HashMap<>();
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
 	private SrcObject SrcObj;
@@ -76,6 +78,27 @@ public class SchedulingObjects implements Serializable{
 	}
 	public void setDestThread(String destThread) {
 		this.destThread = destThread;
+	}
+	public long getLastPushed() {
+		return lastPushed;
+	}
+	public void setLastPushed(long lastPushed) {
+		this.lastPushed = lastPushed;
+	}
+	public long getNextPush() {
+		return nextPush;
+	}
+	public void setNextPush(long nextPush) {
+		this.nextPush = nextPush;
+	}
+	public Map<String,Status> getEndPointStatus() {
+		return endPointStatus;
+	}
+	public void setEndPointStatus(Map<String,Status> endPointStatus) {
+		this.endPointStatus = endPointStatus;
+	}
+	public void setEndPointStatus(String endPoint,Status endPointStatus) {
+		this.endPointStatus.put(endPoint, endPointStatus);
 	}
 
 }
