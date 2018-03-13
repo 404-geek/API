@@ -20,10 +20,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.Service.Credentials;
 import com.aptus.blackbox.index.Cursor;
 import com.aptus.blackbox.index.DestObject;
@@ -36,14 +38,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
-	
+@Component
 public class EndpointsTaskExecuter implements Runnable{
-
-	private UrlObject endpoint;
-	private String choice,connectionId;
-	private  ResponseEntity<String> out;
-	private DestObject destObj;
-	private Map<String,String> destToken;
 	
 	@Value("${homepage.url}")
 	private String homeUrl;
@@ -52,18 +48,23 @@ public class EndpointsTaskExecuter implements Runnable{
 	@Value("${access.control.allow.origin}")
 	private String rootUrl;
 	
-	
+	@Autowired
+	private ApplicationCredentials applicationCredentials;
+
+	private UrlObject endpoint;
+	private String choice,connectionId,userId;
+	private ResponseEntity<String> out;
+	private SchedulingObjects scheduleObjectInfo;	
 	private Connection con = null;
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(EndpointsTaskExecuter.class);
 	
-	public  EndpointsTaskExecuter(UrlObject endpoints, String choice,String connectionId) {
-		this.endpoint=endpoints;
+	public void setEndpointsTaskExecuter(UrlObject endpoint, String choice,String connectionId,String user) {
+		this.endpoint=endpoint;
 		this.choice=choice;
 		this.connectionId=connectionId;
-		SchedulingObjects currObject = null;
-		this.destObj=currObject.getDestObj();
-		this.destToken = currObject.getDestToken();
+		this.userId = user;
+		this.scheduleObjectInfo = applicationCredentials.getApplicationCred().get(user).getSchedulingObjects().get(connectionId);
 	}
 	
 
@@ -87,15 +88,15 @@ public class EndpointsTaskExecuter implements Runnable{
         header.add("access-control-allow-credentials", "true");
         
 		try {
-			String url = Utilities.buildUrl(endpoint, credentials.getCurrSrcToken());
+			String url = Utilities.buildUrl(endpoint, scheduleObjectInfo.getSrcToken());
 			System.out.println(endpoint.getLabel() + " = " + url);
 
-			HttpHeaders headers = Utilities.buildHeader(endpoint, credentials.getCurrSrcToken());
+			HttpHeaders headers = Utilities.buildHeader(endpoint, scheduleObjectInfo.getSrcToken());
 			HttpEntity<?> httpEntity;
 			if (endpoint.getResponseString()!=null&&!endpoint.getResponseString().isEmpty()) {
 				httpEntity = new HttpEntity<Object>(endpoint.getResponseString(), headers);
 			} else if (!endpoint.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> body = Utilities.buildBody(endpoint, credentials.getCurrSrcToken());
+				MultiValueMap<String, String> body = Utilities.buildBody(endpoint, scheduleObjectInfo.getSrcToken());
 				httpEntity = new HttpEntity<Object>(body, headers);
 			} else {
 				httpEntity = new HttpEntity<Object>(headers);
@@ -162,7 +163,7 @@ public class EndpointsTaskExecuter implements Runnable{
 			System.out.println("\n--------------------------------------------------------------\n");
 			//System.out.println(out.getBody());
 			//System.out.println(out.getBody());
-			
+			String tableName=connectionId+"_"+endpoint.getLabel();
 			if(choice.equalsIgnoreCase("view")) {				
 			    JsonObject respBody = new JsonObject();
 				respBody.addProperty("status", "21");
@@ -170,10 +171,9 @@ public class EndpointsTaskExecuter implements Runnable{
 				out = ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 				return;
 			}
-			else if(truncateAndPush()) {
-				String tableName=credentials.getCurrConnId().getConnectionId()+"_"+endpoint.getLabel();
+			else if(truncateAndPush(tableName)) {				
 
-			    System.out.println("SourceController-driver: "+credentials.getCurrDestObj().getDrivers());
+			    System.out.println("SourceController-driver: "+scheduleObjectInfo.getDestObj().getDrivers());
 
 			    if(pushDB(out.getBody().toString(), tableName)) {
 			    	JsonObject respBody = new JsonObject();
@@ -211,21 +211,21 @@ public class EndpointsTaskExecuter implements Runnable{
 	}
 	
 	public boolean pushDB(String  jsonString, String tableName) throws SQLException {
-		System.out.println("pushDBController-driver: "+destObj.getDrivers());
+		System.out.println("pushDBController-driver: "+scheduleObjectInfo.getDestObj().getDrivers());
 		
 		try {
 			System.out.println("TABLENAME: "+tableName);
 			//System.out.println("JSONSTRING: "+jsonString);
 			
-			String host = destToken.get("server_host");
-			String port = destToken.get("server_port");
-			String dbase = destToken.get("database_name");
-			String user = destToken.get("db_username");
-			String pass = destToken.get("db_password");
+			String host = scheduleObjectInfo.getDestToken().get("server_host");
+			String port = scheduleObjectInfo.getDestToken().get("server_port");
+			String dbase = scheduleObjectInfo.getDestToken().get("database_name");
+			String user = scheduleObjectInfo.getDestToken().get("db_username");
+			String pass = scheduleObjectInfo.getDestToken().get("db_password");
 			PreparedStatement preparedStmt;
-			if (checkDB(destToken.get("database_name"),destToken,destObj)) {
+			if (checkDB(dbase,scheduleObjectInfo.getDestToken(),scheduleObjectInfo.getDestObj())) {
 				if (con == null || con.isClosed())
-					connection(destToken,destObj);
+					connection(scheduleObjectInfo.getDestToken(),scheduleObjectInfo.getDestObj());
 				JFlat x = new JFlat(jsonString);
 				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 				// System.out.println(json2csv);
@@ -236,7 +236,7 @@ public class EndpointsTaskExecuter implements Runnable{
 				for (Object[] row : json2csv) {
 					if (i == 0) {
 						 statement="CREATE TABLE "+
-								 destObj.getIdentifier_quote_open()+ tableName +destObj.getIdentifier_quote_close()+
+								 scheduleObjectInfo.getDestObj().getIdentifier_quote_open()+ tableName +scheduleObjectInfo.getDestObj().getIdentifier_quote_close()+
 								 "(";
 						 for(Object t : row)
 						 statement+=t.toString()+" TEXT,";
@@ -248,7 +248,7 @@ public class EndpointsTaskExecuter implements Runnable{
 					} else {
 						int k;						
 						String instmt = "INSERT INTO " +
-								 destObj.getIdentifier_quote_open()+ tableName +destObj.getIdentifier_quote_close()+
+								scheduleObjectInfo.getDestObj().getIdentifier_quote_open()+ tableName +scheduleObjectInfo.getDestObj().getIdentifier_quote_close()+
 								  " VALUES(";
 						
 						for(k=0;k<row.length;k++)
@@ -310,11 +310,11 @@ public class EndpointsTaskExecuter implements Runnable{
 			ResultSet res = stmt.executeQuery(query);
 			if (res.next()) {
 				con.close();
-				credentials.getSchedulingObjects().get(connectionId).setDestValid(true);
+				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setDestValid(true);
 				return true;
 			}
 			con.close();
-			credentials.getSchedulingObjects().get(connectionId).setDestValid(false);
+			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setDestValid(true);
 			return false;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
@@ -323,22 +323,22 @@ public class EndpointsTaskExecuter implements Runnable{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}		
-		credentials.getSchedulingObjects().get(connectionId).setDestValid(false);
+		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setDestValid(false);
 		return false;
 	}
 	
-	private boolean truncateAndPush() {
+	private boolean truncateAndPush(String tableName) {
     	try {
 			if (con == null || con.isClosed())
-				connection(destToken,destObj);
+				connection(scheduleObjectInfo.getDestToken(),scheduleObjectInfo.getDestObj());
 			PreparedStatement stmt;
 			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_schema =" 
-					+ destObj.getValue_quote_open()+ credentials.getCurrConnId().getConnectionId()
-					+destObj.getValue_quote_close()+";");
+					+ scheduleObjectInfo.getDestObj().getValue_quote_open()+ tableName
+					+scheduleObjectInfo.getDestObj().getValue_quote_close()+";");
 			ResultSet res = stmt.executeQuery();
 			res.first();
 			if(res.getInt("COUNT")!=0) {
-				stmt = con.prepareStatement("TRUNCATE TABLE "+credentials.getCurrConnId().getConnectionId()+";");
+				stmt = con.prepareStatement("TRUNCATE TABLE "+tableName+";");
 				stmt.execute();
 			}			
 			return true;

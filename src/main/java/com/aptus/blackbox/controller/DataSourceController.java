@@ -315,8 +315,8 @@ public class DataSourceController {
                 if (out.getStatusCode().is2xxSuccessful()) {                   
                     System.out.println(connId + "***********Deleted!!!!**************");
                     JsonObject respBody = new JsonObject();
-                    respBody.addProperty("data", "Same");
-                    respBody.addProperty("status", "14");
+                    respBody.addProperty("data", "Sucessfully Deleted");
+                    respBody.addProperty("status", "200");
                     return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
                 }
                 else {
