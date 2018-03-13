@@ -15,6 +15,8 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -33,9 +35,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.Service.Credentials;
+import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.Cursor;
 import com.aptus.blackbox.index.DestObject;
+import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.SrcObject;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
@@ -64,6 +68,9 @@ public class DataController {
 	private Credentials credentials;
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
+	
+	 @Autowired
+	 private ApplicationEventPublisher applicationEventPublisher;
 	/*
 	 * 
 	 */
@@ -244,7 +251,8 @@ public class DataController {
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
 	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,
-			@RequestParam("connId") String connId,HttpSession httpsession) {
+			@RequestParam("connId") String connId,@RequestParam(value="scheduled",required=false) String scheduled
+			,@RequestParam(value="period",required=false) String period,HttpSession httpsession) {
         ResponseEntity<String> ret = null;
         HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
@@ -253,6 +261,25 @@ public class DataController {
         try {
         	if(Utilities.isSessionValid(httpsession,credentials)) {
         		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(httpsession.getLastAccessedTime());
+        		if(choice.equalsIgnoreCase("export") && scheduled!=null && scheduled.equalsIgnoreCase("true")) {
+        			//SchedulingObjects obj=new SchedulingObjects();
+        			//obj.setDestObj(destObj);
+        			/*
+        			 * 
+        			 */
+        			
+        			
+        			System.out.println("Publishing custom event. ");
+        			 ScheduleEventData scheduleEventData=new ScheduleEventData();
+        			 scheduleEventData.setData(credentials.getUserId(), connId);
+        			 applicationEventPublisher.publishEvent(scheduleEventData);
+        			 
+        			 JsonObject respBody = new JsonObject();
+     				respBody.addProperty("status", "21");
+     				respBody.addProperty("data","published");
+     				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+        		}
+        		else {
         		credentials.setCurrConnId(credentials.getConnectionIds(connId));
 	        	SrcObject obj = credentials.getCurrSrcObj();
 	            if (obj.getRefresh().equals("YES")) {
@@ -295,6 +322,7 @@ public class DataController {
 	                }
 	            }
 	        }
+        	}
         	else {
     			System.out.println("Session expired!");
     			JsonObject respBody = new JsonObject();
@@ -477,7 +505,7 @@ public class DataController {
 					respBody.addProperty("status", "13");
 				}
 				else if(credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {
-					out=selectAction(choice, connId, httpsession);
+					out=selectAction(choice, connId,null,null, httpsession);
 					respBody=gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();					
 				}
 				else {
@@ -485,7 +513,7 @@ public class DataController {
 							equalsIgnoreCase(credentials.getCurrConnId().getSourceName()) &&
 					   credentials.getConnectionIds(connId).getDestName().
 							equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
-						out=selectAction(choice, connId, httpsession);
+						out=selectAction(choice, connId,null,null, httpsession);
 						respBody=gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
 					}
 					else if(credentials.getConnectionIds(connId).getSourceName().
