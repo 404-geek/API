@@ -7,18 +7,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
@@ -26,10 +26,10 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.aptus.blackbox.Service.ApplicationCredentials;
-import com.aptus.blackbox.Service.Credentials;
 import com.aptus.blackbox.index.Cursor;
 import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.SchedulingObjects;
+import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.github.opendevl.JFlat;
@@ -50,10 +50,12 @@ public class EndpointsTaskExecutor implements Runnable{
 	
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
+	@Autowired
+	private ApplicationEventPublisher applicationEventPublisher;
 
 	private UrlObject endpoint;
 	private String connectionId,userId;
-	private JsonObject result;
+	private Status result;
 	private SchedulingObjects scheduleObject;	
 	private Connection con = null;
 	
@@ -67,13 +69,21 @@ public class EndpointsTaskExecutor implements Runnable{
 	}
 	
 
-	public JsonObject getResult() {
-		return result;
-	}
 
 
-	public void setResult(JsonObject result) {
+	public void setResult(Status result) {
 		this.result = result;
+		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setEndPointStatus(endpoint.getLabel(),result);
+		if(!applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().containsKey("31")) {
+			
+			applicationEventPublisher.publishEvent(new HashMap <String,String>().put(connectionId,userId));
+			
+			//if(!applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().containsKey("32"))	
+				//applicationEventPublisher.publishEvent(new HashMap <String,String>().put(connectionId,userId));
+			
+		}
+		
+			
 	}
 	
 	@Override
@@ -169,19 +179,16 @@ public class EndpointsTaskExecutor implements Runnable{
 			    System.out.println("SourceController-driver: "+scheduleObject.getDestObj().getDrivers());
 
 			    if(pushDB(out.getBody().toString(), tableName)) {
-			    	JsonObject respBody = new JsonObject();
-					respBody.addProperty("status", "22");
-					respBody.addProperty("data", "Successfullypushed");
+			    	Status respBody = new Status("22","successfully pushed");
 					setResult(respBody);
+					
 					//out = ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 					return;
 			    }        	            
 			}
 			else {
-				 JsonObject respBody = new JsonObject();
-					respBody.addProperty("status", "23");
-					respBody.addProperty("data", "Unsuccessful");
-					setResult(respBody);
+				Status respBody = new Status("23","unsuccessful");
+				setResult(respBody);
 					//out =  ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 					return;
 			}
@@ -202,10 +209,9 @@ public class EndpointsTaskExecutor implements Runnable{
 			e.printStackTrace();
 		}
 		
-		JsonObject respBody = new JsonObject();
-		respBody.addProperty("status", "55");
-		respBody.addProperty("data", "Error");
+		Status respBody = new Status("55","error");
 		setResult(respBody);
+		
 		//out = ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(header).body(null);
 		return;
 	}

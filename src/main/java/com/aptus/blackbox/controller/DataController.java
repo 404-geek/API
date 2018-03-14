@@ -42,6 +42,7 @@ import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.SrcObject;
+import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.github.opendevl.JFlat;
@@ -268,7 +269,9 @@ public class DataController {
         			schObj.setDestToken(credentials.getCurrDestToken());
         			schObj.setSrcObj(credentials.getCurrSrcObj());
         			schObj.setSrcToken(credentials.getCurrSrcToken());
-        			
+        			for(String endpoint:credentials.getCurrConnId().getEndPoints()) {
+        				schObj.setEndPointStatus(endpoint, null);
+        			}
         			ScheduleInfo scInfo = new ScheduleInfo();
         			scInfo.setSchedulingObjects(schObj, connId);
         			
