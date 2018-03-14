@@ -39,7 +39,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
 @Component
-public class EndpointsTaskExecuter implements Runnable{
+public class EndpointsTaskExecutor implements Runnable{
 	
 	@Value("${homepage.url}")
 	private String homeUrl;
@@ -52,29 +52,28 @@ public class EndpointsTaskExecuter implements Runnable{
 	private ApplicationCredentials applicationCredentials;
 
 	private UrlObject endpoint;
-	private String choice,connectionId,userId;
-	private ResponseEntity<String> out;
-	private SchedulingObjects scheduleObjectInfo;	
+	private String connectionId,userId;
+	private JsonObject result;
+	private SchedulingObjects scheduleObject;	
 	private Connection con = null;
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(EndpointsTaskExecuter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(EndpointsTaskExecutor.class);
 	
-	public void setEndpointsTaskExecuter(UrlObject endpoint, String choice,String connectionId,String user) {
+	public void setEndpointsTaskExecutor(UrlObject endpoint, String connectionId,String user) {
 		this.endpoint=endpoint;
-		this.choice=choice;
 		this.connectionId=connectionId;
 		this.userId = user;
-		this.scheduleObjectInfo = applicationCredentials.getApplicationCred().get(user).getSchedulingObjects().get(connectionId);
+		this.scheduleObject = applicationCredentials.getApplicationCred().get(user).getSchedulingObjects().get(connectionId);
 	}
 	
 
-	public ResponseEntity<String> getOut() {
-		return out;
+	public JsonObject getResult() {
+		return result;
 	}
 
 
-	public void setOut(ResponseEntity<String> out) {
-		this.out = out;
+	public void setResult(JsonObject result) {
+		this.result = result;
 	}
 	
 	@Override
@@ -88,15 +87,15 @@ public class EndpointsTaskExecuter implements Runnable{
         header.add("access-control-allow-credentials", "true");
         
 		try {
-			String url = Utilities.buildUrl(endpoint, scheduleObjectInfo.getSrcToken());
+			String url = Utilities.buildUrl(endpoint, scheduleObject.getSrcToken());
 			System.out.println(endpoint.getLabel() + " = " + url);
 
-			HttpHeaders headers = Utilities.buildHeader(endpoint, scheduleObjectInfo.getSrcToken());
+			HttpHeaders headers = Utilities.buildHeader(endpoint, scheduleObject.getSrcToken());
 			HttpEntity<?> httpEntity;
 			if (endpoint.getResponseString()!=null&&!endpoint.getResponseString().isEmpty()) {
 				httpEntity = new HttpEntity<Object>(endpoint.getResponseString(), headers);
 			} else if (!endpoint.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> body = Utilities.buildBody(endpoint, scheduleObjectInfo.getSrcToken());
+				MultiValueMap<String, String> body = Utilities.buildBody(endpoint, scheduleObject.getSrcToken());
 				httpEntity = new HttpEntity<Object>(body, headers);
 			} else {
 				httpEntity = new HttpEntity<Object>(headers);
@@ -104,7 +103,7 @@ public class EndpointsTaskExecuter implements Runnable{
 			HttpMethod method = (endpoint.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
 			System.out.println("Method : "+method);
 			System.out.println(url);
-			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
+			ResponseEntity<String> out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 			
 			//call destination validation and push data 
 			
@@ -164,22 +163,17 @@ public class EndpointsTaskExecuter implements Runnable{
 			//System.out.println(out.getBody());
 			//System.out.println(out.getBody());
 			String tableName=connectionId+"_"+endpoint.getLabel();
-			if(choice.equalsIgnoreCase("view")) {				
-			    JsonObject respBody = new JsonObject();
-				respBody.addProperty("status", "21");
-				respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
-				out = ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
-				return;
-			}
-			else if(truncateAndPush(tableName)) {				
+		
+			if(truncate(tableName)) {				
 
-			    System.out.println("SourceController-driver: "+scheduleObjectInfo.getDestObj().getDrivers());
+			    System.out.println("SourceController-driver: "+scheduleObject.getDestObj().getDrivers());
 
 			    if(pushDB(out.getBody().toString(), tableName)) {
 			    	JsonObject respBody = new JsonObject();
 					respBody.addProperty("status", "22");
 					respBody.addProperty("data", "Successfullypushed");
-					out = ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+					setResult(respBody);
+					//out = ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 					return;
 			    }        	            
 			}
@@ -187,7 +181,8 @@ public class EndpointsTaskExecuter implements Runnable{
 				 JsonObject respBody = new JsonObject();
 					respBody.addProperty("status", "23");
 					respBody.addProperty("data", "Unsuccessful");
-					out =  ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+					setResult(respBody);
+					//out =  ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 					return;
 			}
 		} catch (RestClientException e) {
@@ -206,26 +201,31 @@ public class EndpointsTaskExecuter implements Runnable{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		out = ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(header).body(null);
+		
+		JsonObject respBody = new JsonObject();
+		respBody.addProperty("status", "55");
+		respBody.addProperty("data", "Error");
+		setResult(respBody);
+		//out = ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(header).body(null);
 		return;
 	}
 	
 	public boolean pushDB(String  jsonString, String tableName) throws SQLException {
-		System.out.println("pushDBController-driver: "+scheduleObjectInfo.getDestObj().getDrivers());
+		System.out.println("pushDBController-driver: "+scheduleObject.getDestObj().getDrivers());
 		
 		try {
 			System.out.println("TABLENAME: "+tableName);
 			//System.out.println("JSONSTRING: "+jsonString);
 			
-			String host = scheduleObjectInfo.getDestToken().get("server_host");
-			String port = scheduleObjectInfo.getDestToken().get("server_port");
-			String dbase = scheduleObjectInfo.getDestToken().get("database_name");
-			String user = scheduleObjectInfo.getDestToken().get("db_username");
-			String pass = scheduleObjectInfo.getDestToken().get("db_password");
+			String host = scheduleObject.getDestToken().get("server_host");
+			String port = scheduleObject.getDestToken().get("server_port");
+			String dbase = scheduleObject.getDestToken().get("database_name");
+			String user = scheduleObject.getDestToken().get("db_username");
+			String pass = scheduleObject.getDestToken().get("db_password");
 			PreparedStatement preparedStmt;
-			if (checkDB(dbase,scheduleObjectInfo.getDestToken(),scheduleObjectInfo.getDestObj())) {
+			if (checkDB(dbase,scheduleObject.getDestToken(),scheduleObject.getDestObj())) {
 				if (con == null || con.isClosed())
-					connection(scheduleObjectInfo.getDestToken(),scheduleObjectInfo.getDestObj());
+					connection(scheduleObject.getDestToken(),scheduleObject.getDestObj());
 				JFlat x = new JFlat(jsonString);
 				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 				// System.out.println(json2csv);
@@ -236,7 +236,7 @@ public class EndpointsTaskExecuter implements Runnable{
 				for (Object[] row : json2csv) {
 					if (i == 0) {
 						 statement="CREATE TABLE "+
-								 scheduleObjectInfo.getDestObj().getIdentifier_quote_open()+ tableName +scheduleObjectInfo.getDestObj().getIdentifier_quote_close()+
+								 scheduleObject.getDestObj().getIdentifier_quote_open()+ tableName +scheduleObject.getDestObj().getIdentifier_quote_close()+
 								 "(";
 						 for(Object t : row)
 						 statement+=t.toString()+" TEXT,";
@@ -248,7 +248,7 @@ public class EndpointsTaskExecuter implements Runnable{
 					} else {
 						int k;						
 						String instmt = "INSERT INTO " +
-								scheduleObjectInfo.getDestObj().getIdentifier_quote_open()+ tableName +scheduleObjectInfo.getDestObj().getIdentifier_quote_close()+
+								scheduleObject.getDestObj().getIdentifier_quote_open()+ tableName +scheduleObject.getDestObj().getIdentifier_quote_close()+
 								  " VALUES(";
 						
 						for(k=0;k<row.length;k++)
@@ -327,14 +327,14 @@ public class EndpointsTaskExecuter implements Runnable{
 		return false;
 	}
 	
-	private boolean truncateAndPush(String tableName) {
+	private boolean truncate(String tableName) {
     	try {
 			if (con == null || con.isClosed())
-				connection(scheduleObjectInfo.getDestToken(),scheduleObjectInfo.getDestObj());
+				connection(scheduleObject.getDestToken(),scheduleObject.getDestObj());
 			PreparedStatement stmt;
 			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_schema =" 
-					+ scheduleObjectInfo.getDestObj().getValue_quote_open()+ tableName
-					+scheduleObjectInfo.getDestObj().getValue_quote_close()+";");
+					+ scheduleObject.getDestObj().getValue_quote_open()+ tableName
+					+scheduleObject.getDestObj().getValue_quote_close()+";");
 			ResultSet res = stmt.executeQuery();
 			res.first();
 			if(res.getInt("COUNT")!=0) {

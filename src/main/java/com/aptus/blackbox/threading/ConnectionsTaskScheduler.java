@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,23 +31,29 @@ public class ConnectionsTaskScheduler implements Runnable {
 	private String baseUrl;
 	@Value("${access.control.allow.origin}")
 	private String rootUrl;
-	
+	@Autowired
+	private ApplicationContext Context;
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
 	@Autowired
-	private ThreadPoolTaskExecutor taskExecutor;
+	private ThreadPoolTaskExecutor threadPoolTaskExecutor;
 	
-	private String choice,connectionId,userId;
-	private ResponseEntity<String> out;
+	private String connectionId,userId;
+	private JsonObject out;
 	private SchedulingObjects scheduleObjectInfo;
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionsTaskScheduler.class);
 
-	public void setConnectionsTaskScheduler(String choice,String connectionId,String userId) {
-		this.choice = choice;
+	public void setConnectionsTaskScheduler(String connectionId,String userId) {		
 		this.connectionId = connectionId;
 		this.userId = userId;
 		this.scheduleObjectInfo = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
+	}
+	public JsonObject getOut() {
+		return out;
+	}
+	public void setOut(JsonObject out) {
+		this.out = out;
 	}
 	@Override
 	public void run() {
@@ -58,18 +65,18 @@ public class ConnectionsTaskScheduler implements Runnable {
         try {
         	SrcObject obj = scheduleObjectInfo.getSrcObj();
             if (obj.getRefresh().equals("YES")) {
-            	
                 ret = Utilities.token(obj.getRefreshToken(),scheduleObjectInfo.getSrcToken());
                 if (!ret.getStatusCode().is2xxSuccessful()) {	                	
                     JsonObject respBody = new JsonObject();
         			respBody.addProperty("message", "Re-authorize");
     				respBody.addProperty("status", "51");
-    				out =  ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
+    				setOut(respBody);
+    				//set applicationcredentials.endpointStatus
     				return;
 
                 } else {
                 	
-                	//next piece of code is for saveValues 
+                	//next piece of code is ffetchEndpointsDataor saveValues 
                 	try {
                 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
         			} catch (Exception e) {
@@ -80,7 +87,7 @@ public class ConnectionsTaskScheduler implements Runnable {
         			}
             		this.scheduleObjectInfo = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
         			System.out.println("token : " + scheduleObjectInfo.getSrcToken().keySet() + ":" + scheduleObjectInfo.getSrcToken().values());
-                    out = validateData(obj.getValidateCredentials(), obj.getEndPoints(),choice);
+                    setOut(validateData(obj.getValidateCredentials(), obj.getEndPoints()));
                     return ;
                 }
             } else {
@@ -90,13 +97,13 @@ public class ConnectionsTaskScheduler implements Runnable {
                     JsonObject respBody = new JsonObject();
         			respBody.addProperty("message", "Re-authorize");
     				respBody.addProperty("status", "51");
-    				out =  ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
+    				setOut(respBody);
     				return ;
 
                 } else {
                 	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setSrcValid(true);                    
                 	//ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
-                    out =  fetchEndpointsData(obj.getEndPoints(),choice);
+                    setOut(fetchEndpointsData(obj.getEndPoints()));
                     return ;
                 }
             }
@@ -106,54 +113,65 @@ public class ConnectionsTaskScheduler implements Runnable {
             e.printStackTrace();
             System.out.println(e + "home.data");
         }
-        out =  ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
+		JsonObject respBody = new JsonObject();
+		respBody.addProperty("status", "55");
+		respBody.addProperty("data", "Error");
+		setOut(respBody);
         return ;
 	}
 
-    private ResponseEntity<String> validateData(UrlObject valid, List<UrlObject> endPoints, String choice) {
+    private JsonObject validateData(UrlObject validateUrl, List<UrlObject> endPoints) {
         ResponseEntity<String> ret = null;
         HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
 		header.add("access-control-allow-origin", rootUrl);
         header.add("access-control-allow-credentials", "true");
         try {
-            ret = Utilities.token(valid,scheduleObjectInfo.getSrcToken());
+            ret = Utilities.token(validateUrl,scheduleObjectInfo.getSrcToken());
             if (!ret.getStatusCode().is2xxSuccessful()) {            	
                 JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Contact Support");
 				respBody.addProperty("status", "52");
-				return  ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(respBody.toString());
+				return  respBody;
 				
             } else {
-                return fetchEndpointsData(endPoints,choice);
+                return fetchEndpointsData(endPoints);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
             System.out.println("source.validatedata");
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
+		JsonObject respBody = new JsonObject();
+		respBody.addProperty("status", "55");
+		respBody.addProperty("data", "Error");
+		return respBody;
     }
 
-    private ResponseEntity<String> fetchEndpointsData(List<UrlObject> endpoints, String choice)
+    private JsonObject fetchEndpointsData(List<UrlObject> endpoints)
     {
     	HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
 		header.add("access-control-allow-origin", rootUrl);
         header.add("access-control-allow-credentials", "true");
-    	ResponseEntity<String> out = null;
     		try {
     			Gson gson=new Gson();
     			RestTemplate restTemplate = new RestTemplate();
     			
-    			for(UrlObject object:endpoints) {}
-    			
+    			for(UrlObject object:endpoints) {
+    				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
+    				endpointsTaskExecutor.setEndpointsTaskExecutor(object, connectionId, userId);
+    				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
+    			}    			
 
     		} catch (Exception e) {
     			e.printStackTrace();
     			System.out.println(e+"token");
     		}
-    		return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
+    		JsonObject respBody = new JsonObject();
+    		respBody.addProperty("status", "55");
+    		respBody.addProperty("data", "Error");
+    		return respBody;
     }
 	
 	

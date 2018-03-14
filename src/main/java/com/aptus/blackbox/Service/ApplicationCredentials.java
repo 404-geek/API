@@ -18,7 +18,7 @@ public class ApplicationCredentials implements Serializable {
 	public void setApplicationCred(Map<String,ScheduleInfo> applicationCred) {
 		this.applicationCred = applicationCred;
 	}
-	public void setApplicationCred(String userId,ScheduleInfo applicationCred) {
-		this.applicationCred.put(userId, applicationCred);
+	public void setApplicationCred(String userId,ScheduleInfo scheduleInfo) {
+		this.applicationCred.put(userId, scheduleInfo);
 	}
 }

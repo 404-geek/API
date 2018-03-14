@@ -1,12 +1,12 @@
 package com.aptus.blackbox.index;
 
 public class Status {
-	private boolean status;
+	private String status;
 	private String message;
-	public boolean isStatus() {
+	public String getStatus() {
 		return status;
 	}
-	public void setStatus(boolean status) {
+	public void setStatus(String status) {
 		this.status = status;
 	}
 	public String getMessage() {

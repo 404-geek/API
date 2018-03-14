@@ -39,6 +39,7 @@ import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.Cursor;
 import com.aptus.blackbox.index.DestObject;
+import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.SrcObject;
 import com.aptus.blackbox.index.UrlObject;
@@ -251,8 +252,7 @@ public class DataController {
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
 	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,
-			@RequestParam("connId") String connId,@RequestParam(value="scheduled",required=false) String scheduled
-			,@RequestParam(value="period",required=false) String period,HttpSession httpsession) {
+			@RequestParam("connId") String connId,HttpSession httpsession) {
         ResponseEntity<String> ret = null;
         HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
@@ -261,17 +261,24 @@ public class DataController {
         try {
         	if(Utilities.isSessionValid(httpsession,credentials)) {
         		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(httpsession.getLastAccessedTime());
-        		if(choice.equalsIgnoreCase("export") && scheduled!=null && scheduled.equalsIgnoreCase("true")) {
-        			//SchedulingObjects obj=new SchedulingObjects();
-        			//obj.setDestObj(destObj);
-        			/*
-        			 * 
-        			 */
+        		if(choice.equalsIgnoreCase("export")) {
         			
+        			SchedulingObjects schObj=new SchedulingObjects();
+        			schObj.setDestObj(credentials.getCurrDestObj());
+        			schObj.setDestToken(credentials.getCurrDestToken());
+        			schObj.setSrcObj(credentials.getCurrSrcObj());
+        			schObj.setSrcToken(credentials.getCurrSrcToken());
+        			
+        			ScheduleInfo scInfo = new ScheduleInfo();
+        			scInfo.setSchedulingObjects(schObj, connId);
+        			
+        			applicationCredentials.setApplicationCred(credentials.getUserId(), scInfo);
         			
         			System.out.println("Publishing custom event. ");
         			 ScheduleEventData scheduleEventData=new ScheduleEventData();
-        			 scheduleEventData.setData(credentials.getUserId(), connId);
+        			 scheduleEventData.setData(credentials.getUserId(), connId,
+        					 credentials.getCurrConnId().getScheduled(),
+        					 credentials.getCurrConnId().getPeriod());
         			 applicationEventPublisher.publishEvent(scheduleEventData);
         			 
         			 JsonObject respBody = new JsonObject();
@@ -279,6 +286,7 @@ public class DataController {
      				respBody.addProperty("data","published");
      				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
         		}
+        		
         		else {
         		credentials.setCurrConnId(credentials.getConnectionIds(connId));
 	        	SrcObject obj = credentials.getCurrSrcObj();
@@ -505,7 +513,7 @@ public class DataController {
 					respBody.addProperty("status", "13");
 				}
 				else if(credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {
-					out=selectAction(choice, connId,null,null, httpsession);
+					out=selectAction(choice, connId, httpsession);
 					respBody=gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();					
 				}
 				else {
@@ -513,7 +521,7 @@ public class DataController {
 							equalsIgnoreCase(credentials.getCurrConnId().getSourceName()) &&
 					   credentials.getConnectionIds(connId).getDestName().
 							equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
-						out=selectAction(choice, connId,null,null, httpsession);
+						out=selectAction(choice, connId, httpsession);
 						respBody=gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
 					}
 					else if(credentials.getConnectionIds(connId).getSourceName().
