@@ -213,7 +213,7 @@ public class home {
 	
 	
 	@RequestMapping(value="/update")
-	private ResponseEntity<String> login(@RequestParam HashMap<String,String> params,HttpSession session)
+	private ResponseEntity<String> update(@RequestParam HashMap<String,String> params,HttpSession session)
 	{
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
