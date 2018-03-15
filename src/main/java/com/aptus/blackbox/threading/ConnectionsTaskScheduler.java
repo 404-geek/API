@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +49,9 @@ public class ConnectionsTaskScheduler implements Runnable {
 		this.userId = userId;
 		this.scheduleObjectInfo = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
 	}
-
+	public JsonObject getOut() {
+		return out;
+	}
 	public void setOut(JsonObject out) {
 		this.out = out;
 	}
@@ -75,7 +76,7 @@ public class ConnectionsTaskScheduler implements Runnable {
 
                 } else {
                 	
-                	//next piece of code is ffetchEndpointsDataor saveValues 
+                	//next piece of code is ffetchEndpointsData or saveValues 
                 	try {
                 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
         			} catch (Exception e) {
@@ -157,14 +158,11 @@ public class ConnectionsTaskScheduler implements Runnable {
     			Gson gson=new Gson();
     			RestTemplate restTemplate = new RestTemplate();
     			
-    			for(UrlObject object:endpoints) {
+    			for(UrlObject object:endpoints) {    				
     				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
     				endpointsTaskExecutor.setEndpointsTaskExecutor(object, connectionId, userId);
     				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
-    				
     			}    			
-    			
-    			
 
     		} catch (Exception e) {
     			e.printStackTrace();
