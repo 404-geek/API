@@ -51,7 +51,7 @@
     </div>
 
     <div class="modal fade" id="display-modal" tabindex="-1" role="dialog" aria-labelledby="display-modal" aria-hidden="true">
-        <div class="modal-dialog" role="document">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Data</h5>
@@ -63,25 +63,31 @@
                     <p id="modal-body"></p>
                     <form method="get" id="destination-form" style="display: none;">
                         <div class="modal-body">
-                            <div class="form-group">
-                                <label for="InputDatabaseName">Database Name</label>
-                                <input type="text" class="form-control" id="InputDatabaseName" placeholder="Database Name" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="InputUsername">Username</label>
-                                <input type="text" class="form-control" id="InputUsername" placeholder="Username" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="InputPassword">Password</label>
-                                <input type="password" class="form-control" id="InputPassword" placeholder="Password" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="InputHostname">Hostname</label>
-                                <input type="text" class="form-control" id="InputHostname" placeholder="Hostname" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="InputPort">Port</label>
-                                <input type="text" class="form-control" id="InputPort" placeholder="Port" required>
+                            <div class="row">
+                                <div class="list-group col" id="prev-conn">
+                                </div>
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="InputDatabaseName">Database Name</label>
+                                        <input type="text" class="form-control" id="InputDatabaseName" placeholder="Database Name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="InputUsername">Username</label>
+                                        <input type="text" class="form-control" id="InputUsername" placeholder="Username" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="InputPassword">Password</label>
+                                        <input type="password" class="form-control" id="InputPassword" placeholder="Password" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="InputHostname">Hostname</label>
+                                        <input type="text" class="form-control" id="InputHostname" placeholder="Hostname" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="InputPort">Port</label>
+                                        <input type="text" class="form-control" id="InputPort" placeholder="Port" required>
+                                    </div>
+                                </div>
                             </div>
 
                         </div>
@@ -137,7 +143,7 @@
         </div>
     </div>
 
-    
+
 </body>
 
 </html>

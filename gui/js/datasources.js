@@ -121,8 +121,10 @@ $(document).ready(function () {
 					if (id == key) {
 						$("#selectedDestination").html('<div class="d-inline-block border"><div class="m-2"><img class="rounded-circle" width="75" height="75" src="' + destination.logo + '"><p class="text-center">' + destination.name + '</p></div></div>');
 						var srcdestid = key;
+						console.log("uytrytf");
 						$("#destination-form").submit(function (e) {
 							e.preventDefault();
+							console.log("jhgvgif");
 							$('#destinationFormModal').modal('hide');
 							var url = 'http://localhost:8080/validate?type=destination&srcdestId=' + srcdestid + "&database_name=" + $('#InputDatabaseName').val() + "&db_username=" + $('#InputUsername').val() + "&db_password=" + $('#InputPassword').val() + "&server_host=" + $('#InputHostname').val() + "&server_port=" + $('#InputPort').val();
 							window.open(url, "_blank", 'width=800, height=600, menubar=no, resizable=no, scrollbars=no, status=no, toolbar=no, location=no');
@@ -158,12 +160,52 @@ $(document).ready(function () {
 							});
 						});
 
+						$('#destinationFormModal').on('show.bs.modal', function (e) {
+							$.ajax({
+								crossOrigin: true,
+								type: "GET",
+								url: "http://localhost:8080/fetchdbs?destId=" + dst,
+								cache: false,
+								xhrFields: {
+									withCredentials: true
+								},
+								success: function (data) {
+									var obj = JSON.parse(data);
+									var listhtml = "";
+									
+									if (obj.status == 200) {
+										for (var i = 0; i < obj.data.length; i++) {
+											conn = obj.data[i];
+											listhtml += '<button type="button" class="list-group-item list-group-item-action prev-conn-button" data-db-name="' + conn.credentials[0].value + '" data-db-username="' + conn.credentials[1].value + '" data-server-host="' + conn.credentials[2].value + '" data-server-port="' + conn.credentials[3].value + '" data-db-password="' + conn.credentials[4].value + '">' + conn._id + '</button>'
+										}
+										$("#prev-conn").html(listhtml);
+										$(".prev-conn-button").click(function (event) {
+											var button = $(this); // Button that triggered the modal
+											var dbname = button.data('db-name');
+											var username = button.data('db-username');
+											var host = button.data('server-host');
+											var port = button.data('server-port');
+											var password = button.data('db-password');
+											$("#InputDatabaseName").val(dbname);
+											$("#InputUsername").val(username);
+											$("#InputPassword").val(password);
+											$("#InputHostname").val(host);
+											$("#InputPort").val(port);
+										});
+									}
+								}
+
+							});
+						});
+
 						$("#selectRow").show();
 						$("#selectedDestinationLinkValidate").show();
 						$("#selectedDestinationLinkAuthenticate").show();
 					}
 				});
 			});
+
+
 
 			$('#filterModal').on('show.bs.modal', function (e) {
 				var endpointhtml = "";
@@ -177,19 +219,17 @@ $(document).ready(function () {
 					},
 					success: function (data) {
 						var obj = JSON.parse(data);
-						for(var i=0; i<obj.endpoints.length; i++){
-							endpointhtml += '<div class="form-check"><input class="form-check-input" type="checkbox" value="' + obj.endpoints[i] + '" id="defaultCheck1"><label class="form-check-label" for="defaultCheck1">' + obj.endpoints[i] + '</label></div>';
+						for (var i = 0; i < obj.endpoints.length; i++) {
+							endpointhtml += '<div class="form-check"><input class="form-check-input" type="checkbox" value="' + obj.endpoints[i] + '" id="' + obj.endpoints[i] + '"><label class="form-check-label" for="' + obj.endpoints[i] + '">' + obj.endpoints[i] + '</label></div>';
 						}
-						endpointhtml += '<div class="form-check"><input class="form-check-input" type="checkbox" value="xyz" id="defaultCheck1"><label class="form-check-label" for="defaultCheck1">' + obj.endpoints[i] + '</label></div>';
-						endpointhtml += '<div class="form-check"><input class="form-check-input" type="checkbox" value="abc" id="defaultCheck1"><label class="form-check-label" for="defaultCheck1">' + obj.endpoints[i] + '</label></div>'
 						$("#filter-modal-body").html(endpointhtml);
 					}
 				});
 			});
-			$("#submitFilters").click(function(event){
+			$("#submitFilters").click(function (event) {
 				event.preventDefault();
-				var filters = $("#filter-modal-body input:checkbox:checked").map(function(){
-				  return $(this).val();
+				var filters = $("#filter-modal-body input:checkbox:checked").map(function () {
+					return $(this).val();
 				}).get();
 				var obj = {
 					"endpoints": filters
@@ -197,7 +237,7 @@ $(document).ready(function () {
 				console.log(JSON.stringify(obj));
 				$.ajax({
 					crossOrigin: true,
-					data: {"filteredendpoints": JSON.stringify(obj)},
+					data: { "filteredendpoints": JSON.stringify(obj) },
 					type: "POST",
 					url: "http://localhost:8080/createdatasource",
 					cache: false,
