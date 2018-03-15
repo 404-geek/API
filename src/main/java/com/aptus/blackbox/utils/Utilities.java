@@ -40,7 +40,7 @@ public class Utilities {
 		String time = String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
 		return time.substring(0, time.length()-3);
 	}
-	private static String signature(UrlObject object,Map<String,String> params, Map<String, String> values) throws Exception {
+	private static String signature(UrlObject object,Map<String,String> params, Map<String, String> values,String message) throws Exception {
 		String consumerSecret=null;
 		for(objects obj:object.getSignature()){
 			if(obj.getKey().toLowerCase().indexOf("secret")!=-1) {
@@ -74,7 +74,7 @@ public class Utilities {
 		consumerSecret=encode(consumerSecret)+"&";
 		if((object.getLabel().toLowerCase().indexOf("token")!=-1)&&(values.containsKey("oauth_token")))
 			consumerSecret+=values.get("oauth_token");
-		System.out.println(parameter+"\n"+consumerSecret);
+		System.out.println(message+" "+parameter+"\n"+consumerSecret);
 		return generateSignature(parameter,consumerSecret);
 	}
 	private static String encode(String value) {
@@ -116,10 +116,10 @@ public class Utilities {
 		String hmac = new BASE64Encoder().encode(calculateRFC2104HMAC(data,key));
 		return hmac;
 	}
-	public static String buildUrl(UrlObject token, Map<String, String> values)
+	public static String buildUrl(UrlObject token, Map<String, String> values,String message)
 	{
 		String params = "?";
-		System.out.println("parameters = "+token.getParams());
+		System.out.println(message+" "+"parameters = "+token.getParams());
 		for(objects obj:token.getParams())
 		{
 			String key,value;
@@ -144,14 +144,14 @@ public class Utilities {
 			params += key+"="+value+"&";
 		}
 		String url= token.getUrl()+params.substring(0,params.length()-1);
-		System.out.println(url);
+		System.out.println(message+" "+url);
 		return url;
 		
 	}
-	public static HttpHeaders buildHeader (UrlObject token, Map<String, String> values) throws Exception
+	public static HttpHeaders buildHeader (UrlObject token, Map<String, String> values,String message) throws Exception
 	{
 		Map<String, String> oauth; 
-		System.out.println("::HEADERS::");
+		System.out.println(message+" "+"::HEADERS::");
 		HttpHeaders headers = new HttpHeaders();
 		for(objects obj:token.getHeader())
 			{
@@ -172,7 +172,7 @@ public class Utilities {
 					}
 					if(x.getKey().indexOf("signature")!=-1) {
 						
-						values.put(x.getKey(),signature(token,oauth,values));
+						values.put(x.getKey(),signature(token,oauth,values,message));
 					}
 					if(x.getValue().equals("codeValue"))
 						s+= x.getKey() + "=" + encode(values.get(x.getKey()))+",";
@@ -191,17 +191,17 @@ public class Utilities {
 					}
 				}
 				value+= s.substring(0,s.length()-1);
-				System.out.println(key+" : "+value);
+				System.out.println(message+" "+key+" : "+value);
 				headers.add(key, value);
 			}
 		headers.add("Cache-Control", "no-cache");
         headers.add("Access-Control-Allow-Origin", "*");
 		return headers;
 	}
-	public static MultiValueMap<String,String> buildBody(UrlObject token, Map<String, String> values)
+	public static MultiValueMap<String,String> buildBody(UrlObject token, Map<String, String> values,String message)
 	{
 		MultiValueMap<String, String> body = new LinkedMultiValueMap<String, String>();
-		System.out.println("::BODY::");
+		System.out.println(message+" "+"::BODY::");
 		for(objects obj:token.getResponseBody())
 		{
 			String key,value;
@@ -224,34 +224,34 @@ public class Utilities {
 			}
 			
 			value+= s.substring(0,s.length()-1);
-			System.out.println(key+" : "+value);
+			System.out.println(message+" "+key+" : "+value);
 			body.add(key, value);
 		}		
 		return body;
 	}
 	
-	public static ResponseEntity<String> token(UrlObject object,Map<String, String> values) {
+	public static ResponseEntity<String> token(UrlObject object,Map<String, String> values,String message) {
 		ResponseEntity<String> out = null;
 		try {
 			RestTemplate restTemplate = new RestTemplate();
 
-			String url = Utilities.buildUrl(object, values);
-			System.out.println(object.getLabel() + " = " + url);
+			String url = Utilities.buildUrl(object, values,message);
+			System.out.println(message+" "+object.getLabel() + " = " + url);
 
-			HttpHeaders headers = Utilities.buildHeader(object, values);
+			HttpHeaders headers = Utilities.buildHeader(object, values,message);
 			HttpEntity<?> httpEntity;
 			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
 				httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
 			} else if (!object.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> body = Utilities.buildBody(object, values);
+				MultiValueMap<String, String> body = Utilities.buildBody(object, values,message);
 				httpEntity = new HttpEntity<Object>(body, headers);
 			} else {
 				httpEntity = new HttpEntity<Object>(headers);
 			}
 			HttpMethod method = (object.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
-			System.out.println("Method : "+method);
+			System.out.println(message+" "+"Method : "+method);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-			System.out.println("----------------------------"+uri);
+			System.out.println(message+" "+"----------------------------"+uri);
 			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 			//System.out.println(out.getBody());
 		} 

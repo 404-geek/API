@@ -156,7 +156,7 @@ public class DataSourceController {
 					credentials.setCurrDestValid(false);
 					fetchSrcCred(type);
 					System.out.println(srcObj+" "+credentials);
-					out = Utilities.token(srcObj.getValidateCredentials(),credentials.getCurrSrcToken());
+					out = Utilities.token(srcObj.getValidateCredentials(),credentials.getCurrSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
 					System.out.println("OUt:"+out);
 					System.out.println("OUt:"+out.getStatusCode());
 					if (out.getStatusCode().is2xxSuccessful()) {
@@ -378,8 +378,10 @@ public class DataSourceController {
 					destBody.add(tmp);
 				}
 				Gson gson = new Gson();
-				String schedule = filteredEndpoints.get("scheduled");
-				String period = filteredEndpoints.get("period");
+//				String schedule = filteredEndpoints.get("scheduled");
+//				String period = filteredEndpoints.get("period");
+				String schedule = "true";
+				String period = "30";
 				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
 						.getAsJsonObject().get("endpoints").getAsJsonArray();
 				ConnObj currobj = new ConnObj();

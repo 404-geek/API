@@ -70,9 +70,10 @@ public class DataController {
 	private Credentials credentials;
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
-	
-	 @Autowired
-	 private ApplicationEventPublisher applicationEventPublisher;
+	@Autowired
+	private ApplicationContext Context;
+	@Autowired
+	private ApplicationEventPublisher applicationEventPublisher;
 	/*
 	 * 
 	 */
@@ -272,16 +273,20 @@ public class DataController {
         			for(String endpoint:credentials.getCurrConnId().getEndPoints()) {
         				schObj.setEndPointStatus(endpoint, null);
         			}
-        			ScheduleInfo scInfo = new ScheduleInfo();
-        			scInfo.setSchedulingObjects(schObj, connId);
-        			
-        			applicationCredentials.setApplicationCred(credentials.getUserId(), scInfo);
-        			
+        			if(applicationCredentials.getApplicationCred().keySet().contains(credentials.getUserId())){
+            			applicationCredentials.getApplicationCred().get(credentials.getUserId()).setSchedulingObjects(schObj, connId);
+        			}
+        			else {
+        				ScheduleInfo scInfo = new ScheduleInfo();
+            			scInfo.setSchedulingObjects(schObj, connId);        			
+            			applicationCredentials.setApplicationCred(credentials.getUserId(), scInfo);
+        			}  			
         			System.out.println("Publishing custom event. ");
-        			 ScheduleEventData scheduleEventData=new ScheduleEventData();
+        			 ScheduleEventData scheduleEventData=Context.getBean(ScheduleEventData.class);
         			 scheduleEventData.setData(credentials.getUserId(), connId,
         					 credentials.getCurrConnId().getScheduled(),
         					 credentials.getCurrConnId().getPeriod());
+        			 //Context.getAutowireCapableBeanFactory().autowireBean(scheduleEventData);
         			 applicationEventPublisher.publishEvent(scheduleEventData);
         			 
         			 JsonObject respBody = new JsonObject();
@@ -295,7 +300,7 @@ public class DataController {
 	        	SrcObject obj = credentials.getCurrSrcObj();
 	            if (obj.getRefresh().equals("YES")) {
 	            	
-	                ret = Utilities.token(credentials.getCurrSrcObj().getRefreshToken(),credentials.getCurrSrcToken());
+	                ret = Utilities.token(credentials.getCurrSrcObj().getRefreshToken(),credentials.getCurrSrcToken(),"");
 	                if (!ret.getStatusCode().is2xxSuccessful()) {	                	
 	                    JsonObject respBody = new JsonObject();
 	        			respBody.addProperty("message", "Re-authorize");
@@ -317,7 +322,7 @@ public class DataController {
 	                    ret = validateData(obj.getValidateCredentials(), obj.getEndPoints(),choice);
 	                }
 	            } else {
-	                ret = Utilities.token(obj.getValidateCredentials(),credentials.getCurrSrcToken());
+	                ret = Utilities.token(obj.getValidateCredentials(),credentials.getCurrSrcToken(),"");
 	                if (!ret.getStatusCode().is2xxSuccessful()) {
 	                	credentials.setCurrSrcValid(false);
 	                    JsonObject respBody = new JsonObject();
@@ -356,7 +361,7 @@ public class DataController {
 		header.add("access-control-allow-origin", rootUrl);
         header.add("access-control-allow-credentials", "true");
         try {
-            ret = Utilities.token(valid,credentials.getCurrSrcToken());
+            ret = Utilities.token(valid,credentials.getCurrSrcToken(),"");
             if (!ret.getStatusCode().is2xxSuccessful()) {            	
                 JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Contact Support");
@@ -385,15 +390,15 @@ public class DataController {
     			Gson gson=new Gson();
     			RestTemplate restTemplate = new RestTemplate();
     			for(UrlObject object:endpoints) {
-    				String url = Utilities.buildUrl(object, credentials.getCurrSrcToken());
+    				String url = Utilities.buildUrl(object, credentials.getCurrSrcToken(),"");
         			System.out.println(object.getLabel() + " = " + url);
 
-        			HttpHeaders headers = Utilities.buildHeader(object, credentials.getCurrSrcToken());
+        			HttpHeaders headers = Utilities.buildHeader(object, credentials.getCurrSrcToken(),"");
         			HttpEntity<?> httpEntity;
         			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
         				httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
         			} else if (!object.getResponseBody().isEmpty()) {
-        				MultiValueMap<String, String> body = Utilities.buildBody(object, credentials.getCurrSrcToken());
+        				MultiValueMap<String, String> body = Utilities.buildBody(object, credentials.getCurrSrcToken(),"");
         				httpEntity = new HttpEntity<Object>(body, headers);
         			} else {
         				httpEntity = new HttpEntity<Object>(headers);

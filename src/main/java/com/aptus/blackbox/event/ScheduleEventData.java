@@ -1,5 +1,10 @@
 package com.aptus.blackbox.event;
 
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+
+@Component
+@Scope("prototype")
 public class ScheduleEventData {
 
 	private String userId,connId,scheduled;

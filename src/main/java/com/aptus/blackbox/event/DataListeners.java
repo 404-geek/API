@@ -34,7 +34,7 @@ public class DataListeners {
 		String userId=scheduleEventData.getUserId();
 		String connId=scheduleEventData.getConnId();
 		
-		System.out.println("EndpointsTaskScheduler start");
+		System.out.println("LISTENER THREAD START EndpointsTaskScheduler start");
 		ConnectionsTaskScheduler connectionsTaskScheduler=Context.getBean(ConnectionsTaskScheduler.class);
 		connectionsTaskScheduler.setConnectionsTaskScheduler(connId,userId);
 		if(scheduleEventData.getScheduled().equalsIgnoreCase("true")){
@@ -58,22 +58,8 @@ public class DataListeners {
 			get(scheduleEventData.getConnId()).setEndPointStatus(endpt, new Status("31","Running"));;
 		}
 		
-		pushStatus(connId, userId);
+		pushStatus(connId, userId,"LISTENER THREAD START");
 
-	}
-	
-	
-	public void pushStatus(String connectionId,String userId)
-	{
-		System.out.println("UserId is "+userId+" connId is "+connectionId);
-		Iterator<Entry<String, Status>> entry=applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
-				get(connectionId).getEndPointStatus().entrySet().iterator();
-		while(entry.hasNext())
-		{
-			Entry<String, Status> e = entry.next();
-			System.out.println(e.getKey()+" : "+e.getValue());
-		}
-		
 	}
 	@EventListener
 	public void statusListener(HashMap<String,String> result)
@@ -81,13 +67,26 @@ public class DataListeners {
 		 Map.Entry<String,String> entry = result.entrySet().iterator().next();
 		 String userId=entry.getKey();
 		 String connId=entry.getValue();
-		 
+		 pushStatus(connId, userId,"LISTENER THREAD END");
 	}
-	
-	
-	
-	
-	
-	
-
+	@EventListener
+	public void interruptScheduler(Thread thread)
+	{
+		 thread.interrupt();
+	}
+	public void pushStatus(String connectionId,String userId,String s)
+	{
+		System.out.println("UserId is "+userId+" connId is "+connectionId);
+		System.out.println(s+applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
+				get(connectionId).getStatus()+" : "+applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
+				get(connectionId).getMessage());
+		Iterator<Entry<String, Status>> entry=applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
+				get(connectionId).getEndPointStatus().entrySet().iterator();
+		while(entry.hasNext())
+		{
+			Entry<String, Status> e = entry.next();
+			System.out.println(s + e.getKey()+" : "+e.getValue());
+		}
+		
+	}
 }

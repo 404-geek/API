@@ -96,11 +96,17 @@ public class SchedulingObjects implements Serializable{
 	public Map<String,Status> getEndPointStatus() {
 		return endPointStatus;
 	}
+	public List<String> getstatus() {
+		List<String> ret = new ArrayList<String>();
+		this.endPointStatus.values().iterator().forEachRemaining(col -> ret.add(col.getStatus()));
+		return ret;
+	}
 	public void setEndPointStatus(Map<String,Status> endPointStatus) {
 		this.endPointStatus = endPointStatus;
 	}
 	public void setEndPointStatus(String endPoint,Status endPointStatus) {
 		this.endPointStatus.put(endPoint, endPointStatus);
 	}
+	
 
 }

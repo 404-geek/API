@@ -16,12 +16,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -39,6 +42,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
 @Component
+@Scope("prototype")
 public class EndpointsTaskExecutor implements Runnable{
 	
 	@Value("${homepage.url}")
@@ -58,13 +62,14 @@ public class EndpointsTaskExecutor implements Runnable{
 	private Status result;
 	private SchedulingObjects scheduleObject;	
 	private Connection con = null;
-	
+	private Thread parent;
 	private static final Logger LOGGER = LoggerFactory.getLogger(EndpointsTaskExecutor.class);
 	
-	public void setEndpointsTaskExecutor(UrlObject endpoint, String connectionId,String user) {
+	public void setEndpointsTaskExecutor(UrlObject endpoint, String connectionId,String user,Thread parent) {
 		this.endpoint=endpoint;
 		this.connectionId=connectionId;
 		this.userId = user;
+		this.parent = parent;
 		this.scheduleObject = applicationCredentials.getApplicationCred().get(user).getSchedulingObjects().get(connectionId);
 	}
 	
@@ -74,13 +79,20 @@ public class EndpointsTaskExecutor implements Runnable{
 	public void setResult(Status result) {
 		this.result = result;
 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setEndPointStatus(endpoint.getLabel(),result);
-		if(!applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().containsKey("31")) {
-			
-			applicationEventPublisher.publishEvent(new HashMap <String,String>().put(connectionId,userId));
-			
-			//if(!applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().containsKey("32"))	
-				//applicationEventPublisher.publishEvent(new HashMap <String,String>().put(connectionId,userId));
-			
+		if(!applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getstatus().contains("31")) {
+			if(!applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getstatus().contains("32")) {	
+				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("33");
+				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("Completed Successfully");
+			}
+			else {
+				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("32");
+				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("One or more endpoints encountered error");
+				applicationEventPublisher.publishEvent(this.parent);
+			}
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR setResult " + applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().keySet());
+			Map<String,String> map = new HashMap <String,String>();
+			map.put(connectionId,userId);
+			applicationEventPublisher.publishEvent(map);
 		}
 		
 			
@@ -88,6 +100,7 @@ public class EndpointsTaskExecutor implements Runnable{
 	
 	@Override
 	public void run() {
+		System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+endpoint.getLabel());
 		RestTemplate restTemplate =new RestTemplate();
 		Gson gson=new Gson();
 		
@@ -97,29 +110,29 @@ public class EndpointsTaskExecutor implements Runnable{
         header.add("access-control-allow-credentials", "true");
         
 		try {
-			String url = Utilities.buildUrl(endpoint, scheduleObject.getSrcToken());
-			System.out.println(endpoint.getLabel() + " = " + url);
+			String url = Utilities.buildUrl(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+endpoint.getLabel() + " = " + url);
 
-			HttpHeaders headers = Utilities.buildHeader(endpoint, scheduleObject.getSrcToken());
+			HttpHeaders headers = Utilities.buildHeader(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
 			HttpEntity<?> httpEntity;
 			if (endpoint.getResponseString()!=null&&!endpoint.getResponseString().isEmpty()) {
 				httpEntity = new HttpEntity<Object>(endpoint.getResponseString(), headers);
 			} else if (!endpoint.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> body = Utilities.buildBody(endpoint, scheduleObject.getSrcToken());
+				MultiValueMap<String, String> body = Utilities.buildBody(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
 				httpEntity = new HttpEntity<Object>(body, headers);
 			} else {
 				httpEntity = new HttpEntity<Object>(headers);
 			}
 			HttpMethod method = (endpoint.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
-			System.out.println("Method : "+method);
-			System.out.println(url);
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+"Method : "+method);
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+url);
 			ResponseEntity<String> out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 			
 			//call destination validation and push data 
 			
 			//null and empty case+ three more cases+bodu cursor(dropbox).......and a lot more 
 			
-			System.out.println("\n--------------------------------------------------------------\n");
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+"\n--------------------------------------------------------------\n");
 			
 			while(true) {
 				String pData=null;
@@ -131,11 +144,11 @@ public class EndpointsTaskExecutor implements Runnable{
 						String arr[] = cur.getKey().split("::");
 						for(String jobj:arr) {
 			                if(ele.get(jobj)!=null && ele.get(jobj).isJsonObject() )  {
-			                    System.out.println(jobj);
+			                    System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+jobj);
 			                    ele=ele.get(jobj).getAsJsonObject();
 			                }
 			                else {
-			                    System.out.println(ele.get(jobj));
+			                    System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+ele.get(jobj));
 			                    pData = ele.get(jobj)==null?null:ele.get(jobj).getAsString();
 			                    break;
 			                }
@@ -152,31 +165,31 @@ public class EndpointsTaskExecutor implements Runnable{
 								newurl+=newurl.contains("?")?"&"+cur.getParam()+"="+pData:"?"+cur.getParam()+"="+(Integer.parseInt(pData)+1);
 								//newurl+="&"+cur.getParam()+"="+Integer.parseInt(pData)+1;
 							}
-							System.out.println(newurl);
+							System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+newurl);
 							break;
 						}	
 					}
 				}        				
-				System.out.println(newurl);
+				System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+newurl);
 				
 				if(pData==null) {
-					System.out.println("break pData");
+					System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN break pData");
 					break;
 				}
 				out = restTemplate.exchange(URI.create(newurl), method, httpEntity, String.class);
 				if(out.getBody()==null) {
-					System.out.println("break out.getBody");
+					System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN break out.getBody");
 					break;
 				}
 			}        	
-			System.out.println("\n--------------------------------------------------------------\n");
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN\n--------------------------------------------------------------\n");
 			//System.out.println(out.getBody());
 			//System.out.println(out.getBody());
 			String tableName=connectionId+"_"+endpoint.getLabel();
-		
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN table "+tableName);
 			if(truncate(tableName)) {				
 
-			    System.out.println("SourceController-driver: "+scheduleObject.getDestObj().getDrivers());
+			    System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN SourceController-driver: "+scheduleObject.getDestObj().getDrivers());
 
 			    if(pushDB(out.getBody().toString(), tableName)) {
 			    	Status respBody = new Status("22","successfully pushed");
@@ -192,20 +205,30 @@ public class EndpointsTaskExecutor implements Runnable{
 					//out =  ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 					return;
 			}
-		} catch (RestClientException e) {
-			// TODO Auto-generated catch block
+		}
+		catch(HttpClientErrorException e) {
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+e.getMessage());
 			e.printStackTrace();
+		}
+		catch (RestClientException e) {
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
+			e.printStackTrace();
+			// TODO Auto-generated catch block
 		} catch (JsonSyntaxException e) {
-			// TODO Auto-generated catch block
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
 			e.printStackTrace();
+			// TODO Auto-generated catch block
 		} catch (NumberFormatException e) {
-			// TODO Auto-generated catch block
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
 			e.printStackTrace();
+			// TODO Auto-generated catch block
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
 			e.printStackTrace();
+			// TODO Auto-generated catch block
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
 			e.printStackTrace();
 		}
 		
@@ -217,10 +240,10 @@ public class EndpointsTaskExecutor implements Runnable{
 	}
 	
 	public boolean pushDB(String  jsonString, String tableName) throws SQLException {
-		System.out.println("pushDBController-driver: "+scheduleObject.getDestObj().getDrivers());
+		System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR PUSHDB pushDBController-driver: "+scheduleObject.getDestObj().getDrivers());
 		
 		try {
-			System.out.println("TABLENAME: "+tableName);
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR PUSHDB TABLENAME: "+tableName);
 			//System.out.println("JSONSTRING: "+jsonString);
 			
 			String host = scheduleObject.getDestToken().get("server_host");
@@ -248,7 +271,7 @@ public class EndpointsTaskExecutor implements Runnable{
 						 statement+=t.toString()+" TEXT,";
 						
 						 statement=statement.substring(0,statement.length()-1)+");";
-						 System.out.println("-----"+statement);
+						 System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR PUSHDB-----"+statement);
 						 preparedStmt = con.prepareStatement(statement);
 						 preparedStmt.execute();
 					} else {
@@ -267,7 +290,7 @@ public class EndpointsTaskExecutor implements Runnable{
 						for (Object attr : row) {
 							stmt.setString( k++,attr==null?null:attr.toString());
 						}
-						System.out.println(instmt);
+						System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR PUSHDB"+instmt);
 						stmt.execute();
 					}
 					i++;
@@ -276,8 +299,8 @@ public class EndpointsTaskExecutor implements Runnable{
 				return true;
 			}
 			} catch (Exception e) {
-			System.err.println("Got an exception!");
-			System.err.println(e.getMessage());
+			System.err.println(Thread.currentThread().getName()+"THREAD	EXECUTOR PUSHDB Got an exception!");
+			System.err.println(Thread.currentThread().getName()+"THREAD	EXECUTOR PUSHDB");
 			e.printStackTrace();
 		}		
 		return false;
@@ -287,7 +310,7 @@ public class EndpointsTaskExecutor implements Runnable{
 	public void connection(Map<String,String> destToken,DestObject destObj) throws SQLException {
 		try {
 			
-			System.out.println("DataController-driver: "+destObj.getDrivers());
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR CONNECTION DataController-driver: "+destObj.getDrivers());
 			Class.forName(destObj.getDrivers());
 			String url = destObj.getUrlprefix() + destToken.get("server_host") + ":"
 					+ destToken.get("server_port") + destObj.getDbnameseparator()
@@ -297,9 +320,11 @@ public class EndpointsTaskExecutor implements Runnable{
 					destToken.get("db_password"));
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
+			System.err.println(Thread.currentThread().getName()+"THREAD	EXECUTOR PUSHDB Got an exception!");
 			e.printStackTrace();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
+			System.err.println(Thread.currentThread().getName()+"THREAD	EXECUTOR PUSHDB Got an exception!");
 			e.printStackTrace();
 		}
 	}
@@ -312,7 +337,7 @@ public class EndpointsTaskExecutor implements Runnable{
 			Statement stmt = con.createStatement();
 			String query = "SELECT count(*) FROM information_schema.tables WHERE table_schema =" 
 			+ destObj.getValue_quote_open()+ dbase+destObj.getValue_quote_close()+";";
-			System.out.println(query);
+			System.out.println(Thread.currentThread().getName()+"THREAD EXECUTOR CHECKDB"+query);
 			ResultSet res = stmt.executeQuery(query);
 			if (res.next()) {
 				con.close();
@@ -324,9 +349,11 @@ public class EndpointsTaskExecutor implements Runnable{
 			return false;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
+			System.out.println(Thread.currentThread().getName()+"THREAD EXECUTOR CHECKDB");
 			e.printStackTrace();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
+			System.out.println(Thread.currentThread().getName()+"THREAD EXECUTOR CHECKDB");
 			e.printStackTrace();
 		}		
 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setDestValid(false);
@@ -338,19 +365,24 @@ public class EndpointsTaskExecutor implements Runnable{
 			if (con == null || con.isClosed())
 				connection(scheduleObject.getDestToken(),scheduleObject.getDestObj());
 			PreparedStatement stmt;
-			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_schema =" 
+			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_name =" 
 					+ scheduleObject.getDestObj().getValue_quote_open()+ tableName
 					+scheduleObject.getDestObj().getValue_quote_close()+";");
 			ResultSet res = stmt.executeQuery();
 			res.first();
 			if(res.getInt("COUNT")!=0) {
-				stmt = con.prepareStatement("TRUNCATE TABLE "+tableName+";");
+				stmt = con.prepareStatement("DROP TABLE "+tableName+";");
 				stmt.execute();
 			}			
 			return true;
 		} catch (SQLException e) {
+			System.out.println(Thread.currentThread().getName()+"THREAD EXECUTOR TRUNCATE");
 			e.printStackTrace();
 		}
+    	catch (Exception e) {
+    		System.out.println(Thread.currentThread().getName()+"THREAD EXECUTOR TRUNCATE");
+    		e.printStackTrace();
+    	}
     	return false;
     }
 

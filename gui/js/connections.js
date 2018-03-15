@@ -320,7 +320,7 @@ $(document).ready(function() {
         $("#datasource").click(function() {
             $.ajax({
                 crossOrigin: true,
-                type: "GET",
+                type: "POST",
                 url: "http://localhost:8080/createdatasource",
                 cache: false,
                 xhrFields: {
