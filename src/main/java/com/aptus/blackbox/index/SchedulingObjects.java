@@ -5,16 +5,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 public class SchedulingObjects implements Serializable{
 	private boolean SrcValid,DestValid;
-	private String status,message,threadName,sourceThread,destThread;
-	private long lastPushed,nextPush;
+	private String status,message,DestName,SrcName;
+	private long lastPushed,nextPush,period;
 	private Map<String,Status>endPointStatus = new HashMap<>();
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
 	private SrcObject SrcObj;
 	private DestObject DestObj;
+	private ScheduledFuture<?> thread;
 	public boolean isSrcValid() {
 		return SrcValid;
 	}
@@ -63,24 +65,6 @@ public class SchedulingObjects implements Serializable{
 	public void setMessage(String message) {
 		this.message = message;
 	}
-	public String getThreadName() {
-		return threadName;
-	}
-	public void setThreadName(String threadName) {
-		this.threadName = threadName;
-	}
-	public String getSourceThread() {
-		return sourceThread;
-	}
-	public void setSourceThread(String sourceThread) {
-		this.sourceThread = sourceThread;
-	}
-	public String getDestThread() {
-		return destThread;
-	}
-	public void setDestThread(String destThread) {
-		this.destThread = destThread;
-	}
 	public long getLastPushed() {
 		return lastPushed;
 	}
@@ -106,6 +90,30 @@ public class SchedulingObjects implements Serializable{
 	}
 	public void setEndPointStatus(String endPoint,Status endPointStatus) {
 		this.endPointStatus.put(endPoint, endPointStatus);
+	}
+	public long getPeriod() {
+		return period;
+	}
+	public void setPeriod(long period) {
+		this.period = period;
+	}
+	public String getDestName() {
+		return DestName;
+	}
+	public void setDestName(String destName) {
+		DestName = destName;
+	}
+	public String getSrcName() {
+		return SrcName;
+	}
+	public void setSrcName(String srcName) {
+		SrcName = srcName;
+	}
+	public ScheduledFuture<?> getThread() {
+		return thread;
+	}
+	public void setThread(ScheduledFuture<?> thread) {
+		this.thread = thread;
 	}
 	
 

@@ -25,10 +25,10 @@ public class Credentials implements Serializable {
 	private Map<String,String> sessionId=new HashMap<>();
 	private boolean userExist,usrSrcExist,usrDestExist;
 	private boolean currSrcValid,currDestValid;
-	private Map<String,String> currSrcToken=new HashMap<>();
-	private Map<String,String> currDestToken=new HashMap<>();
-	private SrcObject currSrcObj;
-	private DestObject currDestObj;
+	private Map<String,String> SrcToken=new HashMap<>();
+	private Map<String,String> DestToken=new HashMap<>();
+	private SrcObject SrcObj;
+	private DestObject DestObj;
 	
 	public Map<String, String> getSessionId() {
 		return sessionId;
@@ -67,23 +67,23 @@ public class Credentials implements Serializable {
 	public void setCurrDestName(String destName) {
 		this.currDestName = destName;
 	}
-	public Map<String,String> getCurrDestToken() {
-		return currDestToken;
+	public Map<String,String> getDestToken() {
+		return DestToken;
 	}
-	public void setCurrDestToken(Map<String,String> destToken) {
-		this.currDestToken.putAll(destToken);
+	public void setDestToken(Map<String,String> destToken) {
+		this.DestToken.putAll(destToken);
 	}
-	public void setCurrDestToken(String key,String value) {
-		this.currDestToken.put(key, value);
+	public void setDestToken(String key,String value) {
+		this.DestToken.put(key, value);
 	}
-	public Map<String,String> getCurrSrcToken() {
-		return currSrcToken;
+	public Map<String,String> getSrcToken() {
+		return SrcToken;
 	}
-	public void setCurrSrcToken(Map<String,String> srcToken) {
-		this.currSrcToken.putAll(srcToken);
+	public void setSrcToken(Map<String,String> srcToken) {
+		this.SrcToken.putAll(srcToken);
 	}
-	public void setCurrSrcToken(String key,String value) {
-		this.currSrcToken.put(key, value);
+	public void setSrcToken(String key,String value) {
+		this.SrcToken.put(key, value);
 	}
 	public String getUserId() {
 		return userId;
@@ -91,17 +91,17 @@ public class Credentials implements Serializable {
 	public void setUserId(String userId) {
 		this.userId = userId;
 	}
-	public SrcObject getCurrSrcObj() {
-		return currSrcObj;
+	public SrcObject getSrcObj() {
+		return SrcObj;
 	}
-	public void setCurrSrcObj(SrcObject srcObj) {
-		this.currSrcObj = srcObj;
+	public void setSrcObj(SrcObject srcObj) {
+		this.SrcObj = srcObj;
 	}
-	public DestObject getCurrDestObj() {
-		return currDestObj;
+	public DestObject getDestObj() {
+		return DestObj;
 	}
-	public void setCurrDestObj(DestObject destObj) {
-		this.currDestObj = destObj;
+	public void setDestObj(DestObject destObj) {
+		this.DestObj = destObj;
 	}
 	public boolean isCurrSrcValid() {
 		return currSrcValid;

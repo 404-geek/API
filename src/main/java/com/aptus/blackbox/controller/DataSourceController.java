@@ -8,6 +8,7 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -24,6 +25,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.Service.Credentials;
+import com.aptus.blackbox.event.InterruptThread;
+import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.Parser;
@@ -45,10 +48,12 @@ public class DataSourceController {
 	private String rootUrl;
 	
 	@Autowired
-	private Credentials credentials;
-	
+	private Credentials credentials;	
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
+	@Autowired
+	private ApplicationEventPublisher applicationEventPublisher;
+	
 	private SrcObject srcObj;
 	private DestObject destObj;
 	/*
@@ -62,13 +67,13 @@ public class DataSourceController {
 		if (type.equalsIgnoreCase("source")) {
 			
 			srcObj = new Parser("source",srcdestId.toUpperCase(),mongoUrl).getSrcProp();
-			credentials.setCurrSrcObj(srcObj);
+			credentials.setSrcObj(srcObj);
 			credentials.setCurrSrcName(srcdestId.toLowerCase());
 			credentials.setCurrSrcValid(false);
 			
 		} else {
 			destObj = new Parser("destination",srcdestId.toUpperCase(),mongoUrl).getDestProp();
-			credentials.setCurrDestObj(destObj);
+			credentials.setDestObj(destObj);
 			credentials.setCurrDestName(srcdestId.toLowerCase());
 			credentials.setCurrDestValid(false);
 		}
@@ -156,7 +161,7 @@ public class DataSourceController {
 					credentials.setCurrDestValid(false);
 					fetchSrcCred(type);
 					System.out.println(srcObj+" "+credentials);
-					out = Utilities.token(srcObj.getValidateCredentials(),credentials.getCurrSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
+					out = Utilities.token(srcObj.getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
 					System.out.println("OUt:"+out);
 					System.out.println("OUt:"+out.getStatusCode());
 					if (out.getStatusCode().is2xxSuccessful()) {
@@ -235,9 +240,9 @@ public class DataSourceController {
 						value=ob.getAsJsonObject().get("value").toString();
 				key=key.substring(1, key.length()-1);
 				value=value.substring(1, value.length()-1);
-				credentials.setCurrSrcToken(key,value);
+				credentials.setSrcToken(key,value);
 			}
-			System.out.println(credentials.getCurrSrcToken().keySet()+" : "+credentials.getCurrSrcToken().values());
+			System.out.println(credentials.getSrcToken().keySet()+" : "+credentials.getSrcToken().values());
 			//Add destination fetching			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -306,26 +311,35 @@ public class DataSourceController {
                 obj2.add("srcdestId", obj1);
                 JsonObject body = new JsonObject();
                 body.add("$pull", obj2);
-                URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
                 headers.add("Content-Type", "application/json");
                 System.out.println("68542168521"+body.toString());
                 httpEntity = new HttpEntity<Object>(body.toString(), headers);
                 RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
                 out = restTemplate.exchange(URI.create(url), HttpMethod.PATCH, httpEntity, String.class);
-                if (out.getStatusCode().is2xxSuccessful()) {                   
+                if (out.getStatusCode().is2xxSuccessful()) {  
+                	if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
+                		if(applicationCredentials.getApplicationCred().get(credentials
+                				.getUserId()).getSchedulingObjects().get(credentials.getCurrConnId().getConnectionId())!=null) {
+                			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
+                    				.getUserId()).getSchedulingObjects().get(credentials.getCurrConnId().getConnectionId()).getThread()
+                					, false, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
+                			applicationCredentials.getApplicationCred().get(credentials
+                    				.getUserId()).getSchedulingObjects().remove(credentials.getCurrConnId().getConnectionId());
+                		}
+                	}
                     System.out.println(connId + "***********Deleted!!!!**************");
                     JsonObject respBody = new JsonObject();
                     respBody.addProperty("data", "Sucessfully Deleted");
                     respBody.addProperty("status", "200");
                     return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
                 }
-                else {
-    				System.out.println("Session expired!");
-        			JsonObject respBody = new JsonObject();
-        			respBody.addProperty("message", "Sorry! Your session has expired");
-    				respBody.addProperty("status", "33");
-    				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-                }
+            }
+            else {
+				System.out.println("Session expired!");
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
             }
         }
         catch(HttpClientErrorException e) {
@@ -357,26 +371,9 @@ public class DataSourceController {
 				// init();
 				// }
         		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
-				JsonArray sourceBody,destBody;
-				String endpnts = "", conId;
-				
-				sourceBody = new JsonArray();
-				destBody =  new JsonArray();
-				
+				String endpnts = "", conId;								
 				conId = credentials.getUserId() + "_" + credentials.getCurrSrcName() + "_" + credentials.getCurrDestName() + "_"
 						+ String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
-				for (Map.Entry<String, String> mp : credentials.getCurrSrcToken().entrySet()) {
-					JsonObject tmp = new JsonObject();
-					tmp.addProperty("key", String.valueOf(mp.getKey()));
-					tmp.addProperty("value", String.valueOf(mp.getValue()));
-					sourceBody.add(tmp);
-				}
-				for (Map.Entry<String, String> mp : credentials.getCurrDestToken().entrySet()) {
-					JsonObject tmp = new JsonObject();
-					tmp.addProperty("key", String.valueOf(mp.getKey()));
-					tmp.addProperty("value", String.valueOf(mp.getValue()));
-					destBody.add(tmp);
-				}
 				Gson gson = new Gson();
 //				String schedule = filteredEndpoints.get("scheduled");
 //				String period = filteredEndpoints.get("period");
@@ -392,12 +389,10 @@ public class DataSourceController {
 				currobj.setConnectionId(conId);
 				currobj.setSourceName(credentials.getCurrSrcName());
 				currobj.setDestName(credentials.getCurrDestName());
-				currobj.setPeriod(period);
+				currobj.setPeriod((Integer.parseInt(period)*1000));
 				currobj.setScheduled(schedule);
 				credentials.setCurrConnId(currobj);
 				endpnts = endpnts.substring(0, endpnts.length() - 1).toLowerCase();
-				System.out.println(sourceBody);
-				System.out.println(destBody);
 				JsonObject jsonObj;
 				JsonArray endPointsArray = new JsonArray();
 				endPointsArray.add(endpnts);
@@ -418,27 +413,45 @@ public class DataSourceController {
 					// userCredentials
 					JsonObject addToSetObj = new JsonObject();
 					addToSetObj.add("$addToSet", jsonObj);
-					postpatchMetaData(addToSetObj, "user", "PATCH");
+					credentials.setUserExist(Utilities.postpatchMetaData(addToSetObj, "user", "PATCH",credentials.getUserId(),mongoUrl));
 				} else {
 					// userCredentials
 					jsonObj.addProperty("_id", credentials.getUserId().toLowerCase());
-					postpatchMetaData(jsonObj, "user", "POST");
+					credentials.setUserExist(Utilities.postpatchMetaData(jsonObj, "user", "POST",credentials.getUserId(),mongoUrl));
 				}
-				// sourceCredentials
-				jsonObj = new JsonObject();
-				jsonObj.addProperty("_id",
-						credentials.getUserId().toLowerCase() + "_" + credentials.getCurrSrcName().toLowerCase());
-				jsonObj.add("credentials", sourceBody);
-				postpatchMetaData(jsonObj, "source", "POST");
-				// destCredentials
-				jsonObj = new JsonObject();				
-				jsonObj.addProperty("_id",
-						credentials.getUserId().toLowerCase() + "_" + credentials.getCurrDestName().toLowerCase() + "_"
-								+ credentials.getCurrDestToken().get("database_name"));
-				jsonObj.add("credentials", destBody);
-				postpatchMetaData(jsonObj, "destination", "POST");
-				// ret = data(credentials.getSrcName());
-				// System.out.println(ret.getBody());
+				applicationEventPublisher.publishEvent(new PushCredentials(srcObj, destObj,credentials.getSrcToken() , credentials.getDestToken(),
+						credentials.getCurrSrcName(), credentials.getCurrDestName(), credentials.getUserId()));
+//				// sourceCredentials
+//				JsonArray sourceBody = new JsonArray();
+//				for (Map.Entry<String, String> mp : credentials.getCurrSrcToken().entrySet()) {
+//					JsonObject tmp = new JsonObject();
+//					tmp.addProperty("key", String.valueOf(mp.getKey()));
+//					tmp.addProperty("value", String.valueOf(mp.getValue()));
+//					sourceBody.add(tmp);
+//				}
+//				jsonObj = new JsonObject();
+//				jsonObj.addProperty("_id",
+//						credentials.getUserId().toLowerCase() + "_" + credentials.getCurrSrcName().toLowerCase());
+//				jsonObj.add("credentials", sourceBody);
+//				Utilities.postpatchMetaData(jsonObj, "source", "POST",credentials.getUserId());
+//				// destCredentials
+//				JsonArray destBody =  new JsonArray();
+//				for (Map.Entry<String, String> mp : credentials.getCurrDestToken().entrySet()) {
+//					JsonObject tmp = new JsonObject();
+//					tmp.addProperty("key", String.valueOf(mp.getKey()));
+//					tmp.addProperty("value", String.valueOf(mp.getValue()));
+//					destBody.add(tmp);
+//				}
+//				jsonObj = new JsonObject();				
+//				jsonObj.addProperty("_id",
+//						credentials.getUserId().toLowerCase() + "_" + credentials.getCurrDestName().toLowerCase() + "_"
+//								+ credentials.getCurrDestToken().get("database_name"));
+//				jsonObj.add("credentials", destBody);
+//				Utilities.postpatchMetaData(jsonObj, "destination", "POST",credentials.getUserId());
+//				
+//				System.out.println(sourceBody);
+//				System.out.println(destBody);
+				
 				String url = baseUrl;
 				headers.setLocation(URI.create(url));
 				return new ResponseEntity<String>("", headers, HttpStatus.OK);
@@ -452,41 +465,6 @@ public class DataSourceController {
 			e.printStackTrace();
 		}
 		return ret;
-	}
-	private void postpatchMetaData(JsonObject body, String type, String method) {
-		try {
-
-			System.out.println("postpatchMetaData:\nBody: "+body.toString()+"\nType: "+type+"\nMethod"+method);
-			ResponseEntity<String> out = null;
-			String url = "";
-			String appname = "";
-			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-			HttpMethod met = null;
-			String filter = "";
-			if (method.equalsIgnoreCase("POST")) {
-				url = mongoUrl + "/credentials/" + type.toLowerCase() + "Credentials";
-				met = HttpMethod.POST;
-			} else if (method.equalsIgnoreCase("PATCH")) {
-				url = mongoUrl + "/credentials/" + type.toLowerCase() + "Credentials/"
-						+ credentials.getUserId().toLowerCase();
-				met = HttpMethod.PATCH;
-			} 
-			System.out.println(url + "\n" + met);
-			HttpHeaders headers = new HttpHeaders();
-			headers.add("Content-Type", "application/json");
-			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", rootUrl);
-			headers.add("access-control-allow-credentials", "true");
-			HttpEntity<?> httpEntity = new HttpEntity<Object>(body.toString(), headers);
-			out = restTemplate.exchange(url, met, httpEntity, String.class, filter);
-			if (out.getStatusCode().is2xxSuccessful()) {
-				credentials.setUserExist(true);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("source.postpatchmetadata");
-		}
-		return;
 	}
 	
 	@RequestMapping(value="/getconnectionids")

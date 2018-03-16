@@ -20,6 +20,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.aptus.blackbox.Service.ApplicationCredentials;
+import com.aptus.blackbox.event.PostExecutorComplete;
+import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.SrcObject;
 import com.aptus.blackbox.index.Status;
@@ -69,6 +71,17 @@ public class ConnectionsTaskScheduler implements Runnable {
 		header.add("access-control-allow-origin", rootUrl);
         header.add("access-control-allow-credentials", "true");
         try {
+        	
+        	applicationCredentials.getApplicationCred().get(userId).
+    		getSchedulingObjects().get(connectionId).setMessage("Running");    		
+    		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
+    				get(connectionId).setStatus("31");   	
+    		for(String endpt:applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().keySet())
+    		{
+    			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
+    			get(connectionId).setEndPointStatus(endpt, new Status("31","Running"));;
+    		}
+    		applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
         	SrcObject obj = scheduleObjectInfo.getSrcObj();
             if (obj.getRefresh().equals("YES")) {
                 ret = Utilities.token(obj.getRefreshToken(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
@@ -89,7 +102,10 @@ public class ConnectionsTaskScheduler implements Runnable {
         			}
             		this.scheduleObjectInfo = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
         			System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER RUN"+"token : " + scheduleObjectInfo.getSrcToken().keySet() + ":" + scheduleObjectInfo.getSrcToken().values());
-                    setOut(validateData(obj.getValidateCredentials(), obj.getEndPoints()));
+        			SchedulingObjects schedulingObjects = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
+        			applicationEventPublisher.publishEvent(new PushCredentials(schedulingObjects.getSrcObj(), schedulingObjects.getDestObj(), schedulingObjects.getSrcToken(), 
+        					schedulingObjects.getDestToken(), schedulingObjects.getSrcName(), schedulingObjects.getDestName(), userId));
+        			setOut(validateData(obj.getValidateCredentials(), obj.getEndPoints()));
                     return ;
                 }
             } else {

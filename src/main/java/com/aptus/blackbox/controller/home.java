@@ -301,7 +301,7 @@ public class home {
 				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				JsonObject jobj = new JsonObject();
 				JsonArray endpoints=new JsonArray();
-				for(UrlObject obj:credentials.getCurrSrcObj().getEndPoints()) {
+				for(UrlObject obj:credentials.getSrcObj().getEndPoints()) {
 					endpoints.add(obj.getLabel());
 				}
 				jobj.add("endpoints", endpoints);

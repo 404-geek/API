@@ -1,13 +1,15 @@
 package com.aptus.blackbox.threading;
 
 import java.net.URI;
+import java.sql.Timestamp;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -20,7 +22,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
@@ -29,6 +30,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.aptus.blackbox.Service.ApplicationCredentials;
+import com.aptus.blackbox.event.PostExecutorComplete;
 import com.aptus.blackbox.index.Cursor;
 import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.SchedulingObjects;
@@ -79,23 +81,26 @@ public class EndpointsTaskExecutor implements Runnable{
 	public void setResult(Status result) {
 		this.result = result;
 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setEndPointStatus(endpoint.getLabel(),result);
-		if(!applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getstatus().contains("31")) {
-			if(!applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getstatus().contains("32")) {	
+		if(!scheduleObject.getstatus().contains("31")) {
+			if(!scheduleObject.getstatus().contains("32")) {	
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("33");
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("Completed Successfully");
+				long time = ZonedDateTime.now().toInstant().toEpochMilli();
+				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
+				.setNextPush(time+scheduleObject.getPeriod());
+				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
+				.setLastPushed(time);
+				System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));
 			}
 			else {
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("32");
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("One or more endpoints encountered error");
 				applicationEventPublisher.publishEvent(this.parent);
 			}
-			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR setResult " + applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().keySet());
-			Map<String,String> map = new HashMap <String,String>();
-			map.put(connectionId,userId);
-			applicationEventPublisher.publishEvent(map);
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR setResult " + 
+			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().keySet());
+			applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
 		}
-		
-			
 	}
 	
 	@Override

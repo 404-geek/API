@@ -7,6 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.Service.Credentials;
+import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.Cursor;
@@ -102,9 +104,9 @@ public class DataController {
 				destCred.put("server_host", server_host);
 				destCred.put("server_port", server_port);
 				//tableName = "user";
-				credentials.setCurrDestToken(destCred);			
-				destObj = credentials.getCurrDestObj();
-				destToken = credentials.getCurrDestToken();			
+				credentials.setDestToken(destCred);			
+				destObj = credentials.getDestObj();
+				destToken = credentials.getDestToken();			
 				if (!checkDB(destToken.get("database_name"),destToken,destObj)) {
 					credentials.setCurrDestValid(false);
 					System.out.println("Invalid database credentials");
@@ -112,7 +114,7 @@ public class DataController {
 				}
 				credentials.setCurrDestValid(true);
 				System.out.println("Database credentials validated");
-				credentials.setCurrDestToken(destCred);
+				credentials.setDestToken(destCred);
 				String url=homeUrl;
 				headers.setLocation(URI.create(url+"/close.html"));				
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
@@ -143,11 +145,6 @@ public class DataController {
 			System.out.println("TABLENAME: "+tableName);
 			//System.out.println("JSONSTRING: "+jsonString);
 			
-			String host = destToken.get("server_host");
-			String port = destToken.get("server_port");
-			String dbase = destToken.get("database_name");
-			String user = destToken.get("db_username");
-			String pass = destToken.get("db_password");
 			PreparedStatement preparedStmt;
 			if (checkDB(destToken.get("database_name"),destToken,destObj)) {
 				if (con == null || con.isClosed())
@@ -266,10 +263,15 @@ public class DataController {
         		if(choice.equalsIgnoreCase("export")) {
         			
         			SchedulingObjects schObj=new SchedulingObjects();
-        			schObj.setDestObj(credentials.getCurrDestObj());
-        			schObj.setDestToken(credentials.getCurrDestToken());
-        			schObj.setSrcObj(credentials.getCurrSrcObj());
-        			schObj.setSrcToken(credentials.getCurrSrcToken());
+        			schObj.setDestObj(credentials.getDestObj());
+        			schObj.setDestToken(credentials.getDestToken());
+        			schObj.setSrcObj(credentials.getSrcObj());
+        			schObj.setSrcToken(credentials.getSrcToken());
+        			schObj.setPeriod(credentials.getCurrConnId().getPeriod());
+        			schObj.setNextPush(ZonedDateTime.now().toInstant().toEpochMilli());
+        			schObj.setLastPushed(ZonedDateTime.now().toInstant().toEpochMilli());
+        			schObj.setDestName(credentials.getCurrDestName());
+        			schObj.setSrcName(credentials.getCurrSrcName());
         			for(String endpoint:credentials.getCurrConnId().getEndPoints()) {
         				schObj.setEndPointStatus(endpoint, null);
         			}
@@ -297,10 +299,10 @@ public class DataController {
         		
         		else {
         		credentials.setCurrConnId(credentials.getConnectionIds(connId));
-	        	SrcObject obj = credentials.getCurrSrcObj();
+	        	SrcObject obj = credentials.getSrcObj();
 	            if (obj.getRefresh().equals("YES")) {
 	            	
-	                ret = Utilities.token(credentials.getCurrSrcObj().getRefreshToken(),credentials.getCurrSrcToken(),"");
+	                ret = Utilities.token(credentials.getSrcObj().getRefreshToken(),credentials.getSrcToken(),"");
 	                if (!ret.getStatusCode().is2xxSuccessful()) {	                	
 	                    JsonObject respBody = new JsonObject();
 	        			respBody.addProperty("message", "Re-authorize");
@@ -311,18 +313,20 @@ public class DataController {
 	                	
 	                	//next piece of code is for saveValues 
 	                	try {
-	        				credentials.getCurrSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
+	        				credentials.getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
 	        			} catch (Exception e) {
 	        				for (String s : ret.getBody().toString().split("&")) {
 	        					System.out.println(s);
-	        					credentials.getCurrSrcToken().put(s.split("=")[0], s.split("=")[1]);
+	        					credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
 	        				}
 	        			}
-	        			System.out.println("token : " + credentials.getCurrSrcToken().keySet() + ":" + credentials.getCurrSrcToken().values());
+	                	applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), credentials.getDestObj(),credentials.getSrcToken() , credentials.getDestToken(),
+	    						credentials.getCurrSrcName(), credentials.getCurrDestName(), credentials.getUserId()));
+	        			System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
 	                    ret = validateData(obj.getValidateCredentials(), obj.getEndPoints(),choice);
 	                }
 	            } else {
-	                ret = Utilities.token(obj.getValidateCredentials(),credentials.getCurrSrcToken(),"");
+	                ret = Utilities.token(obj.getValidateCredentials(),credentials.getSrcToken(),"");
 	                if (!ret.getStatusCode().is2xxSuccessful()) {
 	                	credentials.setCurrSrcValid(false);
 	                    JsonObject respBody = new JsonObject();
@@ -361,7 +365,7 @@ public class DataController {
 		header.add("access-control-allow-origin", rootUrl);
         header.add("access-control-allow-credentials", "true");
         try {
-            ret = Utilities.token(valid,credentials.getCurrSrcToken(),"");
+            ret = Utilities.token(valid,credentials.getSrcToken(),"");
             if (!ret.getStatusCode().is2xxSuccessful()) {            	
                 JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Contact Support");
@@ -390,15 +394,15 @@ public class DataController {
     			Gson gson=new Gson();
     			RestTemplate restTemplate = new RestTemplate();
     			for(UrlObject object:endpoints) {
-    				String url = Utilities.buildUrl(object, credentials.getCurrSrcToken(),"");
+    				String url = Utilities.buildUrl(object, credentials.getSrcToken(),"");
         			System.out.println(object.getLabel() + " = " + url);
 
-        			HttpHeaders headers = Utilities.buildHeader(object, credentials.getCurrSrcToken(),"");
+        			HttpHeaders headers = Utilities.buildHeader(object, credentials.getSrcToken(),"");
         			HttpEntity<?> httpEntity;
         			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
         				httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
         			} else if (!object.getResponseBody().isEmpty()) {
-        				MultiValueMap<String, String> body = Utilities.buildBody(object, credentials.getCurrSrcToken(),"");
+        				MultiValueMap<String, String> body = Utilities.buildBody(object, credentials.getSrcToken(),"");
         				httpEntity = new HttpEntity<Object>(body, headers);
         			} else {
         				httpEntity = new HttpEntity<Object>(headers);
@@ -475,7 +479,7 @@ public class DataController {
         			else if(truncateAndPush()) {
         				String tableName=credentials.getCurrConnId().getConnectionId()+"_"+object.getLabel();
 
-                        System.out.println("SourceController-driver: "+credentials.getCurrDestObj().getDrivers());
+                        System.out.println("SourceController-driver: "+credentials.getDestObj().getDrivers());
 
                         if(pushDB(out.getBody().toString(), tableName)) {
                         	JsonObject respBody = new JsonObject();

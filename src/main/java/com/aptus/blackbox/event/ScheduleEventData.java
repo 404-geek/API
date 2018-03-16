@@ -8,14 +8,14 @@ import org.springframework.stereotype.Component;
 public class ScheduleEventData {
 
 	private String userId,connId,scheduled;
-	private String period;
+	private long period;
 	
 
 	public String getUserId() {
 		return userId;
 	}
 
-	public void setData(String userId,String connId,String scheduled,String period) {
+	public void setData(String userId,String connId,String scheduled,long period) {
 		this.userId = userId;
 		this.connId=connId;
 		this.scheduled=scheduled;
@@ -34,11 +34,11 @@ public class ScheduleEventData {
 		this.scheduled = scheduled;
 	}
 
-	public String getPeriod() {
+	public long getPeriod() {
 		return period;
 	}
 
-	public void setPeriod(String period) {
+	public void setPeriod(long period) {
 		this.period = period;
 	}
 
