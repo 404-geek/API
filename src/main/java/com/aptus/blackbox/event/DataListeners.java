@@ -82,8 +82,8 @@ public class DataListeners {
 		 if(thread.isUserInterrupted()) {
 			 applicationCredentials.getApplicationCred().get(thread.getUserId()).getSchedulingObjects().get(thread.getConnectionId()).setStatus("35");
 			 applicationCredentials.getApplicationCred().get(thread.getUserId()).getSchedulingObjects().get(thread.getConnectionId()).setMessage("User Stopped Scheduling");
-			 applicationEventPublisher.publishEvent(new PostExecutorComplete(thread.getUserId(),thread.getConnectionId()));
-		 }		 
+		 }	 
+		 applicationEventPublisher.publishEvent(new PostExecutorComplete(thread.getUserId(),thread.getConnectionId()));
 	}
 	@EventListener
 	public void updateCredentials(PushCredentials pushCredentials) {

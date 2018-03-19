@@ -30,6 +30,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import com.aptus.blackbox.Service.ApplicationCredentials;
+import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PostExecutorComplete;
 import com.aptus.blackbox.index.Cursor;
 import com.aptus.blackbox.index.DestObject;
@@ -64,14 +65,12 @@ public class EndpointsTaskExecutor implements Runnable{
 	private Status result;
 	private SchedulingObjects scheduleObject;	
 	private Connection con = null;
-	private Thread parent;
 	private static final Logger LOGGER = LoggerFactory.getLogger(EndpointsTaskExecutor.class);
 	
 	public void setEndpointsTaskExecutor(UrlObject endpoint, String connectionId,String user,Thread parent) {
 		this.endpoint=endpoint;
 		this.connectionId=connectionId;
 		this.userId = user;
-		this.parent = parent;
 		this.scheduleObject = applicationCredentials.getApplicationCred().get(user).getSchedulingObjects().get(connectionId);
 	}
 	
@@ -90,16 +89,17 @@ public class EndpointsTaskExecutor implements Runnable{
 				.setNextPush(time+scheduleObject.getPeriod());
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
 				.setLastPushed(time);
+				applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
 				System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));
 			}
 			else {
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("32");
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("One or more endpoints encountered error");
-				applicationEventPublisher.publishEvent(this.parent);
+				applicationEventPublisher.publishEvent(new InterruptThread(scheduleObject.getThread(),false, userId, connectionId));
 			}
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR setResult " + 
 			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().keySet());
-			applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
+			
 		}
 	}
 	

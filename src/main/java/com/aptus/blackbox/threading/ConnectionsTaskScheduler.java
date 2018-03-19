@@ -2,6 +2,7 @@ package com.aptus.blackbox.threading;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
+import java.nio.channels.InterruptedByTimeoutException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.aptus.blackbox.Service.ApplicationCredentials;
+import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PostExecutorComplete;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
@@ -61,7 +63,10 @@ public class ConnectionsTaskScheduler implements Runnable {
 	public void setOut(Status status) {
 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus(status.getStatus());
 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage(status.getMessage());
-		applicationEventPublisher.publishEvent(Thread.currentThread());
+		if(!status.getStatus().equals("31")) {
+			applicationEventPublisher.publishEvent(new InterruptThread(scheduleObjectInfo.getThread(),false, userId, connectionId));
+		}
+			
 	}
 	@Override
 	public void run() {
