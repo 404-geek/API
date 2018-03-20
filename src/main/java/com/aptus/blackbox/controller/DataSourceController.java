@@ -323,8 +323,6 @@ public class DataSourceController {
                 			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
                     				.getUserId()).getSchedulingObjects().get(credentials.getCurrConnId().getConnectionId()).getThread()
                 					, false, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
-                			applicationCredentials.getApplicationCred().get(credentials
-                    				.getUserId()).getSchedulingObjects().remove(credentials.getCurrConnId().getConnectionId());
                 		}
                 	}
                     System.out.println(connId + "***********Deleted!!!!**************");

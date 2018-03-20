@@ -37,6 +37,7 @@ import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.index.UrlObject;
+import com.aptus.blackbox.index.objects;
 import com.aptus.blackbox.utils.Utilities;
 import com.github.opendevl.JFlat;
 import com.google.gson.Gson;
@@ -120,14 +121,28 @@ public class EndpointsTaskExecutor implements Runnable{
 
 			HttpHeaders headers = Utilities.buildHeader(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
 			HttpEntity<?> httpEntity;
-			if (endpoint.getResponseString()!=null&&!endpoint.getResponseString().isEmpty()) {
-				httpEntity = new HttpEntity<Object>(endpoint.getResponseString(), headers);
-			} else if (!endpoint.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> body = Utilities.buildBody(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
-				httpEntity = new HttpEntity<Object>(body, headers);
+			if (!endpoint.getResponseBody().isEmpty()) {
+				MultiValueMap<String, String> preBody = Utilities.buildBody(endpoint, scheduleObject.getSrcToken(),"THREAD	EXECUTOR RUN");
+				Object postBody=null;
+				for(objects head:endpoint.getHeader())
+				{
+					if(head.getKey().equalsIgnoreCase("content-type")) {
+						postBody=Utilities.bodyBuilder(head.getValue(),preBody,"THREAD	EXECUTOR RUN");
+						break;
+					}
+				}
+				httpEntity = new HttpEntity<Object>(postBody, headers);
 			} else {
 				httpEntity = new HttpEntity<Object>(headers);
 			}
+//			if (endpoint.getResponseString()!=null&&!endpoint.getResponseString().isEmpty()) {
+//				httpEntity = new HttpEntity<Object>(endpoint.getResponseString(), headers);
+//			} else if (!endpoint.getResponseBody().isEmpty()) {
+//				MultiValueMap<String, String> body = Utilities.buildBody(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
+//				httpEntity = new HttpEntity<Object>(body, headers);
+//			} else {
+//				httpEntity = new HttpEntity<Object>(headers);
+//			}
 			HttpMethod method = (endpoint.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+"Method : "+method);
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+url);

@@ -31,6 +31,7 @@ import com.aptus.blackbox.Service.Credentials;
 import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.SrcObject;
 import com.aptus.blackbox.index.UrlObject;
+import com.aptus.blackbox.index.objects;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.common.net.UrlEscapers;
 import com.google.gson.Gson;
@@ -124,13 +125,8 @@ public class SourceController {
 
 			headers = Utilities.buildHeader(object, credentials.getSrcToken(),credentials.getUserId()+"SourceController.code");
 			headers.setLocation(URI.create(url));
-			HttpEntity<?> httpEntity;
-			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
-				String body = object.getResponseString();
-				redirect = new ResponseEntity<String>(body,headers, HttpStatus.MOVED_PERMANENTLY);
-			}else {
-				redirect = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
-			}			
+			HttpEntity<?> httpEntity;			
+			redirect = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
 			System.out.println("redirect =" + redirect);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -155,14 +151,28 @@ public class SourceController {
 
 			HttpHeaders headers = Utilities.buildHeader(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
 			HttpEntity<?> httpEntity;
-			if (accessToken.getResponseString()!=null && !accessToken.getResponseString().isEmpty()) {
-				httpEntity = new HttpEntity<Object>(accessToken.getResponseString(), headers);
-			} else if (accessToken.getResponseBody()!=null && !accessToken.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> body = Utilities.buildBody(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
-				httpEntity = new HttpEntity<Object>(body, headers);
+			if (!accessToken.getResponseBody().isEmpty()) {
+				MultiValueMap<String, String> preBody = Utilities.buildBody(accessToken, credentials.getSrcToken(),"SourceController.handlefooo");
+				Object postBody=null;
+				for(objects head:accessToken.getHeader())
+				{
+					if(head.getKey().equalsIgnoreCase("content-type")) {
+						postBody=Utilities.bodyBuilder(head.getValue(),preBody,"SourceController.handlefooo");
+						break;
+					}
+				}
+				httpEntity = new HttpEntity<Object>(postBody, headers);
 			} else {
 				httpEntity = new HttpEntity<Object>(headers);
 			}
+//			if (accessToken.getResponseString()!=null && !accessToken.getResponseString().isEmpty()) {
+//				httpEntity = new HttpEntity<Object>(accessToken.getResponseString(), headers);
+//			} else if (accessToken.getResponseBody()!=null && !accessToken.getResponseBody().isEmpty()) {
+//				MultiValueMap<String, String> body = Utilities.buildBody(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
+//				httpEntity = new HttpEntity<Object>(body, headers);
+//			} else {
+//				httpEntity = new HttpEntity<Object>(headers);
+//			}
 			HttpMethod method = (accessToken.getMethod() == "GET") ? HttpMethod.GET : HttpMethod.POST;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			 url =UrlEscapers.urlFragmentEscaper().escape(url);

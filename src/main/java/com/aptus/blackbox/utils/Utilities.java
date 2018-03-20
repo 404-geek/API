@@ -6,7 +6,10 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.crypto.Mac;
@@ -243,14 +246,28 @@ public class Utilities {
 
 			HttpHeaders headers = Utilities.buildHeader(object, values,message);
 			HttpEntity<?> httpEntity;
-			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
-				httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
-			} else if (!object.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> body = Utilities.buildBody(object, values,message);
-				httpEntity = new HttpEntity<Object>(body, headers);
+			if (!object.getResponseBody().isEmpty()) {
+				MultiValueMap<String, String> preBody = Utilities.buildBody(object, values,"");
+				Object postBody=null;
+				for(objects head:object.getHeader())
+				{
+					if(head.getKey().equalsIgnoreCase("content-type")) {
+						postBody=Utilities.bodyBuilder(head.getValue(),preBody,message);
+						break;
+					}
+				}
+				httpEntity = new HttpEntity<Object>(postBody, headers);
 			} else {
 				httpEntity = new HttpEntity<Object>(headers);
 			}
+//			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
+//				httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
+//			} else if (!object.getResponseBody().isEmpty()) {
+//				MultiValueMap<String, String> body = Utilities.buildBody(object, values,message);
+//				httpEntity = new HttpEntity<Object>(body, headers);
+//			} else {
+//				httpEntity = new HttpEntity<Object>(headers);
+//			}
 			HttpMethod method = (object.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
 			System.out.println(message+" "+"Method : "+method);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
@@ -312,6 +329,65 @@ public class Utilities {
 			System.out.println("source.postpatchmetadata");
 		}
 		return false;
+	}
+	public static Object bodyBuilder(String contentType, MultiValueMap<String, String> preBody,String message) throws Exception {
+		switch(contentType){
+		case("application/json"):
+			return JsonBuilder(preBody,message);
+		case("application/xml"):
+			return XmlBuilder(preBody,message);
+		case("text/xml"):
+			return XmlBuilder(preBody,message);
+		case("text/html"):
+			return HtmlBuilder(preBody,message);
+		case("application/x-www-form-urlencoded"):
+			return preBody;
+		default:
+			throw new Exception("Unsupported Content Type");
+		}
+	}
+	private static String HtmlBuilder(MultiValueMap<String, String> preBody, String message) {
+		try {
+			String body = "<!DOCTYPE html>";
+			for(Entry<String, List<String>> element:preBody.entrySet()) {
+				body.concat("<"+element.getKey()+">"+element.getValue()+"</"+element.getKey()+">");
+			}
+			System.out.println(message+" : Body :"+body);
+			return body;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	private static String XmlBuilder(MultiValueMap<String, String> preBody, String message) {
+		try {
+			String body = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>";
+			for(Entry<String, List<String>> element:preBody.entrySet()) {
+				body.concat("<"+element.getKey()+">"+element.getValue()+"</"+element.getKey()+">");
+			}
+			System.out.println(message+" : Body :"+body);
+			return body;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	private static String JsonBuilder(MultiValueMap<String, String> preBody, String message) {
+		try {
+			JsonObject body = new JsonObject();
+			for(Entry<String, List<String>> element:preBody.entrySet()) {
+				body.addProperty(element.getKey(), element.getValue().get(0));
+			}
+			System.out.println(message+" : Body :"+body.toString());
+			return body.toString();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			System.out.println(message+e.getMessage());
+			e.printStackTrace();			
+		}
+		return null;
 	}
 	
 }

@@ -7,31 +7,21 @@ import org.springframework.stereotype.Component;
 @Scope("prototype")
 public class ScheduleEventData {
 
-	private String userId,connId,scheduled;
-	private long period;
-	
+	private String userId,connId;
+	private long period;	
 
 	public String getUserId() {
 		return userId;
 	}
 
-	public void setData(String userId,String connId,String scheduled,long period) {
+	public void setData(String userId,String connId,long period) {
 		this.userId = userId;
 		this.connId=connId;
-		this.scheduled=scheduled;
 		this.period=period;
 	}
 
 	public String getConnId() {
 		return connId;
-	}
-
-	public String getScheduled() {
-		return scheduled;
-	}
-
-	public void setScheduled(String scheduled) {
-		this.scheduled = scheduled;
 	}
 
 	public long getPeriod() {
@@ -41,7 +31,5 @@ public class ScheduleEventData {
 	public void setPeriod(long period) {
 		this.period = period;
 	}
-
-
 
 }

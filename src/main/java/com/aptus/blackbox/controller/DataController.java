@@ -46,6 +46,7 @@ import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.SrcObject;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.index.UrlObject;
+import com.aptus.blackbox.index.objects;
 import com.aptus.blackbox.utils.Utilities;
 import com.github.opendevl.JFlat;
 import com.google.gson.Gson;
@@ -286,7 +287,6 @@ public class DataController {
         			System.out.println("Publishing custom event. ");
         			 ScheduleEventData scheduleEventData=Context.getBean(ScheduleEventData.class);
         			 scheduleEventData.setData(credentials.getUserId(), connId,
-        					 credentials.getCurrConnId().getScheduled(),
         					 credentials.getCurrConnId().getPeriod());
         			 //Context.getAutowireCapableBeanFactory().autowireBean(scheduleEventData);
         			 applicationEventPublisher.publishEvent(scheduleEventData);
@@ -302,15 +302,14 @@ public class DataController {
 	        	SrcObject obj = credentials.getSrcObj();
 	            if (obj.getRefresh().equals("YES")) {
 	            	
-	                ret = Utilities.token(credentials.getSrcObj().getRefreshToken(),credentials.getSrcToken(),"");
+	                ret = Utilities.token(credentials.getSrcObj().getRefreshToken(),credentials.getSrcToken(),"DataController.Selectaction");
 	                if (!ret.getStatusCode().is2xxSuccessful()) {	                	
 	                    JsonObject respBody = new JsonObject();
 	        			respBody.addProperty("message", "Re-authorize");
 	    				respBody.addProperty("status", "51");
 	    				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
 
-	                } else {
-	                	
+	                } else {	                	
 	                	//next piece of code is for saveValues 
 	                	try {
 	        				credentials.getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
@@ -326,7 +325,7 @@ public class DataController {
 	                    ret = validateData(obj.getValidateCredentials(), obj.getEndPoints(),choice);
 	                }
 	            } else {
-	                ret = Utilities.token(obj.getValidateCredentials(),credentials.getSrcToken(),"");
+	                ret = Utilities.token(obj.getValidateCredentials(),credentials.getSrcToken(),"DataController.selectAction");
 	                if (!ret.getStatusCode().is2xxSuccessful()) {
 	                	credentials.setCurrSrcValid(false);
 	                    JsonObject respBody = new JsonObject();
@@ -365,7 +364,7 @@ public class DataController {
 		header.add("access-control-allow-origin", rootUrl);
         header.add("access-control-allow-credentials", "true");
         try {
-            ret = Utilities.token(valid,credentials.getSrcToken(),"");
+            ret = Utilities.token(valid,credentials.getSrcToken(),"DataController.validateData");
             if (!ret.getStatusCode().is2xxSuccessful()) {            	
                 JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Contact Support");
@@ -394,16 +393,22 @@ public class DataController {
     			Gson gson=new Gson();
     			RestTemplate restTemplate = new RestTemplate();
     			for(UrlObject object:endpoints) {
-    				String url = Utilities.buildUrl(object, credentials.getSrcToken(),"");
+    				String url = Utilities.buildUrl(object, credentials.getSrcToken(),"DataController.fetchendpoint");
         			System.out.println(object.getLabel() + " = " + url);
 
-        			HttpHeaders headers = Utilities.buildHeader(object, credentials.getSrcToken(),"");
+        			HttpHeaders headers = Utilities.buildHeader(object, credentials.getSrcToken(),"DataController.fetchendpoint");
         			HttpEntity<?> httpEntity;
-        			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
-        				httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
-        			} else if (!object.getResponseBody().isEmpty()) {
-        				MultiValueMap<String, String> body = Utilities.buildBody(object, credentials.getSrcToken(),"");
-        				httpEntity = new HttpEntity<Object>(body, headers);
+        			if (!object.getResponseBody().isEmpty()) {
+        				MultiValueMap<String, String> preBody = Utilities.buildBody(object, credentials.getSrcToken(),"DataController.fetchendpoint");
+        				Object postBody=null;
+        				for(objects head:object.getHeader())
+        				{
+        					if(head.getKey().equalsIgnoreCase("content-type")) {
+        						postBody=Utilities.bodyBuilder(head.getValue(),preBody,"DataController.fetchendpoint");
+        						break;
+        					}
+        				}
+        				httpEntity = new HttpEntity<Object>(postBody, headers);
         			} else {
         				httpEntity = new HttpEntity<Object>(headers);
         			}
