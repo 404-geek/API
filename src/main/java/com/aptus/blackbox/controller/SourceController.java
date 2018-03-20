@@ -169,7 +169,8 @@ public class SourceController {
 			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 			saveValues(out);
 			out = Utilities.token(validateCredentials,credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
-			//System.out.println(out.getBody());
+			System.out.println(out.getBody()+" "+out.getStatusCode());
+			System.out.println(out);
 			headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
 			headers.add("access-control-allow-origin", rootUrl);

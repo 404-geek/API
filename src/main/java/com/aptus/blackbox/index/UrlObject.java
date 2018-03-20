@@ -5,7 +5,7 @@ import java.util.List;
 
 public class UrlObject implements Serializable {
 	
-	private String label,type,url,method,responseString;
+	private String label,type,url,method,responseString,responseBodyType;
 	private List<objects> params,header,responseBody,signature;
 	private List<Cursor> pagination;
 	
@@ -69,6 +69,12 @@ public class UrlObject implements Serializable {
 	}
 	public void setPagination(List<Cursor> pagination) {
 		this.pagination = pagination;
+	}
+	public String getResponseBodyType() {
+		return responseBodyType;
+	}
+	public void setResponseBodyType(String responseBodyType) {
+		this.responseBodyType = responseBodyType;
 	}
 	
 }
