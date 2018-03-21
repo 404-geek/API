@@ -319,9 +319,9 @@ public class DataSourceController {
                 if (out.getStatusCode().is2xxSuccessful()) {  
                 	if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
                 		if(applicationCredentials.getApplicationCred().get(credentials
-                				.getUserId()).getSchedulingObjects().get(credentials.getCurrConnId().getConnectionId())!=null) {
+                				.getUserId()).getSchedulingObjects().get(connId)!=null) {
                 			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
-                    				.getUserId()).getSchedulingObjects().get(credentials.getCurrConnId().getConnectionId()).getThread()
+                    				.getUserId()).getSchedulingObjects().get(connId).getThread()
                 					, false, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
                 			url = mongoUrl + "/credentials/scheduledStatus/" + credentials.getUserId();
                             System.out.println("Delete scheduled DataSource");
@@ -331,7 +331,7 @@ public class DataSourceController {
                             obj2 = new JsonObject();
                             obj2.add("$unset", obj1);
                             headers.add("Content-Type", "application/json");
-                            System.out.println("68542168521"+obj2.toString());
+                            System.out.println("Datasourcecontroller deletedatasource"+obj2.toString());
                             httpEntity = new HttpEntity<Object>(obj2.toString(), headers);
                             restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
                             out = restTemplate.exchange(URI.create(url), HttpMethod.PATCH, httpEntity, String.class);
@@ -387,7 +387,7 @@ public class DataSourceController {
 				Gson gson = new Gson();
 //				String schedule = filteredEndpoints.get("scheduled");
 //				String period = filteredEndpoints.get("period");
-				String schedule = "false";
+				String schedule = "true";
 				String period = "30";
 				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
 						.getAsJsonObject().get("endpoints").getAsJsonArray();
@@ -414,54 +414,26 @@ public class DataSourceController {
 				values.addProperty("scheduled", schedule);
 				values.addProperty("period", period);
 				values.add("endPoints", endPointsArray);
-				eachArray.add(values);
-				JsonObject eachObj = new JsonObject();
-				eachObj.add("$each", eachArray);
-				jsonObj = new JsonObject();
-				jsonObj.add("srcdestId", eachObj);
+				eachArray.add(values);				
 				if (credentials.isUserExist()) {
 					// userCredentials
+					JsonObject eachObj = new JsonObject();
+					eachObj.add("$each", eachArray);
+					jsonObj = new JsonObject();
+					jsonObj.add("srcdestId", eachObj);
 					JsonObject addToSetObj = new JsonObject();
 					addToSetObj.add("$addToSet", jsonObj);
 					credentials.setUserExist(Utilities.postpatchMetaData(addToSetObj, "user", "PATCH",credentials.getUserId(),mongoUrl));
 				} else {
 					// userCredentials
+					jsonObj = new JsonObject();
+					jsonObj.add("srcdestId", eachArray);
+					JsonObject addToSetObj = new JsonObject();
 					jsonObj.addProperty("_id", credentials.getUserId().toLowerCase());
 					credentials.setUserExist(Utilities.postpatchMetaData(jsonObj, "user", "POST",credentials.getUserId(),mongoUrl));
 				}
 				applicationEventPublisher.publishEvent(new PushCredentials(srcObj, destObj,credentials.getSrcToken() , credentials.getDestToken(),
-						credentials.getCurrSrcName(), credentials.getCurrDestName(), credentials.getUserId()));
-//				// sourceCredentials
-//				JsonArray sourceBody = new JsonArray();
-//				for (Map.Entry<String, String> mp : credentials.getCurrSrcToken().entrySet()) {
-//					JsonObject tmp = new JsonObject();
-//					tmp.addProperty("key", String.valueOf(mp.getKey()));
-//					tmp.addProperty("value", String.valueOf(mp.getValue()));
-//					sourceBody.add(tmp);
-//				}
-//				jsonObj = new JsonObject();
-//				jsonObj.addProperty("_id",
-//						credentials.getUserId().toLowerCase() + "_" + credentials.getCurrSrcName().toLowerCase());
-//				jsonObj.add("credentials", sourceBody);
-//				Utilities.postpatchMetaData(jsonObj, "source", "POST",credentials.getUserId());
-//				// destCredentials
-//				JsonArray destBody =  new JsonArray();
-//				for (Map.Entry<String, String> mp : credentials.getCurrDestToken().entrySet()) {
-//					JsonObject tmp = new JsonObject();
-//					tmp.addProperty("key", String.valueOf(mp.getKey()));
-//					tmp.addProperty("value", String.valueOf(mp.getValue()));
-//					destBody.add(tmp);
-//				}
-//				jsonObj = new JsonObject();				
-//				jsonObj.addProperty("_id",
-//						credentials.getUserId().toLowerCase() + "_" + credentials.getCurrDestName().toLowerCase() + "_"
-//								+ credentials.getCurrDestToken().get("database_name"));
-//				jsonObj.add("credentials", destBody);
-//				Utilities.postpatchMetaData(jsonObj, "destination", "POST",credentials.getUserId());
-//				
-//				System.out.println(sourceBody);
-//				System.out.println(destBody);
-				
+						credentials.getCurrSrcName(), credentials.getCurrDestName(), credentials.getUserId()));				
 				String url = baseUrl;
 				headers.setLocation(URI.create(url));
 				return new ResponseEntity<String>("", headers, HttpStatus.OK);

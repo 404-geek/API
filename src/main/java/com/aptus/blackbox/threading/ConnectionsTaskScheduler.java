@@ -84,7 +84,7 @@ public class ConnectionsTaskScheduler implements Runnable {
     		for(String endpt:applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().keySet())
     		{
     			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
-    			get(connectionId).setEndPointStatus(endpt, new Status("31","Running"));;
+    			get(connectionId).setEndPointStatus(endpt, new Status("31","Running"));
     		}
     		applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
         	SrcObject obj = scheduleObjectInfo.getSrcObj();
@@ -175,7 +175,6 @@ public class ConnectionsTaskScheduler implements Runnable {
         				endpointsTaskExecutor.setEndpointsTaskExecutor(object, connectionId, userId,Thread.currentThread());
         				//Context.getAutowireCapableBeanFactory().autowireBean(endpointsTaskExecutor);
         				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
-
     				}
     			}
     			return new Status("31","Success");
