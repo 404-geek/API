@@ -91,11 +91,7 @@ public class DataListeners {
 			 if(thread.isUserInterrupted()) {
 				 applicationCredentials.getApplicationCred().get(thread.getUserId()).getSchedulingObjects().get(thread.getConnectionId()).setStatus("35");
 				 applicationCredentials.getApplicationCred().get(thread.getUserId()).getSchedulingObjects().get(thread.getConnectionId()).setMessage("User Stopped Scheduling");
-				 pushStatus(thread.getConnectionId(), thread.getUserId(),"USER Interrupted");
-				 applicationCredentials.getApplicationCred().get(thread.getUserId()).getSchedulingObjects().remove(thread.getConnectionId());
-			 }
-			 else {
-				 pushStatus(thread.getConnectionId(), thread.getUserId(),"Some Error Occured");
+				 pushStatus(thread.getConnectionId(), thread.getUserId(), "User Stopped Scheduling");
 			 }
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -158,11 +154,15 @@ public class DataListeners {
 				endpointStatus.addProperty("messsage", e.getValue().getMessage());
 				temp.add(e.getKey(), endpointStatus);
 			}
+			String value = new Date(new Timestamp(tempScheduleObj.getNextPush()).getTime())+"";
 			temp.addProperty("Last Succesfully Pushed", new Date(new Timestamp(tempScheduleObj.getLastPushed()).getTime())+"");
-			String value = tempScheduleObj.getNextPush()!=0?new Date(new Timestamp(tempScheduleObj.getNextPush()).getTime())+"":"N.A";
-			temp.addProperty("Next Scheduled Pushed", value);
 			temp.addProperty("status", tempScheduleObj.getStatus());
 			temp.addProperty("message", tempScheduleObj.getMessage());
+			if(tempScheduleObj.getNextPush()==0) {
+				value = "N.A";
+				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().remove(connectionId);
+			}			
+			temp.addProperty("Next Scheduled Pushed", value);
 			connStatus.add(connectionId, temp);
 			ResponseEntity<String> out = null;
 			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());

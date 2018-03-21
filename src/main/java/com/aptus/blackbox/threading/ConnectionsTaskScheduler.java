@@ -105,7 +105,7 @@ public class ConnectionsTaskScheduler implements Runnable {
         					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getSrcToken().put(s.split("=")[0], s.split("=")[1]);
         				}
         			}
-            		this.scheduleObjectInfo = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
+            		scheduleObjectInfo = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
         			System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER RUN"+"token : " + scheduleObjectInfo.getSrcToken().keySet() + ":" + scheduleObjectInfo.getSrcToken().values());
         			SchedulingObjects schedulingObjects = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
         			applicationEventPublisher.publishEvent(new PushCredentials(schedulingObjects.getSrcObj(), schedulingObjects.getDestObj(), schedulingObjects.getSrcToken(), 

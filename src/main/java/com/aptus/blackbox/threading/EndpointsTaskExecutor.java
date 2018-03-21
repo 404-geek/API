@@ -82,12 +82,18 @@ public class EndpointsTaskExecutor implements Runnable{
 		this.result = result;
 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setEndPointStatus(endpoint.getLabel(),result);
 		if(!scheduleObject.getstatus().contains("31")) {
-			if(!scheduleObject.getstatus().contains("32")) {	
-				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("33");
-				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("Completed Successfully");
+			if(!scheduleObject.getstatus().contains("32")) {
 				long time = ZonedDateTime.now().toInstant().toEpochMilli();
-				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
-				.setNextPush(time+scheduleObject.getPeriod());
+				if(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getNextPush()==0) {
+					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("35");
+					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("User Stopped Scheduling");
+				}
+				else {
+					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("33");
+					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("Completed Successfully");
+					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
+					.setNextPush(time+scheduleObject.getPeriod());
+				}				
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
 				.setLastPushed(time);
 				applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));

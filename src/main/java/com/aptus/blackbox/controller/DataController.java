@@ -262,8 +262,7 @@ public class DataController {
         try {
         	if(Utilities.isSessionValid(httpsession,credentials)) {
         		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(httpsession.getLastAccessedTime());
-        		credentials.setCurrConnId(credentials.getConnectionIds(connId));
-        		if(credentials.getCurrConnId().getScheduled().equalsIgnoreCase("true") && choice.equalsIgnoreCase("export")) {        			
+        		if(credentials.getCurrConnId().getScheduled().equalsIgnoreCase("true")&&choice.equalsIgnoreCase("export")) {
         			SchedulingObjects schObj=new SchedulingObjects();
         			schObj.setDestObj(credentials.getDestObj());
         			schObj.setDestToken(credentials.getDestToken());
@@ -641,7 +640,7 @@ public class DataController {
 	    		if(Utilities.isSessionValid(session,credentials)) {
 	        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 	    			String name = destId;
-	    			String filter = "{\"_id\":{\"$regex\":\".*"+name.toLowerCase() + ".*\"}}";					
+	    			String filter = "{\"_id\":{\"$regex\":\".*"+credentials.getUserId().toLowerCase()+"_"+name.toLowerCase() + ".*\"}}";					
 	    			String url = mongoUrl+"/credentials/destinationCredentials?filter=" + filter;		 
 	    			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 	    			
