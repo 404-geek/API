@@ -1,5 +1,7 @@
 package com.aptus.blackbox.controller;
 
+import java.io.FileWriter;
+import java.io.Writer;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -24,13 +26,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -44,16 +44,16 @@ import com.aptus.blackbox.index.DestObject;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.SrcObject;
-import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.index.objects;
 import com.aptus.blackbox.utils.Utilities;
 import com.github.opendevl.JFlat;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.JsonParser;
 
 @RestController
 public class DataController {
@@ -186,11 +186,12 @@ public class DataController {
 						for (Object attr : row) {
 							stmt.setString( k++,attr==null?null:attr.toString());
 						}
-						System.out.println(instmt);
+						//System.out.println(instmt);
 						stmt.execute();
 					}
 					i++;
 				}
+				System.out.println("All pushed");
 				con.close();
 				return true;
 			}
@@ -261,8 +262,8 @@ public class DataController {
         try {
         	if(Utilities.isSessionValid(httpsession,credentials)) {
         		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(httpsession.getLastAccessedTime());
-        		if(choice.equalsIgnoreCase("export")) {
-        			
+        		credentials.setCurrConnId(credentials.getConnectionIds(connId));
+        		if(credentials.getCurrConnId().getScheduled().equalsIgnoreCase("true") && choice.equalsIgnoreCase("export")) {        			
         			SchedulingObjects schObj=new SchedulingObjects();
         			schObj.setDestObj(credentials.getDestObj());
         			schObj.setDestToken(credentials.getDestToken());
@@ -297,11 +298,9 @@ public class DataController {
      				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
         		}
         		
-        		else {
-        		credentials.setCurrConnId(credentials.getConnectionIds(connId));
+        		else {        		
 	        	SrcObject obj = credentials.getSrcObj();
-	            if (obj.getRefresh().equals("YES")) {
-	            	
+	            if (obj.getRefresh().equals("YES")) {	            	
 	                ret = Utilities.token(credentials.getSrcObj().getRefreshToken(),credentials.getSrcToken(),"DataController.Selectaction");
 	                if (!ret.getStatusCode().is2xxSuccessful()) {	                	
 	                    JsonObject respBody = new JsonObject();
@@ -323,6 +322,7 @@ public class DataController {
 	    						credentials.getCurrSrcName(), credentials.getCurrDestName(), credentials.getUserId()));
 	        			System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
 	                    ret = validateData(obj.getValidateCredentials(), obj.getEndPoints(),choice);
+	                    return ret;
 	                }
 	            } else {
 	                ret = Utilities.token(obj.getValidateCredentials(),credentials.getSrcToken(),"DataController.selectAction");
@@ -335,9 +335,10 @@ public class DataController {
 
 	                } else {
 	                	credentials.setCurrSrcValid(true);
-	                    //ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
-	                	
-	                    return fetchEndpointsData(obj.getEndPoints(),choice);
+	                    //ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());	                	
+	                    ResponseEntity<String> out = fetchEndpointsData(obj.getEndPoints(),choice);
+	                    System.out.println(out.getBody().substring(0, 20));
+	                    return out;
 	                }
 	            }
 	        }
@@ -391,8 +392,16 @@ public class DataController {
     	ResponseEntity<String> out = null;
     		try {
     			Gson gson=new Gson();
+    			JsonArray mergedData=new JsonArray();
     			RestTemplate restTemplate = new RestTemplate();
+    			
     			for(UrlObject object:endpoints) {
+    				System.out.println("LABEL1"+object.getLabel());
+    				boolean value=credentials.getCurrConnId().getEndPoints().contains(object.getLabel().toLowerCase());
+    				System.out.println(value+ " "+object.getLabel().toLowerCase());
+    				
+    				if(credentials.getCurrConnId().getEndPoints().contains(object.getLabel().toLowerCase())) {
+    					System.out.println("LABEL2"+object.getLabel()+" "+credentials.getCurrConnId().getEndPoints());
     				String url = Utilities.buildUrl(object, credentials.getSrcToken(),"DataController.fetchendpoint");
         			System.out.println(object.getLabel() + " = " + url);
 
@@ -417,13 +426,27 @@ public class DataController {
         			System.out.println(url);
         			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
         			
-        			//call destination validation and push data 
+        			if(choice.equalsIgnoreCase("view")) {
+        				System.out.println("View Data");
+        	            JsonObject respBody = new JsonObject();
+        				respBody.addProperty("status", "21");
+        				respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
+        				System.out.println(respBody.toString().substring(0, 20));
+        				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+        			}
+        			else if(choice.equalsIgnoreCase("export")){
+        				System.out.println("Export Data without schedule");
+        				if(out.getBody()!=null)
+        				mergedData.add(new JsonParser().parse(out.getBody().toString()).getAsJsonObject());
+        				//call destination validation and push data 
         			
                     //null and empty case+ three more cases+bodu cursor(dropbox).......and a lot more 
         			
         			System.out.println("\n--------------------------------------------------------------\n");
         			
+        			System.out.println("While start");
         			while(true) {
+        				
         				String pData=null;
         				String newurl = url;
         				List<Cursor> page =object.getPagination();
@@ -466,41 +489,46 @@ public class DataController {
         					break;
         				}
         				out = restTemplate.exchange(URI.create(newurl), method, httpEntity, String.class);
+        				
         				if(out.getBody()==null) {
         					System.out.println("break out.getBody");
         					break;
         				}
+        				mergedData.add(new JsonParser().parse(out.getBody().toString()).getAsJsonObject());
+        				
         			}        	
+        			System.out.println("While End");
         			System.out.println("\n--------------------------------------------------------------\n");
         			//System.out.println(out.getBody());
-        			//System.out.println(out.getBody());
-        			
-        			if(choice.equalsIgnoreCase("view")) {				
-        	            JsonObject respBody = new JsonObject();
-        				respBody.addProperty("status", "21");
-        				respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
-        				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+        			System.out.println("Merged Data "+mergedData.toString().substring(0, 30));
+        			try (FileWriter writer = new FileWriter("Output.json")) {
+        				
+        			    Gson gsonb = new GsonBuilder().create();
+        			    gsonb.toJson(mergedData, writer);
         			}
-        			else if(truncateAndPush()) {
+        			if(truncateAndPush()) {
         				String tableName=credentials.getCurrConnId().getConnectionId()+"_"+object.getLabel();
 
                         System.out.println("SourceController-driver: "+credentials.getDestObj().getDrivers());
 
-                        if(pushDB(out.getBody().toString(), tableName)) {
+                        
+                        
+                        if(pushDB(mergedData.toString(), tableName)) {
                         	JsonObject respBody = new JsonObject();
             				respBody.addProperty("status", "22");
             				respBody.addProperty("data", "Successfullypushed");
             				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
-                        }        	            
+                        } else {
+              				 JsonObject respBody = new JsonObject();
+             				respBody.addProperty("status", "23");
+             				respBody.addProperty("data", "Unsuccessful");
+             				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+            			}      	            
         			}
-        			else {
-        				 JsonObject respBody = new JsonObject();
-         				respBody.addProperty("status", "23");
-         				respBody.addProperty("data", "Unsuccessful");
-         				return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
-        			}
+        			
     			}
-    			
+    			}
+    		}
 
     		} catch (Exception e) {
     			e.printStackTrace();

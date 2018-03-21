@@ -375,7 +375,7 @@ public class DataSourceController {
 				Gson gson = new Gson();
 //				String schedule = filteredEndpoints.get("scheduled");
 //				String period = filteredEndpoints.get("period");
-				String schedule = "true";
+				String schedule = "false";
 				String period = "30";
 				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
 						.getAsJsonObject().get("endpoints").getAsJsonArray();
