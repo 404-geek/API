@@ -323,6 +323,18 @@ public class DataSourceController {
                 			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
                     				.getUserId()).getSchedulingObjects().get(credentials.getCurrConnId().getConnectionId()).getThread()
                 					, false, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
+                			url = mongoUrl + "/credentials/scheduledStatus/" + credentials.getUserId();
+                            System.out.println("Delete scheduled DataSource");
+                            System.out.println(url);
+                            obj1 = new JsonObject();
+                            obj1.add(connId,null);
+                            obj2 = new JsonObject();
+                            obj2.add("$unset", obj1);
+                            headers.add("Content-Type", "application/json");
+                            System.out.println("68542168521"+obj2.toString());
+                            httpEntity = new HttpEntity<Object>(obj2.toString(), headers);
+                            restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+                            out = restTemplate.exchange(URI.create(url), HttpMethod.PATCH, httpEntity, String.class);
                 		}
                 	}
                     System.out.println(connId + "***********Deleted!!!!**************");
