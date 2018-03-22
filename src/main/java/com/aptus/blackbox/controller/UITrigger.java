@@ -95,52 +95,52 @@ public class UITrigger {
 		// store in credentials
 	}
 	
-	@RequestMapping("/togglescheduling")
-	public ResponseEntity<String> toggleScheduling(@RequestParam("connid") String connId,
-			@RequestParam("toggle") String toggle,HttpSession session){
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
-		headers.add("access-control-allow-credentials", "true");
-		if (Utilities.isSessionValid(session, credentials)) {
-			if(toggle.equalsIgnoreCase("on")) {
-				boolean ret=false;
-				ResponseEntity<String> out = null;
-				RestTemplate restTemplate = new RestTemplate();
-				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
-				String filter = "filter={\"_id\":\""+credentials.getUserId()+"\"}&filter={\""+connId+"\":{\"$exists\":true,\"$ne\":null}}";
-				String url = mongoUrl+"/credentials/scheduledStatus?" + filter;
-				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				HttpHeaders header = new HttpHeaders();
-				// header.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				System.out.println(out.getBody());
-				JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
-				JsonObject jobj = jelem.getAsJsonObject();
-				if(jobj.get("_returned").getAsInt() != 0) {
-					url = mongoUrl+"/credentials/scheduledStatus/"+credentials.getUserId();
-					
-				}
-			}
-			else {
-				if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
-            		if(applicationCredentials.getApplicationCred().get(credentials
-            				.getUserId()).getSchedulingObjects().get(credentials.getCurrConnId().getConnectionId())!=null) {
-            			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
-                				.getUserId()).getSchedulingObjects().get(credentials.getCurrConnId().getConnectionId()).getThread()
-            					, true, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
-            		}            		
-            	}
-			}
-		}
-		else {
-			System.out.println("Session expired!");
-			JsonObject respBody = new JsonObject();
-			respBody.addProperty("message", "Sorry! Your session has expired");
-			respBody.addProperty("status", "33");
-			return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers)
-					.body(respBody.toString());
-		}
-	}
+//	@RequestMapping("/togglescheduling")
+//	public ResponseEntity<String> toggleScheduling(@RequestParam("connid") String connId,
+//			@RequestParam("toggle") String toggle,HttpSession session){
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", rootUrl);
+//		headers.add("access-control-allow-credentials", "true");
+//		if (Utilities.isSessionValid(session, credentials)) {
+//			if(toggle.equalsIgnoreCase("on")) {
+//				boolean ret=false;
+//				ResponseEntity<String> out = null;
+//				RestTemplate restTemplate = new RestTemplate();
+//				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
+//				String filter = "filter={\"_id\":\""+credentials.getUserId()+"\"}&filter={\""+connId+"\":{\"$exists\":true,\"$ne\":null}}";
+//				String url = mongoUrl+"/credentials/scheduledStatus?" + filter;
+//				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+//				HttpHeaders header = new HttpHeaders();
+//				// header.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+//				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
+//				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
+//				System.out.println(out.getBody());
+//				JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
+//				JsonObject jobj = jelem.getAsJsonObject();
+//				if(jobj.get("_returned").getAsInt() != 0) {
+//					url = mongoUrl+"/credentials/scheduledStatus/"+credentials.getUserId();
+//					
+//				}
+//			}
+//			else {
+//				if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
+//            		if(applicationCredentials.getApplicationCred().get(credentials
+//            				.getUserId()).getSchedulingObjects().get(credentials.getCurrConnId().getConnectionId())!=null) {
+//            			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
+//                				.getUserId()).getSchedulingObjects().get(credentials.getCurrConnId().getConnectionId()).getThread()
+//            					, true, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
+//            		}            		
+//            	}
+//			}
+//		}
+//		else {
+//			System.out.println("Session expired!");
+//			JsonObject respBody = new JsonObject();
+//			respBody.addProperty("message", "Sorry! Your session has expired");
+//			respBody.addProperty("status", "33");
+//			return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers)
+//					.body(respBody.toString());
+//		}
+//	}
 }
