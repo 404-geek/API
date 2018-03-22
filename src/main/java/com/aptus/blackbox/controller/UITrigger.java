@@ -31,6 +31,7 @@ import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.Service.Credentials;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.ScheduleEventData;
+import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
@@ -119,7 +120,7 @@ public class UITrigger {
 			if(credentials.getConnectionIds(connId).getSourceName().
 						equalsIgnoreCase(credentials.getCurrConnId().getSourceName()) &&
 				   credentials.getConnectionIds(connId).getDestName().
-						equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
+						equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {				
 				if(toggle.equalsIgnoreCase("on")) {
 					boolean ret=false;
 					ResponseEntity<String> out = null;
@@ -139,6 +140,11 @@ public class UITrigger {
 						JsonObject scheduledData = jobj.get("_embedded").getAsJsonArray()
 								.get(0).getAsJsonObject().get(connId).getAsJsonObject();
 						if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
+							ConnObj connObj = new ConnObj();
+		     				connObj.setConnectionId(connId);
+		     				connObj.setDestName(credentials.getCurrDestName());
+		     				connObj.setSourceName(credentials.getCurrSrcName());
+		     				connObj.setPeriod(Integer.parseInt(period)*1000);
 							SchedulingObjects schObj=new SchedulingObjects();
 		        			schObj.setDestObj(credentials.getDestObj());
 		        			schObj.setDestToken(credentials.getDestToken());
@@ -153,8 +159,11 @@ public class UITrigger {
 		        			for(Entry<String, JsonElement> endpoint:scheduledData.entrySet()) {
 		        				if(endpoint.getValue().isJsonObject()) {
 		        					schObj.setEndPointStatus(endpoint.getKey().toString(), null);
+		        					connObj.setEndPoints(endpoint.getKey());
 		        				}
 		        			}
+		        			connObj.setScheduled("true");
+		        			credentials.setConnectionIds(connId, connObj);
 							applicationCredentials.getApplicationCred().get(credentials.getUserId())
 							.setSchedulingObjects(schObj, connId);
 							ScheduleEventData scheduleEventData=Context.getBean(ScheduleEventData.class);
@@ -171,6 +180,7 @@ public class UITrigger {
 		            			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
 		                				.getUserId()).getSchedulingObjects().get(connId).getThread()
 		            					, true, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
+		            			credentials.getConnectionIds(connId).setScheduled("false");
 	            		}            		
 	            	}
 				}
@@ -186,6 +196,7 @@ public class UITrigger {
 		        			 scheduleEventData.setData(credentials.getUserId(), connId,Integer.parseInt(period)*1000);
 		        			 System.out.println(applicationCredentials.getApplicationCred().get(credentials.getUserId()).getSchedulingObjects().get(connId));
 		        			 applicationEventPublisher.publishEvent(scheduleEventData);
+		        			 credentials.getConnectionIds(connId).setPeriod(Integer.parseInt(period)*1000);
             		}            		
             	}
 				}

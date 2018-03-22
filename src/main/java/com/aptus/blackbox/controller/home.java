@@ -25,6 +25,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.Service.Credentials;
+import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
@@ -89,6 +90,7 @@ public class home {
 				applicationCredentials.setApplicationCred(user, new ScheduleInfo());
 				applicationCredentials.getApplicationCred().get(user).setLastAccessTime(session.getLastAccessedTime());
 				credentials.setSessionId(user,session.getId());
+				getConnectionIds(session);
 				System.out.println(session.getId());
 				respBody.addProperty("id", user);
 				respBody.addProperty("status", "200");
@@ -319,6 +321,72 @@ public class home {
 		}
 		catch (Exception e) {
 			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+	}
+	
+	@RequestMapping(value="/getconnectionids")
+	private ResponseEntity<String> getConnectionIds(HttpSession session) {
+		String dataSource=null;
+		HttpHeaders headers = new HttpHeaders();			
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+        headers.add("access-control-allow-credentials", "true");
+		try {
+			if(Utilities.isSessionValid(session,credentials)) {
+        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
+				ResponseEntity<String> out = null;
+				RestTemplate restTemplate = new RestTemplate();
+				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
+				String url = mongoUrl+"/credentials/userCredentials/"+credentials.getUserId();
+				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+				HttpHeaders header = new HttpHeaders();
+				// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+				header.add("Cache-Control", "no-cache");
+				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
+				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
+				System.out.println(out.getBody());
+				Gson gson=new Gson();								
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("status", "200");
+				respBody.add("data",gson.fromJson(out.getBody(), JsonElement.class));
+				
+				ConnObj conObj = new ConnObj();
+				JsonElement data = gson.fromJson(out.getBody(), JsonElement.class);
+				
+			    url = mongoUrl+"/credentials/SrcDstlist/srcdestlist";
+			    uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+				out  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
+				respBody.add("images",gson.fromJson(out.getBody(), JsonElement.class));
+				
+				
+				JsonArray srcdestId = data.getAsJsonObject().get("srcdestId").getAsJsonArray();
+				for(JsonElement ele:srcdestId) {
+					conObj = gson.fromJson(ele, ConnObj.class);
+					credentials.setConnectionIds(conObj.getConnectionId(), conObj);
+				}
+				//System.out.println(credentials.getConnectionIds().values());
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			}
+			else {
+   				System.out.println("Session expired!");
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			}			
+		}
+		catch(HttpClientErrorException e) {
+			System.out.println(e.getMessage());
+			if(e.getMessage().startsWith("4")) {
+	            JsonObject respBody = new JsonObject();
+				respBody.addProperty("data", "null");
+				respBody.addProperty("status", "200");
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			}
+		}
+		catch(Exception e){
 			e.printStackTrace();
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
