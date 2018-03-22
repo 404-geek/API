@@ -159,8 +159,9 @@ public class DataListeners {
 			temp.addProperty("status", tempScheduleObj.getStatus());
 			temp.addProperty("message", tempScheduleObj.getMessage());
 			if(tempScheduleObj.getNextPush()==0) {
-				value = "N.A";
-				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().remove(connectionId);
+				value = "N.A";	
+				System.out.println(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().remove(connectionId)+"");
+				System.out.println(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)+"");
 			}			
 			temp.addProperty("Next Scheduled Pushed", value);
 			connStatus.add(connectionId, temp);
