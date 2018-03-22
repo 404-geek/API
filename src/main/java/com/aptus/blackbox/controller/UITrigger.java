@@ -107,7 +107,7 @@ public class UITrigger {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 		// store in credentials
 	}
-	
+
 	@RequestMapping("/togglescheduling")
 	public ResponseEntity<String> toggleScheduling(@RequestParam("connid") String connId,
 			@RequestParam("toggle") String toggle,@RequestParam("period") String period,HttpSession session){
@@ -230,4 +230,5 @@ public class UITrigger {
 					.body(respBody.toString());
 		}
 	}
+
 }
