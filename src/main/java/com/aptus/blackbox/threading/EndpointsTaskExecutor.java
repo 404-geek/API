@@ -41,6 +41,7 @@ import com.aptus.blackbox.index.objects;
 import com.aptus.blackbox.utils.Utilities;
 import com.github.opendevl.JFlat;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
@@ -159,65 +160,79 @@ public class EndpointsTaskExecutor implements Runnable{
 			//null and empty case+ three more cases+bodu cursor(dropbox).......and a lot more 
 			
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+"\n--------------------------------------------------------------\n");
-			
-			while(true) {
-				String pData=null;
+			JsonArray mergedData = new JsonArray();
+			if (out.getBody() != null)
+				mergedData.add(gson.fromJson(out.getBody().toString(), JsonElement.class));
+			// call destination validation and push data
+			// null and empty case+ three more cases+bodu cursor(dropbox).......and a lot
+			// more
+
+			System.out.println("\n--------------------------------------------------------------\n");
+
+			System.out.println("While start");
+			while (true) {
+
+				String pData = null;
 				String newurl = url;
-				List<Cursor> page =endpoint.getPagination();
-				if(page!=null) {
-					for(Cursor cur:page) {
+				List<Cursor> page = endpoint.getPagination();
+				if (page != null) {
+					for (Cursor cur : page) {
 						JsonObject ele = gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
 						String arr[] = cur.getKey().split("::");
-						for(String jobj:arr) {
-			                if(ele.get(jobj)!=null && ele.get(jobj).isJsonObject() )  {
-			                    System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+jobj);
-			                    ele=ele.get(jobj).getAsJsonObject();
-			                }
-			                else {
-			                    System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+ele.get(jobj));
-			                    pData = ele.get(jobj)==null?null:ele.get(jobj).getAsString();
-			                    break;
-			                }
+						for (String jobj : arr) {
+							if (ele.get(jobj) != null && ele.get(jobj).isJsonObject()) {
+								System.out.println(jobj);
+								ele = ele.get(jobj).getAsJsonObject();
+							} else {
+								System.out.println(ele.get(jobj));
+								pData = ele.get(jobj) == null ? null : ele.get(jobj).getAsString();
+								break;
+							}
 						}
-						if(pData!=null) {
-							if(cur.getType().equalsIgnoreCase("url")) {
+						if (pData != null) {
+							if (cur.getType().equalsIgnoreCase("url")) {
 								newurl = pData;
+							} else if (cur.getType().equalsIgnoreCase("append")) {
+								newurl += newurl.contains("?") ? "&" + cur.getParam() + "=" + pData
+										: "?" + cur.getParam() + "=" + pData;
+								// newurl+="&"+cur.getParam()+"="+pData;
+							} else {
+								newurl += newurl.contains("?") ? "&" + cur.getParam() + "=" + pData
+										: "?" + cur.getParam() + "=" + (Integer.parseInt(pData) + 1);
+								// newurl+="&"+cur.getParam()+"="+Integer.parseInt(pData)+1;
 							}
-							else if(cur.getType().equalsIgnoreCase("append")) {
-								newurl+=newurl.contains("?")?"&"+cur.getParam()+"="+pData:"?"+cur.getParam()+"="+pData;
-								//newurl+="&"+cur.getParam()+"="+pData;
-							}
-							else {
-								newurl+=newurl.contains("?")?"&"+cur.getParam()+"="+pData:"?"+cur.getParam()+"="+(Integer.parseInt(pData)+1);
-								//newurl+="&"+cur.getParam()+"="+Integer.parseInt(pData)+1;
-							}
-							System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+newurl);
+							System.out.println(newurl);
 							break;
-						}	
+						}
 					}
-				}        				
-				System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+newurl);
-				
-				if(pData==null) {
-					System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN break pData");
+				}
+				System.out.println(newurl);
+
+				if (pData == null) {
+					System.out.println("break pData");
 					break;
 				}
 				out = restTemplate.exchange(URI.create(newurl), method, httpEntity, String.class);
-				if(out.getBody()==null) {
-					System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN break out.getBody");
+
+				if (out.getBody() == null) {
+					System.out.println("break out.getBody");
 					break;
 				}
-			}        	
+				mergedData.add(gson.fromJson(out.getBody().toString(), JsonElement.class));
+			}
+			System.out.println("While End");
+			System.out.println("\n--------------------------------------------------------------\n");
+	        	
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN\n--------------------------------------------------------------\n");
-			//System.out.println(out.getBody());
-			//System.out.println(out.getBody());
+			
 			String tableName=connectionId+"_"+endpoint.getLabel();
-			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN table "+tableName);
+			String outputData = mergedData.toString();
+			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN table "+tableName);	
 			if(truncate(tableName)) {				
 
 			    System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN SourceController-driver: "+scheduleObject.getDestObj().getDrivers());
 
-			    if(pushDB(out.getBody().toString(), tableName)) {
+			    if(pushDB(outputData, tableName)) {
 			    	Status respBody = new Status("22","successfully pushed");
 					setResult(respBody);
 					

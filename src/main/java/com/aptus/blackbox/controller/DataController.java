@@ -15,6 +15,9 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.XML;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -298,7 +301,6 @@ public class DataController {
 					respBody.addProperty("data", "published");
 					return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 				}
-
 				else {
 					SrcObject obj = credentials.getSrcObj();
 					if (obj.getRefresh().equals("YES")) {
@@ -364,7 +366,79 @@ public class DataController {
 		}
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
 	}
+	private ResponseEntity<String> validateSourceCred(String choice) {
+		ResponseEntity<String> ret = null;
+		HttpHeaders header = new HttpHeaders();
+		header.add("Cache-Control", "no-cache");
+		header.add("access-control-allow-origin", rootUrl);
+		header.add("access-control-allow-credentials", "true");
+		try {
+			SrcObject obj = credentials.getSrcObj();
+			if (obj.getRefresh().equals("YES")) {
+				ret = Utilities.token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
+						"DataController.Selectaction");
+				if (!ret.getStatusCode().is2xxSuccessful()) {
+					JsonObject respBody = new JsonObject();
+					respBody.addProperty("message", "Re-authorize");
+					respBody.addProperty("status", "51");
+					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header)
+							.body(respBody.toString());
 
+				} else {
+					// next piece of code is for saveValues
+					try {
+						credentials.getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
+					} catch (Exception e) {
+						for (String s : ret.getBody().toString().split("&")) {
+							System.out.println(s);
+							credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
+						}
+					}
+					applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(),
+							credentials.getDestObj(), credentials.getSrcToken(), credentials.getDestToken(),
+							credentials.getCurrSrcName(), credentials.getCurrDestName(),
+							credentials.getUserId()));
+					System.out.println("token : " + credentials.getSrcToken().keySet() + ":"
+							+ credentials.getSrcToken().values());
+					ret = validateData(obj.getValidateCredentials(), obj.getEndPoints(), choice);
+					return ret;
+				}
+			} else {
+				ret = Utilities.token(obj.getValidateCredentials(), credentials.getSrcToken(),
+						"DataController.selectAction");
+				if (!ret.getStatusCode().is2xxSuccessful()) {
+					credentials.setCurrSrcValid(false);
+					JsonObject respBody = new JsonObject();
+					respBody.addProperty("message", "Re-authorize");
+					respBody.addProperty("status", "51");
+					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header)
+							.body(respBody.toString());
+
+				} else {
+					credentials.setCurrSrcValid(true);
+					// ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
+					ResponseEntity<String> out=null;
+					if(choice.equalsIgnoreCase("export")||choice.equalsIgnoreCase("view"))
+					{
+						out = fetchEndpointsData(obj.getEndPoints(), choice);
+					}
+					else {
+						JsonObject respBody = new JsonObject();
+						respBody.addProperty("message", "Validated");
+						respBody.addProperty("status", "200");
+						return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+					}
+					System.out.println(out.getBody().substring(0, 20));
+					System.out.println("Headers Inside selectAction "+out.getHeaders());
+					return out;
+				}
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
+	}
 	private ResponseEntity<String> validateData(UrlObject valid, List<UrlObject> endPoints, String choice) {
 		ResponseEntity<String> ret = null;
 		HttpHeaders header = new HttpHeaders();
@@ -379,9 +453,17 @@ public class DataController {
 				respBody.addProperty("status", "52");
 				return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(respBody.toString());
 			} else {
-
-				ret = fetchEndpointsData(endPoints, choice);
-				return ret;
+				if(choice.equalsIgnoreCase("export")||choice.equalsIgnoreCase("view"))
+				{
+					ret = fetchEndpointsData(endPoints, choice);
+					return ret;
+				}
+				else {
+					JsonObject respBody = new JsonObject();
+					respBody.addProperty("message", "Validated");
+					respBody.addProperty("status", "200");
+					return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+				}
 			}
 
 		} catch (Exception e) {
@@ -601,16 +683,14 @@ public class DataController {
 					respBody.getAsJsonObject().addProperty("status", "13");
 				} else if (credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {
 					out = selectAction(choice, connId, httpsession);
-					return out;
-					//respBody = gson.fromJson(out.getBody(), JsonElement.class);
+					respBody = gson.fromJson(out.getBody(), JsonElement.class);
 				} else {
 					if (credentials.getConnectionIds(connId).getSourceName()
 							.equalsIgnoreCase(credentials.getCurrConnId().getSourceName())
 							&& credentials.getConnectionIds(connId).getDestName()
 									.equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
 						out = selectAction(choice, connId, httpsession);
-						return out;
-						//respBody = gson.fromJson(out.getBody(), JsonElement.class);
+						respBody = gson.fromJson(out.getBody(), JsonElement.class);
 					} else if (credentials.getConnectionIds(connId).getSourceName()
 							.equalsIgnoreCase(credentials.getCurrConnId().getSourceName())) {
 						credentials.setCurrDestValid(false);
@@ -633,6 +713,9 @@ public class DataController {
 				currConnId.setSourceName(credentials.getConnectionIds(connId).getSourceName());
 				currConnId.setEndPoints(credentials.getConnectionIds(connId).getEndPoints());
 				currConnId.setConnectionId(connId);
+				currConnId.setPeriod(credentials.getConnectionIds(connId).getPeriod());
+				currConnId.setScheduled(credentials.getConnectionIds(connId).getScheduled());
+				credentials.setConnectionIds(connId, currConnId);
 				if(!choice.equalsIgnoreCase("export")&&!choice.equalsIgnoreCase("export"))
 					headers=out.getHeaders();
 				System.out.println(out.getHeaders().values()+""+out.getHeaders().getContentLength()+"");
@@ -732,14 +815,42 @@ public class DataController {
 				System.out.println("LABEL1" + object.getLabel());
 				if (object.getLabel().trim().equalsIgnoreCase(endpoint.toLowerCase())) {
 					JsonElement data = paginate(choice,object);
-					check1 = data.toString().getBytes();
-					
+					String sheet="";
+					switch(choice) {
+						case "xml":{
+							headers.setContentType(MediaType.APPLICATION_XML);
+							JSONArray jobj = new JSONArray(data.toString());
+							System.out.println(jobj.toString());
+							sheet = XML.toString(jobj,"data");
+							break;
+						}
+						case "json":{
+							headers.setContentType(MediaType.APPLICATION_JSON);
+							sheet = data.toString();
+							break;
+						}
+						case "csv":{
+							headers.setContentType(MediaType.TEXT_PLAIN);
+							JFlat x = new JFlat(data.toString());
+							List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
+							sheet ="";
+							for(Object[] row:json2csv) {
+								for(Object element:row) {
+									sheet+=element.toString()+",";
+								}
+								sheet = sheet.substring(0, sheet.length()-1);
+								sheet+="\n";
+							}
+							break;
+						}
+					}					
+					check1 = sheet.getBytes();					
 					headers.add("Cache-Control", "no-cache");
 					headers.add("access-control-allow-origin", rootUrl);
 					headers.add("access-control-allow-credentials", "true");
-					headers.add("content-type","application/json");
 					headers.add("charset", "utf-8");
-					headers.add("content-disposition", "attachment; filename=" + "data.json");
+					headers.add("content-disposition", "attachment; filename=" +
+							credentials.getCurrSrcName()+"_"+object.getLabel() +"."+choice);
 					headers.add("Content-length",check1.length+"");
 					System.out.println(headers);
 					// return new ResponseEntity<byte[]>(output, responseHeaders, HttpStatus.OK)
@@ -799,7 +910,17 @@ public class DataController {
 				System.out.println("View Data");
 				respBody = new JsonObject();
 				respBody.addProperty("status", "21");
-				respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
+				JFlat x = new JFlat(out.getBody());
+				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
+				String sheet ="";
+				for(Object[] row:json2csv) {
+					for(Object element:row) {
+						sheet+=element.toString()+",";
+					}
+					sheet = sheet.substring(0, sheet.length()-1);
+					sheet+="\n";
+				}
+				respBody.addProperty("data", sheet);
 				System.out.println(respBody.toString().substring(0, 20));
 				return respBody;
 			} else {
@@ -884,34 +1005,7 @@ public class DataController {
 						respBody.addProperty("data", "Unsuccessful");
 					}
 					return respBody;
-				}
-				else
-				{
-						System.out.println("Download data............");
-//						switch(choice) {
-//						case "xml":{
-//							header.setContentType(MediaType.APPLICATION_XML);
-//							break;
-//						}
-//						case "json":{
-//							headers.add("content-type","application/json");
-//							break;
-//						}
-//						case "csv":{
-//							//hsuku_linkedin_mysql_1521633617532eader.setContentType(MediaType.);
-//							break;
-//						}
-//						default:{
-//							//return ResponseEntity.status(HttpStatus.OK).headers(header).body(endpStatus.toString());
-//						}
-//						}
-//						System.out.println("Downloading data............");
-//						header.setContentLength(outputData.length());
-//						header.add("charset", "utf-8");							
-//						header.add("content-disposition", "attachment; filename=" +
-//						credentials.getCurrSrcName()+"_"+endpoint.getLabel() +"."+choice);						
-						return mergedData;
-				}		
+				}	
 			}
 		} catch (RestClientException e) {
 			// TODO Auto-generated catch block

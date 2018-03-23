@@ -159,7 +159,7 @@ public class DataSourceController {
 			if (credentials.isUsrSrcExist() || credentials.isUsrDestExist()) {				
 				if(type.equalsIgnoreCase("source")) {
 					credentials.setCurrDestValid(false);
-					fetchSrcCred(type);
+					fetchSrcCred();
 					System.out.println(srcObj+" "+credentials);
 					out = Utilities.token(srcObj.getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
 					System.out.println("OUt:"+out);
@@ -218,14 +218,14 @@ public class DataSourceController {
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 
-	private void fetchSrcCred(String type) {
+	private void fetchSrcCred() {
 		ResponseEntity<String> out = null;
 		int res = 0;
 		String userid = credentials.getUserId(), appId;
 		try {
 			appId = credentials.getCurrSrcName();
 			RestTemplate restTemplate = new RestTemplate();
-			String url = mongoUrl+"/credentials/" + type + "Credentials/" + userid.toLowerCase()+"_"+appId.toLowerCase();
+			String url = mongoUrl+"/credentials/sourceCredentials/" + userid.toLowerCase()+"_"+appId.toLowerCase();
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
 			headers.add("access-control-allow-origin", rootUrl);
@@ -388,7 +388,7 @@ public class DataSourceController {
 //				String schedule = filteredEndpoints.get("scheduled");
 //				String period = filteredEndpoints.get("period");
 				String schedule = "true";
-				String period = "30";
+				String period = "60";
 				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
 						.getAsJsonObject().get("endpoints").getAsJsonArray();
 				ConnObj currobj = new ConnObj();
@@ -435,14 +435,16 @@ public class DataSourceController {
 				}
 				applicationEventPublisher.publishEvent(new PushCredentials(srcObj, destObj,credentials.getSrcToken() , credentials.getDestToken(),
 						credentials.getCurrSrcName(), credentials.getCurrDestName(), credentials.getUserId()));				
-				String url = baseUrl;
-				headers.setLocation(URI.create(url));
-				return new ResponseEntity<String>("", headers, HttpStatus.OK);
+				JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "DataSource created");
+				respBody.addProperty("status", "200");
+				return new ResponseEntity<String>(respBody.toString(), headers, HttpStatus.OK);
 			} else {
 				System.out.println("Session expired!");
-				String url = baseUrl;
-				headers.setLocation(URI.create(url));
-				return new ResponseEntity<String>("Sorry! Your session has expired", headers, HttpStatus.OK);
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

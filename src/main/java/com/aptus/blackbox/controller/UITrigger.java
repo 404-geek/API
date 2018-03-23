@@ -82,7 +82,7 @@ public class UITrigger {
 				JsonObject respBody = new JsonObject();
 				
 				if(obj.get("_returned").getAsInt() == 0 ? false : true)
-				{
+				{	
 					respBody.add("data",obj);
 					respBody.addProperty("status", "200");
 					respBody.addProperty("message", "Scheduled Data Exist");

@@ -75,8 +75,7 @@ public class ConnectionsTaskScheduler implements Runnable {
 		header.add("Cache-Control", "no-cache");
 		header.add("access-control-allow-origin", rootUrl);
         header.add("access-control-allow-credentials", "true");
-        try {
-        	
+        try {        	
         	applicationCredentials.getApplicationCred().get(userId).
     		getSchedulingObjects().get(connectionId).setMessage("Running");    		
     		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
