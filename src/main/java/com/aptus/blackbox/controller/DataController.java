@@ -15,6 +15,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.json.CDL;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.XML;
@@ -302,6 +303,8 @@ public class DataController {
 					return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 				}
 				else {
+					return validateSourceCred(choice);
+					/*
 					SrcObject obj = credentials.getSrcObj();
 					if (obj.getRefresh().equals("YES")) {
 						ret = Utilities.token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
@@ -352,6 +355,7 @@ public class DataController {
 							return out;
 						}
 					}
+					*/
 				}
 			} else {
 				System.out.println("Session expired!");
@@ -483,176 +487,30 @@ public class DataController {
 		try {
 			Gson gson = new Gson();
 			JsonObject endPoint = new JsonObject();
+			JsonObject data = new JsonObject();
+			boolean success=true;
 			for (UrlObject object : endpoints) {
 				System.out.println("LABEL1" + object.getLabel());
 				boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
 				System.out.println(value + " " + object.getLabel().toLowerCase());
 				if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
-					JsonElement data = paginate(choice,object);
-					endPoint.add(object.getLabel(),data);
+					JsonElement datum = paginate(choice,object);
+					if(choice.equalsIgnoreCase("view")) {
+						if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
+							success=false;
+						}
+					}
+					endPoint.add(object.getLabel(),datum);
 				}
 			}
-			return 	ResponseEntity.status(HttpStatus.OK).headers(header).body(endPoint.toString());	
-//			for (UrlObject object : endpoints) {
-//				System.out.println("LABEL1" + object.getLabel());
-//				boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
-//				System.out.println(value + " " + object.getLabel().toLowerCase());
-//
-//				if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
-//					System.out.println("LABEL2" + object.getLabel() + " " + credentials.getCurrConnId().getEndPoints());
-//					String url = Utilities.buildUrl(object, credentials.getSrcToken(), "DataController.fetchendpoint");
-//					System.out.println(object.getLabel() + " = " + url);
-//
-//					HttpHeaders headers = Utilities.buildHeader(object, credentials.getSrcToken(),
-//							"DataController.fetchendpoint");
-//					HttpEntity<?> httpEntity;
-//					if (!object.getResponseBody().isEmpty()) {
-//						MultiValueMap<String, String> preBody = Utilities.buildBody(object, credentials.getSrcToken(),
-//								"DataController.fetchendpoint");
-//						Object postBody = null;
-//						for (objects head : object.getHeader()) {
-//							if (head.getKey().equalsIgnoreCase("content-type")) {
-//								postBody = Utilities.bodyBuilder(head.getValue(), preBody,
-//										"DataController.fetchendpoint");
-//								break;
-//							}
-//						}
-//						httpEntity = new HttpEntity<Object>(postBody, headers);
-//					} else {
-//						httpEntity = new HttpEntity<Object>(headers);
-//					}
-//					HttpMethod method = (object.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
-//					System.out.println("Method : " + method);
-//					System.out.println(url);
-//					out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
-//
-//					if (choice.equalsIgnoreCase("view")) {
-//						System.out.println("View Data");
-//						JsonObject respBody = new JsonObject();
-//						respBody.addProperty("status", "21");
-//						respBody.add("data", gson.fromJson(out.getBody(), JsonElement.class));
-//						System.out.println(respBody.toString().substring(0, 20));
-//						return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
-//					} else {
-//						if (out.getBody() != null)
-//							mergedData.add(gson.fromJson(out.getBody().toString(), JsonElement.class));
-//						// call destination validation and push data
-//
-//						// null and empty case+ three more cases+bodu cursor(dropbox).......and a lot
-//						// more
-//
-//						System.out.println("\n--------------------------------------------------------------\n");
-//
-//						System.out.println("While start");
-//						while (true) {
-//
-//							String pData = null;
-//							String newurl = url;
-//							List<Cursor> page = object.getPagination();
-//							if (page != null) {
-//								for (Cursor cur : page) {
-//									JsonObject ele = gson.fromJson(out.getBody(), JsonElement.class).getAsJsonObject();
-//									String arr[] = cur.getKey().split("::");
-//									for (String jobj : arr) {
-//										if (ele.get(jobj) != null && ele.get(jobj).isJsonObject()) {
-//											System.out.println(jobj);
-//											ele = ele.get(jobj).getAsJsonObject();
-//										} else {
-//											System.out.println(ele.get(jobj));
-//											pData = ele.get(jobj) == null ? null : ele.get(jobj).getAsString();
-//											break;
-//										}
-//									}
-//									if (pData != null) {
-//										if (cur.getType().equalsIgnoreCase("url")) {
-//											newurl = pData;
-//										} else if (cur.getType().equalsIgnoreCase("append")) {
-//											newurl += newurl.contains("?") ? "&" + cur.getParam() + "=" + pData
-//													: "?" + cur.getParam() + "=" + pData;
-//											// newurl+="&"+cur.getParam()+"="+pData;
-//										} else {
-//											newurl += newurl.contains("?") ? "&" + cur.getParam() + "=" + pData
-//													: "?" + cur.getParam() + "=" + (Integer.parseInt(pData) + 1);
-//											// newurl+="&"+cur.getParam()+"="+Integer.parseInt(pData)+1;
-//										}
-//										System.out.println(newurl);
-//										break;
-//									}
-//								}
-//							}
-//							System.out.println(newurl);
-//
-//							if (pData == null) {
-//								System.out.println("break pData");
-//								break;
-//							}
-//							out = restTemplate.exchange(URI.create(newurl), method, httpEntity, String.class);
-//
-//							if (out.getBody() == null) {
-//								System.out.println("break out.getBody");
-//								break;
-//							}
-//							mergedData.add(gson.fromJson(out.getBody().toString(), JsonElement.class));
-//						}
-//						System.out.println("While End");
-//						System.out.println("\n--------------------------------------------------------------\n");
-//						// System.out.println(out.getBody());
-//
-//						String outputData = mergedData.toString();
-//
-//						if (choice.equalsIgnoreCase("export") && truncateAndPush()) {
-//							
-//							System.out.println("Export Data without schedule");
-//							String tableName = credentials.getCurrConnId().getConnectionId() + "_" + object.getLabel();
-//
-//							System.out.println("SourceController-driver: " + credentials.getDestObj().getDrivers());
-//
-//							if (pushDB(outputData, tableName)) {
-//								JsonObject respBody = new JsonObject();
-//								respBody.addProperty("status", "22");
-//								respBody.addProperty("data", "Successfullypushed");
-//								endpStatus.add(object.getLabel(), respBody);
-//							} else {
-//								JsonObject respBody = new JsonObject();
-//								respBody.addProperty("status", "23");
-//								respBody.addProperty("data", "Unsuccessful");
-//								endpStatus.add(object.getLabel(), respBody);
-//							}
-//						}
-//						else
-//						{
-//							System.out.println("Download data............");
-//							switch(choice) {
-//							case "xml":{
-//								header.setContentType(MediaType.APPLICATION_XML);
-//								break;
-//							}
-//							case "json":{
-//								headers.add("content-type","application/json");
-//								break;
-//							}
-//							case "csv":{
-//								//hsuku_linkedin_mysql_1521633617532eader.setContentType(MediaType.);
-//								break;
-//							}
-//							default:{
-//								//return ResponseEntity.status(HttpStatus.OK).headers(header).body(endpStatus.toString());
-//							}
-//							}
-//							System.out.println("Downloading data............");
-//							header.setContentLength(outputData.length());
-//							header.add("charset", "utf-8");							
-//							header.add("content-disposition", "attachment; filename=" +
-//							credentials.getCurrSrcName()+"_"+object.getLabel() +"."+choice);
-//							System.out.println(header);
-//							check = outputData.getBytes();
-//							return new ResponseEntity<String>(outputData, header, HttpStatus.OK);
-//						}
-//
-//					}
-//				}
-//
-//			}
+			data.add("data", endPoint);
+			data.addProperty("status", "21");
+			data.addProperty("message", "succesful");
+			if(success==true) {
+				data.addProperty("status", "23");
+				data.addProperty("message", "unsuccesful");
+			}
+			return 	ResponseEntity.status(HttpStatus.OK).headers(header).body(data.toString());	
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println(e + "token");
@@ -660,145 +518,6 @@ public class DataController {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
 	}
 
-	
-	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection")
-	private ResponseEntity<String> checkConnection(@RequestParam("choice") String choice,
-			@RequestParam("connId") String connId, HttpSession httpsession) {
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
-		headers.add("access-control-allow-credentials", "true");
-		ResponseEntity<String> out = null;
-		Gson gson = new Gson();
-		try {
-			JsonElement respBody = new JsonObject();
-			System.out.println(credentials);
-			if (Utilities.isSessionValid(httpsession, credentials)) {
-				applicationCredentials.getApplicationCred().get(credentials.getUserId())
-						.setLastAccessTime(httpsession.getLastAccessedTime());
-				if (credentials.getCurrConnId() == null) {
-					credentials.setCurrDestValid(false);
-					credentials.setCurrSrcValid(false);
-					respBody.getAsJsonObject().addProperty("data", "DifferentAll");
-					respBody.getAsJsonObject().addProperty("status", "13");
-				} else if (credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {
-					out = selectAction(choice, connId, httpsession);
-					respBody = gson.fromJson(out.getBody(), JsonElement.class);
-				} else {
-					if (credentials.getConnectionIds(connId).getSourceName()
-							.equalsIgnoreCase(credentials.getCurrConnId().getSourceName())
-							&& credentials.getConnectionIds(connId).getDestName()
-									.equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
-						out = selectAction(choice, connId, httpsession);
-						respBody = gson.fromJson(out.getBody(), JsonElement.class);
-					} else if (credentials.getConnectionIds(connId).getSourceName()
-							.equalsIgnoreCase(credentials.getCurrConnId().getSourceName())) {
-						credentials.setCurrDestValid(false);
-						respBody.getAsJsonObject().addProperty("data", "DifferentDestination");
-						respBody.getAsJsonObject().addProperty("status", "12");
-					} else if (credentials.getConnectionIds(connId).getDestName()
-							.equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
-						credentials.setCurrSrcValid(false);
-						respBody.getAsJsonObject().addProperty("data", "DifferentSource");
-						respBody.getAsJsonObject().addProperty("status", "11");
-					} else {
-						credentials.setCurrDestValid(false);
-						credentials.setCurrSrcValid(false);
-						respBody.getAsJsonObject().addProperty("data", "DifferentAll");
-						respBody.getAsJsonObject().addProperty("status", "13");
-					}
-				}
-				ConnObj currConnId = new ConnObj();
-				currConnId.setDestName(credentials.getConnectionIds(connId).getDestName());
-				currConnId.setSourceName(credentials.getConnectionIds(connId).getSourceName());
-				currConnId.setEndPoints(credentials.getConnectionIds(connId).getEndPoints());
-				currConnId.setConnectionId(connId);
-				currConnId.setPeriod(credentials.getConnectionIds(connId).getPeriod());
-				currConnId.setScheduled(credentials.getConnectionIds(connId).getScheduled());
-				credentials.setConnectionIds(connId, currConnId);
-				if(!choice.equalsIgnoreCase("export")&&!choice.equalsIgnoreCase("export"))
-					headers=out.getHeaders();
-				System.out.println(out.getHeaders().values()+""+out.getHeaders().getContentLength()+"");
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			} else {
-				System.out.println("Session expired!");
-				respBody = new JsonObject();
-				respBody.getAsJsonObject().addProperty("message", "Sorry! Your session has expired");
-				respBody.getAsJsonObject().addProperty("status", "33");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-	}
-
-	private boolean truncateAndPush() {
-		try {
-			if (con == null || con.isClosed())
-				connection(destToken, destObj);
-			PreparedStatement stmt;
-			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_schema ="
-					+ destObj.getValue_quote_open() + credentials.getCurrConnId().getConnectionId()
-					+ destObj.getValue_quote_close() + ";");
-			ResultSet res = stmt.executeQuery();
-			res.first();
-			if (res.getInt("COUNT") != 0) {
-				stmt = con.prepareStatement("TRUNCATE TABLE " + credentials.getCurrConnId().getConnectionId() + ";");
-				stmt.execute();
-			}
-			return true;
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-		return false;
-	}
-
-	@RequestMapping("/fetchdbs")
-	private ResponseEntity<String> fetchDBs(@RequestParam("destId") String destId, HttpSession session) {
-		ResponseEntity<String> out = null;
-		HttpHeaders headers = new HttpHeaders();
-		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
-		headers.add("access-control-allow-credentials", "true");
-		try {
-			if (Utilities.isSessionValid(session, credentials)) {
-				applicationCredentials.getApplicationCred().get(credentials.getUserId())
-						.setLastAccessTime(session.getLastAccessedTime());
-				String name = destId;
-				String filter = "{\"_id\":{\"$regex\":\".*" + credentials.getUserId().toLowerCase() + "_"
-						+ name.toLowerCase() + ".*\"}}";
-				String url = mongoUrl + "/credentials/destinationCredentials?filter=" + filter;
-				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-
-				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-				RestTemplate restTemplate = new RestTemplate();
-				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-				JsonObject respBody = new JsonObject();
-				JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
-				respBody.addProperty("status", "200");
-				respBody.add("data", obj.get("_embedded").getAsJsonArray());
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			} else {
-				System.out.println("Session expired!");
-				JsonObject respBody = new JsonObject();
-				respBody.addProperty("message", "Sorry! Your session has expired");
-				respBody.addProperty("status", "33");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-			}
-		} catch (HttpClientErrorException e) {
-			JsonObject respBody = new JsonObject();
-			respBody.addProperty("data", "Error");
-			respBody.addProperty("status", "404");
-			System.out.println(e.getMessage());
-			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-	}
 	
 	@RequestMapping("/downloadData")
 	public ResponseEntity<byte[]> downloadData(@RequestParam("choice") String choice,
@@ -810,53 +529,60 @@ public class DataController {
 		byte[] check1;
 		try {
 			if (Utilities.isSessionValid(session, credentials)) {
-			List<UrlObject> endpoints = credentials.getSrcObj().getEndPoints();
-			for (UrlObject object : endpoints) {
-				System.out.println("LABEL1" + object.getLabel());
-				if (object.getLabel().trim().equalsIgnoreCase(endpoint.toLowerCase())) {
-					JsonElement data = paginate(choice,object);
-					String sheet="";
-					switch(choice) {
-						case "xml":{
-							headers.setContentType(MediaType.APPLICATION_XML);
-							JSONArray jobj = new JSONArray(data.toString());
-							System.out.println(jobj.toString());
-							sheet = XML.toString(jobj,"data");
-							break;
-						}
-						case "json":{
-							headers.setContentType(MediaType.APPLICATION_JSON);
-							sheet = data.toString();
-							break;
-						}
-						case "csv":{
-							headers.setContentType(MediaType.TEXT_PLAIN);
-							JFlat x = new JFlat(data.toString());
-							List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
-							sheet ="";
-							for(Object[] row:json2csv) {
-								for(Object element:row) {
-									sheet+=element.toString()+",";
+				ResponseEntity<String> out = validateSourceCred(choice);
+				System.out.println(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").getAsString());
+				if(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").toString().equalsIgnoreCase("\"200\"")) {
+					List<UrlObject> endpoints = credentials.getSrcObj().getEndPoints();
+					for (UrlObject object : endpoints) {
+						System.out.println("LABEL1" + object.getLabel());
+						if (object.getLabel().trim().equalsIgnoreCase(endpoint.toLowerCase())) {
+							JsonElement data = paginate(choice,object);
+							String sheet="";
+							switch(choice) {
+								case "xml":{
+									headers.setContentType(MediaType.APPLICATION_XML);
+									JSONArray jobj = new JSONArray(data.toString());
+									System.out.println(jobj.toString());
+									sheet = XML.toString(jobj,"data");
+									break;
 								}
-								sheet = sheet.substring(0, sheet.length()-1);
-								sheet+="\n";
-							}
-							break;
+								case "json":{
+									headers.setContentType(MediaType.APPLICATION_JSON);
+									sheet = data.toString();
+									break;
+								}
+								case "csv":{
+									headers.setContentType(MediaType.TEXT_PLAIN);
+									JFlat x = new JFlat(data.toString());
+									List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
+									sheet ="";
+									for(Object[] row:json2csv) {
+										for(Object element:row) {
+											sheet+=element.toString()+",";
+										}
+										sheet = sheet.substring(0, sheet.length()-1);
+										sheet+="\r\n";
+									}
+									break;
+								}
+							}					
+							check1 = sheet.getBytes();					
+							headers.add("Cache-Control", "no-cache");
+							headers.add("access-control-allow-origin", rootUrl);
+							headers.add("access-control-allow-credentials", "true");
+							headers.add("charset", "utf-8");
+							headers.add("content-disposition", "attachment; filename=" +
+									credentials.getCurrSrcName()+"_"+object.getLabel() +"."+choice);
+							headers.add("Content-length",check1.length+"");
+							System.out.println(headers);
+							// return new ResponseEntity<byte[]>(output, responseHeaders, HttpStatus.OK)
+							return new ResponseEntity<byte[]>(check1, headers, HttpStatus.OK);
 						}
-					}					
-					check1 = sheet.getBytes();					
-					headers.add("Cache-Control", "no-cache");
-					headers.add("access-control-allow-origin", rootUrl);
-					headers.add("access-control-allow-credentials", "true");
-					headers.add("charset", "utf-8");
-					headers.add("content-disposition", "attachment; filename=" +
-							credentials.getCurrSrcName()+"_"+object.getLabel() +"."+choice);
-					headers.add("Content-length",check1.length+"");
-					System.out.println(headers);
-					// return new ResponseEntity<byte[]>(output, responseHeaders, HttpStatus.OK)
-					return new ResponseEntity<byte[]>(check1, headers, HttpStatus.OK);
+				}			
 				}
-			}
+				else {
+					return ResponseEntity.status(HttpStatus.OK).headers(out.getHeaders()).body(out.getBody().getBytes());
+				}
 			}
 			else {
 				System.out.println("Session expired!");
@@ -879,7 +605,7 @@ public class DataController {
 			Gson gson = new Gson();
 			JsonArray mergedData = new JsonArray();
 			JsonObject respBody = new JsonObject();
-			System.out.println("LABEL2" + endpoint.getLabel() + " " + credentials.getCurrConnId().getEndPoints());
+			//System.out.println("LABEL2" + endpoint.getLabel() + " " + credentials.getCurrConnId().getEndPoints());
 			String url = Utilities.buildUrl(endpoint, credentials.getSrcToken(), "DataController.fetchendpoint");
 			System.out.println(endpoint.getLabel() + " = " + url);
 
@@ -915,10 +641,12 @@ public class DataController {
 				String sheet ="";
 				for(Object[] row:json2csv) {
 					for(Object element:row) {
-						sheet+=element.toString()+",";
+						sheet+=String.valueOf(element)+",";
 					}
 					sheet = sheet.substring(0, sheet.length()-1);
-					sheet+="\n";
+					sheet+="\r\n";
+					if(json2csv.indexOf(row)>20)
+						break;
 				}
 				respBody.addProperty("data", sheet);
 				System.out.println(respBody.toString().substring(0, 20));
@@ -1005,7 +733,10 @@ public class DataController {
 						respBody.addProperty("data", "Unsuccessful");
 					}
 					return respBody;
-				}	
+				}
+				else {
+					return mergedData;
+				}
 			}
 		} catch (RestClientException e) {
 			// TODO Auto-generated catch block
@@ -1027,5 +758,145 @@ public class DataController {
 		respBody.addProperty("status", "61");
 		respBody.addProperty("data", "Error occured");
 		return respBody;
+	}
+	
+	private boolean truncateAndPush() {
+		try {
+			if (con == null || con.isClosed())
+				connection(destToken, destObj);
+			PreparedStatement stmt;
+			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_schema ="
+					+ destObj.getValue_quote_open() + credentials.getCurrConnId().getConnectionId()
+					+ destObj.getValue_quote_close() + ";");
+			ResultSet res = stmt.executeQuery();
+			res.first();
+			if (res.getInt("COUNT") != 0) {
+				stmt = con.prepareStatement("TRUNCATE TABLE " + credentials.getCurrConnId().getConnectionId() + ";");
+				stmt.execute();
+			}
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+	
+	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection")
+	private ResponseEntity<String> checkConnection(@RequestParam("choice") String choice,
+			@RequestParam("connId") String connId, HttpSession httpsession) {
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-credentials", "true");
+		ResponseEntity<String> out = null;
+		Gson gson = new Gson();
+		try {
+			JsonElement respBody = new JsonObject();
+			System.out.println(credentials);
+			if (Utilities.isSessionValid(httpsession, credentials)) {
+				applicationCredentials.getApplicationCred().get(credentials.getUserId())
+						.setLastAccessTime(httpsession.getLastAccessedTime());
+				if (credentials.getCurrConnId() == null) {
+					credentials.setCurrDestValid(false);
+					credentials.setCurrSrcValid(false);
+					respBody.getAsJsonObject().addProperty("data", "DifferentAll");
+					respBody.getAsJsonObject().addProperty("status", "13");
+				} else if (credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {
+					out = selectAction(choice, connId, httpsession);
+					respBody = gson.fromJson(out.getBody(), JsonElement.class);
+				} else {
+					if (credentials.getConnectionIds(connId).getSourceName()
+							.equalsIgnoreCase(credentials.getCurrConnId().getSourceName())
+							&& credentials.getConnectionIds(connId).getDestName()
+									.equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
+						out = selectAction(choice, connId, httpsession);
+						respBody = gson.fromJson(out.getBody(), JsonElement.class);
+					} else if (credentials.getConnectionIds(connId).getSourceName()
+							.equalsIgnoreCase(credentials.getCurrConnId().getSourceName())) {
+						credentials.setCurrDestValid(false);
+						respBody.getAsJsonObject().addProperty("data", "DifferentDestination");
+						respBody.getAsJsonObject().addProperty("status", "12");
+					} else if (credentials.getConnectionIds(connId).getDestName()
+							.equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
+						credentials.setCurrSrcValid(false);
+						respBody.getAsJsonObject().addProperty("data", "DifferentSource");
+						respBody.getAsJsonObject().addProperty("status", "11");
+					} else {
+						credentials.setCurrDestValid(false);
+						credentials.setCurrSrcValid(false);
+						respBody.getAsJsonObject().addProperty("data", "DifferentAll");
+						respBody.getAsJsonObject().addProperty("status", "13");
+					}
+				}
+				ConnObj currConnId = new ConnObj();
+				currConnId.setDestName(credentials.getConnectionIds(connId).getDestName());
+				currConnId.setSourceName(credentials.getConnectionIds(connId).getSourceName());
+				currConnId.setEndPoints(credentials.getConnectionIds(connId).getEndPoints());
+				currConnId.setConnectionId(connId);
+				currConnId.setPeriod(credentials.getConnectionIds(connId).getPeriod());
+				currConnId.setScheduled(credentials.getConnectionIds(connId).getScheduled());
+				credentials.setConnectionIds(connId, currConnId);
+				if(!choice.equalsIgnoreCase("export")&&!choice.equalsIgnoreCase("export"))
+					headers=out.getHeaders();
+				System.out.println(out.getBody());
+				System.out.println(out.getHeaders().values()+""+out.getHeaders().getContentLength()+"");
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			} else {
+				System.out.println("Session expired!");
+				respBody = new JsonObject();
+				respBody.getAsJsonObject().addProperty("message", "Sorry! Your session has expired");
+				respBody.getAsJsonObject().addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+	}	
+
+	@RequestMapping("/fetchdbs")
+	private ResponseEntity<String> fetchDBs(@RequestParam("destId") String destId, HttpSession session) {
+		ResponseEntity<String> out = null;
+		HttpHeaders headers = new HttpHeaders();
+		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-credentials", "true");
+		try {
+			if (Utilities.isSessionValid(session, credentials)) {
+				applicationCredentials.getApplicationCred().get(credentials.getUserId())
+						.setLastAccessTime(session.getLastAccessedTime());
+				String name = destId;
+				String filter = "{\"_id\":{\"$regex\":\".*" + credentials.getUserId().toLowerCase() + "_"
+						+ name.toLowerCase() + ".*\"}}";
+				String url = mongoUrl + "/credentials/destinationCredentials?filter=" + filter;
+				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+
+				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
+				RestTemplate restTemplate = new RestTemplate();
+				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
+				JsonObject respBody = new JsonObject();
+				JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
+				respBody.addProperty("status", "200");
+				respBody.add("data", obj.get("_embedded").getAsJsonArray());
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			} else {
+				System.out.println("Session expired!");
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			}
+		} catch (HttpClientErrorException e) {
+			JsonObject respBody = new JsonObject();
+			respBody.addProperty("data", "Error");
+			respBody.addProperty("status", "404");
+			System.out.println(e.getMessage());
+			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 }
