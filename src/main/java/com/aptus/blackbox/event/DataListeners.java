@@ -12,6 +12,7 @@ import java.util.concurrent.ScheduledFuture;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.ldap.embedded.EmbeddedLdapProperties.Credential;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -41,6 +42,12 @@ import com.google.gson.JsonSyntaxException;
 public class DataListeners {
 	@Value("${spring.mongodb.ipAndPort}")
 	private String mongoUrl;
+	@Value("${homepage.url}")
+	private String homeUrl;
+	@Value("${base.url}")
+	private String baseUrl;
+	@Value("${access.control.allow.origin}")
+	private String rootUrl;
 	
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
@@ -208,6 +215,60 @@ public class DataListeners {
 		}
 		catch(Exception e) {
 			
+		}
+	}
+	@EventListener
+	private void pushMeteringInfo(Metering metering) {
+		HttpHeaders headers = new HttpHeaders();
+		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", rootUrl);
+        headers.add("access-control-allow-credentials", "true");
+        headers.add("Content-Type", "application/json");
+		ResponseEntity<String> out = null;
+		RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+		//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
+		String filter = "{\"_id\":\"" + metering.getUserId() + "\"}";
+		String url;
+		url = mongoUrl+"/credentials/metering?filter=" + filter;
+		URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();		
+		HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
+		out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
+		System.out.println(out.getBody());
+		JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+		JsonObject time = new JsonObject();
+		time.addProperty("Total Rows", metering.getTotalRowsFetched());
+		time.addProperty("Type", metering.getType());		
+		JsonArray endPoints = new JsonArray();
+		System.out.println(out.getBody());
+		for(Entry<String, Integer> temp:metering.getRowsFetched().entrySet()) {
+			JsonObject endPoint = new JsonObject();
+			endPoint.addProperty("name", temp.getKey());
+			endPoint.addProperty("rows", temp.getValue());
+			endPoints.add(endPoint);
+		}
+		time.add("Endpoints", endPoints);
+		System.out.println(out.getBody());
+		if(jobj.get("_returned").getAsInt() == 0 ? false : true) {
+			System.out.println("if"+out.getBody());
+			url = mongoUrl+"/credentials/metering/"+metering.getUserId();
+			JsonObject upper=new JsonObject();
+			uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();	
+			upper.add(metering.getConnId()+"."+metering.getTime(), time);
+			httpEntity = new HttpEntity<Object>(upper.toString(),headers);
+			out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
+		}
+		else {
+			System.out.println("else"+out.getBody());
+			JsonObject upper = new JsonObject();
+			JsonObject connId = new JsonObject();
+			connId.add(metering.getTime(), time);
+			upper.add(metering.getConnId(), connId);
+			httpEntity = new HttpEntity<Object>(upper.toString(),headers);
+			url = mongoUrl+"/credentials/metering";
+			uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();	
+			out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity,String.class);
 		}
 	}
 }

@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.Service.Credentials;
+import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.index.ConnObj;
@@ -60,6 +62,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+
 
 @RestController
 public class DataController {
@@ -489,20 +492,37 @@ public class DataController {
 			JsonObject endPoint = new JsonObject();
 			JsonObject data = new JsonObject();
 			boolean success=true;
+			int totalRows=0;
+			Metering metring = new Metering();
+			metring.setConnId(credentials.getCurrConnId().getConnectionId());
+			metring.setTime(new Date()+"");
+			metring.setType(choice);
+			metring.setUserId(credentials.getUserId());
 			for (UrlObject object : endpoints) {
 				System.out.println("LABEL1" + object.getLabel());
 				boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
 				System.out.println(value + " " + object.getLabel().toLowerCase());
 				if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
-					JsonElement datum = paginate(choice,object);
+					
+					Map<JsonElement,Integer> data1 = paginate(choice,object);
+					Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
+					JsonElement datum=entry.getKey();
+					Integer rows=entry.getValue();
+					
 					if(choice.equalsIgnoreCase("view")) {
 						if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
 							success=false;
 						}
 					}
+					else {
+						totalRows+=rows;
+						metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+					}
 					endPoint.add(object.getLabel(),datum);
 				}
 			}
+			metring.setTotalRowsFetched(totalRows);
+			applicationEventPublisher.publishEvent(metring);
 			data.add("data", endPoint);
 			data.addProperty("status", "21");
 			data.addProperty("message", "succesful");
@@ -533,10 +553,25 @@ public class DataController {
 				System.out.println(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").getAsString());
 				if(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").toString().equalsIgnoreCase("\"200\"")) {
 					List<UrlObject> endpoints = credentials.getSrcObj().getEndPoints();
+					int totalRows=0;
+					Metering metring = new Metering();
+					metring.setConnId(credentials.getCurrConnId().getConnectionId());
+					metring.setTime(new Date()+"");
+					metring.setType(choice);
+					metring.setUserId(credentials.getUserId());
 					for (UrlObject object : endpoints) {
 						System.out.println("LABEL1" + object.getLabel());
 						if (object.getLabel().trim().equalsIgnoreCase(endpoint.toLowerCase())) {
-							JsonElement data = paginate(choice,object);
+							Map<JsonElement,Integer> data1 = paginate(choice,object);
+							
+							Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
+							JsonElement data=entry.getKey();
+							Integer rows=entry.getValue();
+							totalRows=rows;
+							metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+							metring.setTotalRowsFetched(totalRows);
+							applicationEventPublisher.publishEvent(metring);
+							
 							String sheet="";
 							switch(choice) {
 								case "xml":{
@@ -597,8 +632,10 @@ public class DataController {
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
-	private JsonElement paginate(String choice,UrlObject endpoint) {
+	private Map<JsonElement,Integer> paginate(String choice,UrlObject endpoint) {
+		Map<JsonElement,Integer> response=new HashMap<>();
 		try {
+			
 			HttpHeaders header = new HttpHeaders();
 			ResponseEntity<String> out = null;
 			RestTemplate restTemplate = new RestTemplate();
@@ -608,7 +645,7 @@ public class DataController {
 			//System.out.println("LABEL2" + endpoint.getLabel() + " " + credentials.getCurrConnId().getEndPoints());
 			String url = Utilities.buildUrl(endpoint, credentials.getSrcToken(), "DataController.fetchendpoint");
 			System.out.println(endpoint.getLabel() + " = " + url);
-
+			
 			HttpHeaders headers = Utilities.buildHeader(endpoint, credentials.getSrcToken(),
 					"DataController.fetchendpoint");
 			HttpEntity<?> httpEntity;
@@ -632,6 +669,8 @@ public class DataController {
 			System.out.println(url);
 			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 
+			Integer rows=0;
+			
 			if (choice.equalsIgnoreCase("view")) {
 				System.out.println("View Data");
 				respBody = new JsonObject();
@@ -650,7 +689,8 @@ public class DataController {
 				}
 				respBody.addProperty("data", sheet);
 				System.out.println(respBody.toString().substring(0, 20));
-				return respBody;
+				response.put(respBody, rows);
+				return response;
 			} else {
 				if (out.getBody() != null)
 					mergedData.add(gson.fromJson(out.getBody().toString(), JsonElement.class));
@@ -661,6 +701,7 @@ public class DataController {
 				System.out.println("\n--------------------------------------------------------------\n");
 
 				System.out.println("While start");
+				
 				while (true) {
 
 					String pData = null;
@@ -704,11 +745,12 @@ public class DataController {
 						break;
 					}
 					out = restTemplate.exchange(URI.create(newurl), method, httpEntity, String.class);
-
+					
 					if (out.getBody() == null) {
 						System.out.println("break out.getBody");
 						break;
 					}
+					
 					mergedData.add(gson.fromJson(out.getBody().toString(), JsonElement.class));
 				}
 				System.out.println("While End");
@@ -716,7 +758,9 @@ public class DataController {
 				// System.out.println(out.getBody());
 
 				String outputData = mergedData.toString();
-
+				JFlat x = new JFlat(outputData);
+				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
+				rows=json2csv.size()-1;
 				if (choice.equalsIgnoreCase("export") && truncateAndPush()) {
 					
 					System.out.println("Export Data without schedule");
@@ -732,10 +776,12 @@ public class DataController {
 						respBody.addProperty("status", "23");
 						respBody.addProperty("data", "Unsuccessful");
 					}
-					return respBody;
+					response.put(respBody, rows);
+					return response;
 				}
 				else {
-					return mergedData;
+					response.put(mergedData, rows);
+					return response;
 				}
 			}
 		} catch (RestClientException e) {
@@ -757,7 +803,8 @@ public class DataController {
 		JsonObject respBody = new JsonObject();
 		respBody.addProperty("status", "61");
 		respBody.addProperty("data", "Error occured");
-		return respBody;
+		response.put(respBody, 0);
+		return response;
 	}
 	
 	private boolean truncateAndPush() {
