@@ -30,6 +30,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -380,7 +381,7 @@ public class DataController {
 			SrcObject obj = credentials.getSrcObj();
 			if (obj.getRefresh().equals("YES")) {
 				ret = Utilities.token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
-						"DataController.Selectaction");
+						"DataController.validateSourceCred");
 				if (!ret.getStatusCode().is2xxSuccessful()) {
 					JsonObject respBody = new JsonObject();
 					respBody.addProperty("message", "Re-authorize");
@@ -409,7 +410,7 @@ public class DataController {
 				}
 			} else {
 				ret = Utilities.token(obj.getValidateCredentials(), credentials.getSrcToken(),
-						"DataController.selectAction");
+						"DataController.validateSourceCred");
 				if (!ret.getStatusCode().is2xxSuccessful()) {
 					credentials.setCurrSrcValid(false);
 					JsonObject respBody = new JsonObject();
@@ -433,7 +434,7 @@ public class DataController {
 						return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 					}
 					System.out.println(out.getBody().substring(0, 20));
-					System.out.println("Headers Inside selectAction "+out.getHeaders());
+					System.out.println("Headers Inside validateSourceCred "+out.getHeaders());
 					return out;
 				}
 			}
@@ -558,7 +559,7 @@ public class DataController {
 									sheet ="";
 									for(Object[] row:json2csv) {
 										for(Object element:row) {
-											sheet+=element.toString()+",";
+											sheet+=String.valueOf(element)+",";
 										}
 										sheet = sheet.substring(0, sheet.length()-1);
 										sheet+="\r\n";

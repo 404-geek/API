@@ -388,7 +388,7 @@ public class DataSourceController {
 //				String schedule = filteredEndpoints.get("scheduled");
 //				String period = filteredEndpoints.get("period");
 				String schedule = "true";
-				String period = "60";
+				String period = "120";
 				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
 						.getAsJsonObject().get("endpoints").getAsJsonArray();
 				ConnObj currobj = new ConnObj();

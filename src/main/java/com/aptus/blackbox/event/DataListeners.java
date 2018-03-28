@@ -99,42 +99,46 @@ public class DataListeners {
 		}
 	}
 	@EventListener
-	public void updateCredentials(PushCredentials pushCredentials) {
-		try {			
-			// sourceCredentials
-			JsonArray sourceBody = new JsonArray();
-			for (Map.Entry<String, String> mp : pushCredentials.getSrcToken().entrySet()) {
-				JsonObject tmp = new JsonObject();
-				tmp.addProperty("key", String.valueOf(mp.getKey()));
-				tmp.addProperty("value", String.valueOf(mp.getValue()));
-				sourceBody.add(tmp);
-			}
+	public void updateCredentials(PushCredentials pushCredentials) {			
 			JsonObject jsonObj = new JsonObject();
-			jsonObj.addProperty("_id",
-					pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getSrcName().toLowerCase());
-			jsonObj.add("credentials", sourceBody);
-			Utilities.postpatchMetaData(jsonObj, "source", "POST",pushCredentials.getUserId(),mongoUrl);
-			// destCredentials
-			JsonArray destBody =  new JsonArray();
-			for (Map.Entry<String, String> mp : pushCredentials.getDestToken().entrySet()) {
-				JsonObject tmp = new JsonObject();
-				tmp.addProperty("key", String.valueOf(mp.getKey()));
-				tmp.addProperty("value", String.valueOf(mp.getValue()));
-				destBody.add(tmp);
+			try {
+				// sourceCredentials
+				if(!(pushCredentials.getSrcName()!=null)&&(pushCredentials.getSrcToken()!=null)&&(pushCredentials.getSrcObj()!=null))
+				{
+					JsonArray sourceBody = new JsonArray();
+					for (Map.Entry<String, String> mp : pushCredentials.getSrcToken().entrySet()) {
+						JsonObject tmp = new JsonObject();
+						tmp.addProperty("key", String.valueOf(mp.getKey()));
+						tmp.addProperty("value", String.valueOf(mp.getValue()));
+						sourceBody.add(tmp);
+					}				
+					jsonObj.addProperty("_id",
+							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getSrcName().toLowerCase());
+					jsonObj.add("credentials", sourceBody);
+					Utilities.postpatchMetaData(jsonObj, "source", "POST",pushCredentials.getUserId(),mongoUrl);
+					System.out.println(sourceBody);
+				}
+				// destCredentials
+				if((pushCredentials.getDestName()!=null)&&(pushCredentials.getDestToken()!=null)&&(pushCredentials.getDestObj()!=null)) {
+					JsonArray destBody =  new JsonArray();
+					for (Map.Entry<String, String> mp : pushCredentials.getDestToken().entrySet()) {
+						JsonObject tmp = new JsonObject();
+						tmp.addProperty("key", String.valueOf(mp.getKey()));
+						tmp.addProperty("value", String.valueOf(mp.getValue()));
+						destBody.add(tmp);
+					}
+					jsonObj = new JsonObject();				
+					jsonObj.addProperty("_id",
+							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase() + "_"
+									+ pushCredentials.getDestToken().get("database_name"));
+					jsonObj.add("credentials", destBody);
+					Utilities.postpatchMetaData(jsonObj, "destination", "POST",pushCredentials.getUserId(),mongoUrl);
+					System.out.println(destBody);
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
-			jsonObj = new JsonObject();				
-			jsonObj.addProperty("_id",
-					pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase() + "_"
-							+ pushCredentials.getDestToken().get("database_name"));
-			jsonObj.add("credentials", destBody);
-			Utilities.postpatchMetaData(jsonObj, "destination", "POST",pushCredentials.getUserId(),mongoUrl);
-			
-			System.out.println(sourceBody);
-			System.out.println(destBody);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 	public void pushStatus(String connectionId,String userId,String s)
 	{
