@@ -82,6 +82,9 @@ public class EndpointsTaskExecutor implements Runnable{
 	public void setResult(Status result) {
 		this.result = result;
 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setEndPointStatus(endpoint.getLabel(),result);
+		scheduleObject = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
+		for(String e:scheduleObject.getstatus())
+			System.out.println(e);
 		if(!scheduleObject.getstatus().contains("31")) {
 			if(!scheduleObject.getstatus().contains("32")) {
 				long time = ZonedDateTime.now().toInstant().toEpochMilli();
@@ -142,14 +145,6 @@ public class EndpointsTaskExecutor implements Runnable{
 			} else {
 				httpEntity = new HttpEntity<Object>(headers);
 			}
-//			if (endpoint.getResponseString()!=null&&!endpoint.getResponseString().isEmpty()) {
-//				httpEntity = new HttpEntity<Object>(endpoint.getResponseString(), headers);
-//			} else if (!endpoint.getResponseBody().isEmpty()) {
-//				MultiValueMap<String, String> body = Utilities.buildBody(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
-//				httpEntity = new HttpEntity<Object>(body, headers);
-//			} else {
-//				httpEntity = new HttpEntity<Object>(headers);
-//			}
 			HttpMethod method = (endpoint.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+"Method : "+method);
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+url);
@@ -236,14 +231,12 @@ public class EndpointsTaskExecutor implements Runnable{
 			    	Status respBody = new Status("22","successfully pushed");
 					setResult(respBody);
 					
-					//out = ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 					return;
 			    }        	            
 			}
 			else {
 				Status respBody = new Status("23","unsuccessful");
 				setResult(respBody);
-					//out =  ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 					return;
 			}
 		}
@@ -273,7 +266,7 @@ public class EndpointsTaskExecutor implements Runnable{
 			e.printStackTrace();
 		}
 		
-		Status respBody = new Status("55","error");
+		Status respBody = new Status("32","error");
 		setResult(respBody);
 		
 		//out = ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(header).body(null);
@@ -309,7 +302,7 @@ public class EndpointsTaskExecutor implements Runnable{
 								 scheduleObject.getDestObj().getIdentifier_quote_open()+ tableName +scheduleObject.getDestObj().getIdentifier_quote_close()+
 								 "(";
 						 for(Object t : row)
-						 statement+=t.toString()+" TEXT,";
+								statement += t.toString().replace("_", "") + " TEXT,";
 						
 						 statement=statement.substring(0,statement.length()-1)+");";
 						 System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR PUSHDB-----"+statement);

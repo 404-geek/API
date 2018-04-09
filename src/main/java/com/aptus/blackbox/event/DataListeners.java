@@ -110,7 +110,7 @@ public class DataListeners {
 			JsonObject jsonObj = new JsonObject();
 			try {
 				// sourceCredentials
-				if(!(pushCredentials.getSrcName()!=null)&&(pushCredentials.getSrcToken()!=null)&&(pushCredentials.getSrcObj()!=null))
+				if((pushCredentials.getSrcName()!=null)&&(pushCredentials.getSrcToken()!=null)&&(pushCredentials.getSrcObj()!=null))
 				{
 					JsonArray sourceBody = new JsonArray();
 					for (Map.Entry<String, String> mp : pushCredentials.getSrcToken().entrySet()) {

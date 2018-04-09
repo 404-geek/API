@@ -1,6 +1,7 @@
 package com.aptus.blackbox.controller;
 
 import java.net.URI;
+import java.net.URLDecoder;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -138,12 +139,14 @@ public class SourceController {
 
 	@RequestMapping(value = "/oauth2/s2")
 	@ResponseStatus(value = HttpStatus.OK)
-	private ResponseEntity<String> handlefooo(@RequestParam Map<String, String> parameters) {
+	private ResponseEntity<String> handlefooo(@RequestParam HashMap<String, String> parameters) {
 		credentials.getSrcToken().putAll(parameters);
 		System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
 		System.out.println("parameters : " + parameters.keySet() + ":" + parameters.values());
 		ResponseEntity<String> out = null;
 		try {
+			String code = URLDecoder.decode(parameters.get("code"), "UTF-8");
+			parameters.put("code", code);
 			String url = Utilities.buildUrl(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
 			System.out.println(accessToken.getLabel() + " = " + url);
 

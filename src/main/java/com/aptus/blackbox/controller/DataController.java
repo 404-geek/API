@@ -92,8 +92,6 @@ public class DataController {
 	/*
 	 * 
 	 */
-	private DestObject destObj;
-	private Map<String, String> destToken;
 
 	@RequestMapping(method = RequestMethod.GET, value = "/authdestination")
 	private ResponseEntity<String> destination(HttpSession session,
@@ -120,8 +118,8 @@ public class DataController {
 				destCred.put("server_port", server_port);
 				// tableName = "user";
 				credentials.setDestToken(destCred);
-				destObj = credentials.getDestObj();
-				destToken = credentials.getDestToken();
+				DestObject destObj = credentials.getDestObj();
+				Map<String, String> destToken = credentials.getDestToken();
 				if (!checkDB(destToken.get("database_name"), destToken, destObj)) {
 					credentials.setCurrDestValid(false);
 					System.out.println("Invalid database credentials");
@@ -153,7 +151,7 @@ public class DataController {
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 
-	public boolean pushDB(String jsonString, String tableName) throws SQLException {
+	public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map<String, String> destToken) throws SQLException {
 		System.out.println("pushDBController-driver: " + destObj.getDrivers());
 		this.tableName = tableName;
 		try {
@@ -177,7 +175,7 @@ public class DataController {
 						statement = "CREATE TABLE " + destObj.getIdentifier_quote_open() + tableName
 								+ destObj.getIdentifier_quote_close() + "(";
 						for (Object t : row)
-							statement += t.toString() + " TEXT,";
+							statement += t.toString().substring(0,t.toString().length()%10==0?t.toString().length()%10+1:t.toString().length()%10) + " TEXT,";
 
 						statement = statement.substring(0, statement.length() - 1) + ");";
 						System.out.println("-----" + statement);
@@ -308,58 +306,7 @@ public class DataController {
 				}
 				else {
 					return validateSourceCred(choice);
-					/*
-					SrcObject obj = credentials.getSrcObj();
-					if (obj.getRefresh().equals("YES")) {
-						ret = Utilities.token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
-								"DataController.Selectaction");
-						if (!ret.getStatusCode().is2xxSuccessful()) {
-							JsonObject respBody = new JsonObject();
-							respBody.addProperty("message", "Re-authorize");
-							respBody.addProperty("status", "51");
-							return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header)
-									.body(respBody.toString());
-
-						} else {
-							// next piece of code is for saveValues
-							try {
-								credentials.getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
-							} catch (Exception e) {
-								for (String s : ret.getBody().toString().split("&")) {
-									System.out.println(s);
-									credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
-								}
-							}
-							applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(),
-									credentials.getDestObj(), credentials.getSrcToken(), credentials.getDestToken(),
-									credentials.getCurrSrcName(), credentials.getCurrDestName(),
-									credentials.getUserId()));
-							System.out.println("token : " + credentials.getSrcToken().keySet() + ":"
-									+ credentials.getSrcToken().values());
-							ret = validateData(obj.getValidateCredentials(), obj.getEndPoints(), choice);
-							return ret;
-						}
-					} else {
-						ret = Utilities.token(obj.getValidateCredentials(), credentials.getSrcToken(),
-								"DataController.selectAction");
-						if (!ret.getStatusCode().is2xxSuccessful()) {
-							credentials.setCurrSrcValid(false);
-							JsonObject respBody = new JsonObject();
-							respBody.addProperty("message", "Re-authorize");
-							respBody.addProperty("status", "51");
-							return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header)
-									.body(respBody.toString());
-
-						} else {
-							credentials.setCurrSrcValid(true);
-							// ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
-							ResponseEntity<String> out = fetchEndpointsData(obj.getEndPoints(), choice);
-							System.out.println(out.getBody().substring(0, 20));
-							System.out.println("Headers Inside selectAction "+out.getHeaders());
-							return out;
-						}
-					}
-					*/
+					
 				}
 			} else {
 				System.out.println("Session expired!");
@@ -762,14 +709,14 @@ public class DataController {
 				JFlat x = new JFlat(outputData);
 				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 				rows=json2csv.size()-1;
-				if (choice.equalsIgnoreCase("export") && truncateAndPush()) {
+				if (choice.equalsIgnoreCase("export") && truncateAndPush(credentials.getDestObj(),credentials.getDestToken())) {
 					
 					System.out.println("Export Data without schedule");
 					String tableName = credentials.getCurrConnId().getConnectionId() + "_" + endpoint.getLabel();
 
 					System.out.println("SourceController-driver: " + credentials.getDestObj().getDrivers());
 
-					if (pushDB(outputData, tableName)) {						
+					if (pushDB(outputData, tableName, credentials.getDestObj(),credentials.getDestToken())) {						
 						respBody.addProperty("status", "22");
 						respBody.addProperty("data", "Successfullypushed");
 					} else {
@@ -808,7 +755,7 @@ public class DataController {
 		return response;
 	}
 	
-	private boolean truncateAndPush() {
+	private boolean truncateAndPush(DestObject destObj,Map<String, String> destToken) {
 		try {
 			if (con == null || con.isClosed())
 				connection(destToken, destObj);

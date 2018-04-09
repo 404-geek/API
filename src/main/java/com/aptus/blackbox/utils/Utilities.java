@@ -260,14 +260,6 @@ public class Utilities {
 			} else {
 				httpEntity = new HttpEntity<Object>(headers);
 			}
-//			if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
-//				httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
-//			} else if (!object.getResponseBody().isEmpty()) {
-//				MultiValueMap<String, String> body = Utilities.buildBody(object, values,message);
-//				httpEntity = new HttpEntity<Object>(body, headers);
-//			} else {
-//				httpEntity = new HttpEntity<Object>(headers);
-//			}
 			HttpMethod method = (object.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
 			System.out.println(message+" "+"Method : "+method);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();

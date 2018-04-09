@@ -1,8 +1,5 @@
 package com.aptus.blackbox.threading;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-
-import java.nio.channels.InterruptedByTimeoutException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -14,7 +11,6 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
@@ -30,7 +26,6 @@ import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.index.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 @Component
 @Scope("prototype")
 public class ConnectionsTaskScheduler implements Runnable {

@@ -123,6 +123,7 @@ public class DataSourceController {
 				System.out.println(out.getBody());
 				JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 				JsonObject jobj = jelem.getAsJsonObject();
+				System.out.println("datasourceontroller /validate"+jobj.get("_returned").getAsInt());
 				if (type.equalsIgnoreCase("source")) {
 					credentials.setUsrSrcExist(jobj.get("_returned").getAsInt() == 0 ? false : true);
 					System.out.println(url+" : "+credentials.isUsrSrcExist());
@@ -156,7 +157,7 @@ public class DataSourceController {
 		headers.add("access-control-allow-origin", rootUrl);
 		headers.add("access-control-allow-credentials", "true");
 		try {			
-			if (credentials.isUsrSrcExist() || credentials.isUsrDestExist()) {				
+			if (credentials.isUsrSrcExist() && credentials.isUsrDestExist()) {				
 				if(type.equalsIgnoreCase("source")) {
 					credentials.setCurrDestValid(false);
 					fetchSrcCred();
@@ -243,7 +244,6 @@ public class DataSourceController {
 				credentials.setSrcToken(key,value);
 			}
 			System.out.println(credentials.getSrcToken().keySet()+" : "+credentials.getSrcToken().values());
-			//Add destination fetching			
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("home.fetch");
