@@ -176,10 +176,12 @@ public class EndpointsTaskExecutor implements Runnable{
 						String arr[] = cur.getKey().split("::");
 						for (String jobj : arr) {
 							if (ele.get(jobj) != null && ele.get(jobj).isJsonObject()) {
-								System.out.println(jobj);
+								System.out.print("inside if...");
+								System.out.println("jobj is "+jobj);
 								ele = ele.get(jobj).getAsJsonObject();
 							} else {
-								System.out.println(ele.get(jobj));
+								System.out.print("inside else...");
+								System.out.println("ele.get(jobj): "+ele.get(jobj));
 								pData = ele.get(jobj) == null ? null : ele.get(jobj).getAsString();
 								break;
 							}
@@ -196,23 +198,28 @@ public class EndpointsTaskExecutor implements Runnable{
 										: "?" + cur.getParam() + "=" + (Integer.parseInt(pData) + 1);
 								// newurl+="&"+cur.getParam()+"="+Integer.parseInt(pData)+1;
 							}
-							System.out.println(newurl);
+							System.out.println("newurl is: "+newurl);
 							break;
 						}
 					}
 				}
-				System.out.println(newurl);
+				System.out.println("new url is:  "+newurl);
 
 				if (pData == null) {
 					System.out.println("break pData");
 					break;
 				}
 				out = restTemplate.exchange(URI.create(newurl), method, httpEntity, String.class);
-
+				System.out.println(gson.fromJson(out.getBody(), JsonObject.class).get("data"));
 				if (out.getBody() == null) {
 					System.out.println("break out.getBody");
 					break;
 				}
+				else if (gson.fromJson(out.getBody(), JsonObject.class).get("data").getAsJsonArray().toString().equals("[]")) {
+					System.out.println("break out.getBody.empty");
+					break;
+				}
+				
 				mergedData.add(gson.fromJson(out.getBody().toString(), JsonElement.class));
 			}
 			System.out.println("While End");
