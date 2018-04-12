@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.http.HttpSession;
 
@@ -145,8 +146,9 @@ public class SourceController {
 		System.out.println("parameters : " + parameters.keySet() + ":" + parameters.values());
 		ResponseEntity<String> out = null;
 		try {
-			String code = URLDecoder.decode(parameters.get("code"), "UTF-8");
-			parameters.put("code", code);
+			for(Entry<String, String> entry:parameters.entrySet()) {
+				parameters.put(entry.getKey(),URLDecoder.decode(entry.getValue(), "UTF-8"));
+			}
 			String url = Utilities.buildUrl(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
 			System.out.println(accessToken.getLabel() + " = " + url);
 

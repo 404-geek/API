@@ -9,8 +9,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -62,6 +64,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 
 
@@ -166,7 +169,7 @@ public class DataController {
 				JFlat x = new JFlat(jsonString);
 				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 				// System.out.println(json2csv);
-
+				
 				String statement = "";
 
 				int i = 0;
@@ -175,7 +178,7 @@ public class DataController {
 						statement = "CREATE TABLE " + destObj.getIdentifier_quote_open() + tableName
 								+ destObj.getIdentifier_quote_close() + "(";
 						for (Object t : row)
-							statement += t.toString().substring(0,t.toString().length()%10==0?t.toString().length()%10+1:t.toString().length()%10) + " TEXT,";
+							statement += t.toString().replace("_", "") +" "+credentials.getDestObj().getType_text()+ ",";
 
 						statement = statement.substring(0, statement.length() - 1) + ");";
 						System.out.println("-----" + statement);
@@ -470,7 +473,10 @@ public class DataController {
 				}
 			}
 			metring.setTotalRowsFetched(totalRows);
-			applicationEventPublisher.publishEvent(metring);
+			if(!choice.equalsIgnoreCase("view")) {
+				applicationEventPublisher.publishEvent(metring);
+			}
+			
 			data.add("data", endPoint);
 			data.addProperty("status", "21");
 			data.addProperty("message", "succesful");
@@ -698,6 +704,10 @@ public class DataController {
 						System.out.println("break out.getBody");
 						break;
 					}
+					else if (gson.fromJson(out.getBody(), JsonObject.class).get("data").getAsJsonArray().toString().equals("[]")) {
+						System.out.println("break out.getBody.empty");
+						break;
+					}
 					
 					mergedData.add(gson.fromJson(out.getBody().toString(), JsonElement.class));
 				}
@@ -760,13 +770,13 @@ public class DataController {
 			if (con == null || con.isClosed())
 				connection(destToken, destObj);
 			PreparedStatement stmt;
-			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_schema ="
+			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_name ="
 					+ destObj.getValue_quote_open() + credentials.getCurrConnId().getConnectionId()
 					+ destObj.getValue_quote_close() + ";");
 			ResultSet res = stmt.executeQuery();
 			res.first();
 			if (res.getInt("COUNT") != 0) {
-				stmt = con.prepareStatement("TRUNCATE TABLE " + credentials.getCurrConnId().getConnectionId() + ";");
+				stmt = con.prepareStatement("DROP TABLE " + credentials.getCurrConnId().getConnectionId() + ";");
 				stmt.execute();
 			}
 			return true;

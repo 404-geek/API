@@ -229,9 +229,9 @@ public class DataListeners {
 		headers.add("access-control-allow-origin", rootUrl);
         headers.add("access-control-allow-credentials", "true");
         headers.add("Content-Type", "application/json");
+        Gson gson = new Gson();
 		ResponseEntity<String> out = null;
 		RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-		//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 		String filter = "{\"_id\":\"" + metering.getUserId() + "\"}";
 		String url;
 		url = mongoUrl+"/credentials/metering?filter=" + filter;
@@ -254,7 +254,7 @@ public class DataListeners {
 		}
 		time.add("Endpoints", endPoints);
 		System.out.println(out.getBody());
-		if(jobj.get("_returned").getAsInt() == 0 ? false : true) {
+		if(jobj.get("_returned").getAsInt() == 0 ? false : true) {			
 			System.out.println("if"+out.getBody());
 			url = mongoUrl+"/credentials/metering/"+metering.getUserId();
 			JsonObject upper=new JsonObject();
@@ -269,6 +269,7 @@ public class DataListeners {
 			JsonObject connId = new JsonObject();
 			connId.add(metering.getTime(), time);
 			upper.add(metering.getConnId(), connId);
+			upper.addProperty("_id", metering.getUserId());
 			httpEntity = new HttpEntity<Object>(upper.toString(),headers);
 			url = mongoUrl+"/credentials/metering";
 			uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();	

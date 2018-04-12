@@ -110,7 +110,7 @@ public class UITrigger {
 
 	@RequestMapping("/togglescheduling")
 	public ResponseEntity<String> toggleScheduling(@RequestParam("connid") String connId,
-			@RequestParam("toggle") String toggle,@RequestParam("period") String period,HttpSession session){
+			@RequestParam("toggle") String toggle,@RequestParam(value="period",required=false) String period,HttpSession session){
 		HttpHeaders headers = new HttpHeaders();
 		JsonObject respBody = new JsonObject();
 		headers.add("Cache-Control", "no-cache");

@@ -1,5 +1,6 @@
 package com.aptus.blackbox.threading;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.event.InterruptThread;
+import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PostExecutorComplete;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
@@ -162,6 +164,12 @@ public class ConnectionsTaskScheduler implements Runnable {
     			Gson gson=new Gson();
     			RestTemplate restTemplate = new RestTemplate();
     			
+    			Metering metring = new Metering();
+    			metring.setConnId(connectionId);
+    			metring.setTime(new Date()+"");
+    			metring.setType("Export");
+    			metring.setUserId(userId);
+    			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMetering(metring);
     			for(UrlObject object:endpoints) {
     				if(scheduleObjectInfo.getEndPointStatus().containsKey(object.getLabel())) {
     					System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor");

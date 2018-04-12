@@ -7,11 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
+import com.aptus.blackbox.event.Metering;
+
 public class SchedulingObjects implements Serializable{
 	private boolean SrcValid,DestValid;
 	private String status,message,DestName,SrcName;
 	private long lastPushed,nextPush,period;
 	private Map<String,Status>endPointStatus = new HashMap<>();
+	private Metering metering = new Metering();
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
 	private SrcObject SrcObj;
@@ -115,6 +118,11 @@ public class SchedulingObjects implements Serializable{
 	public void setThread(ScheduledFuture<?> thread) {
 		this.thread = thread;
 	}
-	
+	public Metering getMetering() {
+		return metering;
+	}
+	public void setMetering(Metering metering) {
+		this.metering = metering;
+	}
 
 }

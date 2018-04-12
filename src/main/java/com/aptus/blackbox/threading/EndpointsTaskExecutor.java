@@ -76,9 +76,6 @@ public class EndpointsTaskExecutor implements Runnable{
 		this.scheduleObject = applicationCredentials.getApplicationCred().get(user).getSchedulingObjects().get(connectionId);
 	}
 	
-
-
-
 	public void setResult(Status result) {
 		this.result = result;
 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setEndPointStatus(endpoint.getLabel(),result);
@@ -102,6 +99,7 @@ public class EndpointsTaskExecutor implements Runnable{
 				.setLastPushed(time);
 				applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
 				System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));
+				applicationEventPublisher.publishEvent(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering());
 			}
 			else {
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("32");
@@ -229,6 +227,14 @@ public class EndpointsTaskExecutor implements Runnable{
 			
 			String tableName=connectionId+"_"+endpoint.getLabel();
 			String outputData = mergedData.toString();
+			JFlat x = new JFlat(outputData);
+			List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
+			
+			int rows=json2csv.size()-1;
+			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(endpoint.getLabel().toLowerCase(), rows);
+			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+			.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
+			
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN table "+tableName);	
 			if(truncate(tableName)) {				
 
