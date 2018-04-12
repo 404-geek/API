@@ -243,7 +243,8 @@ public class DataListeners {
 		JsonObject jobj = jelem.getAsJsonObject();
 		JsonObject time = new JsonObject();
 		time.addProperty("Total Rows", metering.getTotalRowsFetched());
-		time.addProperty("Type", metering.getType());		
+		time.addProperty("Type", metering.getType());	
+		time.addProperty("Time", metering.getTime());
 		JsonArray endPoints = new JsonArray();
 		System.out.println(out.getBody());
 		for(Entry<String, Integer> temp:metering.getRowsFetched().entrySet()) {
@@ -257,19 +258,38 @@ public class DataListeners {
 		if(jobj.get("_returned").getAsInt() == 0 ? false : true) {			
 			System.out.println("if"+out.getBody());
 			url = mongoUrl+"/credentials/metering/"+metering.getUserId();
-			JsonObject upper=new JsonObject();
 			uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();	
-			upper.add(metering.getConnId()+"."+metering.getTime(), time);
-			httpEntity = new HttpEntity<Object>(upper.toString(),headers);
+			JsonArray each=new JsonArray();
+			each.add(time);
+			System.out.println(each);
+			JsonObject e=new JsonObject();
+			e.add("$each", each);
+			System.out.println(e);
+			JsonObject f=new JsonObject();
+			f.add(metering.getConnId()+"."+"MeteringInfo", e);
+			System.out.println(f);
+			JsonObject addtoset=new JsonObject();
+			addtoset.add("$addToSet", f);
+			System.out.println(addtoset);
+			
+			httpEntity = new HttpEntity<Object>(addtoset.toString(),headers);
 			out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
 		}
 		else {
 			System.out.println("else"+out.getBody());
+
+			JsonArray meteringInfo=new JsonArray();
+			meteringInfo.add(time);
+			
 			JsonObject upper = new JsonObject();
-			JsonObject connId = new JsonObject();
-			connId.add(metering.getTime(), time);
-			upper.add(metering.getConnId(), connId);
+			
 			upper.addProperty("_id", metering.getUserId());
+			
+			
+			JsonObject connId=new JsonObject();
+			connId.add("MeteringInfo", meteringInfo);
+			connId.addProperty("Total rows", "");
+			upper.add(metering.getConnId(), connId);
 			httpEntity = new HttpEntity<Object>(upper.toString(),headers);
 			url = mongoUrl+"/credentials/metering";
 			uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();	
