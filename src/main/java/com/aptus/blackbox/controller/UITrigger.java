@@ -20,7 +20,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
@@ -58,6 +60,86 @@ public class UITrigger {
 	private ApplicationEventPublisher applicationEventPublisher;
 	@Autowired
 	private ApplicationContext Context;
+	
+	
+	@RequestMapping(method = RequestMethod.GET, value = "/")
+    private ResponseEntity<String> deleteDataSource(HttpSession session, @RequestParam("connId") String connId) {
+        ResponseEntity<String> out = null;
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Cache-Control", "no-cache");
+        headers.add("access-control-allow-origin", rootUrl);
+        headers.add("access-control-allow-credentials", "true");
+        try {         
+            HttpEntity<?> httpEntity;
+            if (Utilities.isSessionValid(session, credentials)) {
+        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
+                String url = mongoUrl + "/credentials/userCredentials/" + credentials.getUserId();
+                System.out.println("DeleteDataSource");
+                System.out.println(url);
+                JsonObject obj1 = new JsonObject();
+                obj1.addProperty("connectionId", connId);
+                JsonObject obj2 = new JsonObject();
+                obj2.add("srcdestId", obj1);
+                JsonObject body = new JsonObject();
+                body.add("$pull", obj2);
+                headers.add("Content-Type", "application/json");
+                System.out.println("68542168521"+body.toString());
+                httpEntity = new HttpEntity<Object>(body.toString(), headers);
+                RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+                out = restTemplate.exchange(URI.create(url), HttpMethod.PATCH, httpEntity, String.class);
+                if (out.getStatusCode().is2xxSuccessful()) {  
+                	if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
+                		if(applicationCredentials.getApplicationCred().get(credentials
+                				.getUserId()).getSchedulingObjects().get(connId)!=null) {
+                			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
+                    				.getUserId()).getSchedulingObjects().get(connId).getThread()
+                					, false, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
+                			url = mongoUrl + "/credentials/scheduledStatus/" + credentials.getUserId();
+                            System.out.println("Delete scheduled DataSource");
+                            System.out.println(url);
+                            obj1 = new JsonObject();
+                            obj1.add(connId,null);
+                            obj2 = new JsonObject();
+                            obj2.add("$unset", obj1);
+                            headers.add("Content-Type", "application/json");
+                            System.out.println("Datasourcecontroller deletedatasource"+obj2.toString());
+                            httpEntity = new HttpEntity<Object>(obj2.toString(), headers);
+                            restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+                            out = restTemplate.exchange(URI.create(url), HttpMethod.PATCH, httpEntity, String.class);
+                		}
+                	}
+                    System.out.println(connId + "***********Deleted!!!!**************");
+                    JsonObject respBody = new JsonObject();
+                    respBody.addProperty("data", "Sucessfully Deleted");
+                    respBody.addProperty("status", "200");
+                    return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+                }
+            }
+            else {
+				System.out.println("Session expired!");
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+            }
+        }
+        catch(HttpClientErrorException e) {
+            JsonObject respBody = new JsonObject();
+            respBody.addProperty("data", "Error");
+            respBody.addProperty("status", "404");
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }   
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+    }
+	
+	
+	
+	
+	
 	
 	
 	@RequestMapping("/getScheduledStatus")
