@@ -37,6 +37,7 @@ import com.aptus.blackbox.index.ConnObj;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -62,66 +63,42 @@ public class UITrigger {
 	private ApplicationContext Context;
 	
 	
-	@RequestMapping(method = RequestMethod.GET, value = "/")
-    private ResponseEntity<String> deleteDataSource(HttpSession session, @RequestParam("connId") String connId) {
+	@RequestMapping(method = RequestMethod.GET, value = "/clientscheduledstatus")
+    private ResponseEntity<String> getstatus(HttpSession session, @RequestParam("connId") String connId) {
         ResponseEntity<String> out = null;
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache");
         headers.add("access-control-allow-origin", rootUrl);
         headers.add("access-control-allow-credentials", "true");
         try {         
-            HttpEntity<?> httpEntity;
-            if (Utilities.isSessionValid(session, credentials)) {
-        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
-                String url = mongoUrl + "/credentials/userCredentials/" + credentials.getUserId();
-                System.out.println("DeleteDataSource");
-                System.out.println(url);
-                JsonObject obj1 = new JsonObject();
-                obj1.addProperty("connectionId", connId);
-                JsonObject obj2 = new JsonObject();
-                obj2.add("srcdestId", obj1);
-                JsonObject body = new JsonObject();
-                body.add("$pull", obj2);
-                headers.add("Content-Type", "application/json");
-                System.out.println("68542168521"+body.toString());
-                httpEntity = new HttpEntity<Object>(body.toString(), headers);
-                RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-                out = restTemplate.exchange(URI.create(url), HttpMethod.PATCH, httpEntity, String.class);
-                if (out.getStatusCode().is2xxSuccessful()) {  
-                	if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
-                		if(applicationCredentials.getApplicationCred().get(credentials
-                				.getUserId()).getSchedulingObjects().get(connId)!=null) {
-                			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
-                    				.getUserId()).getSchedulingObjects().get(connId).getThread()
-                					, false, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
-                			url = mongoUrl + "/credentials/scheduledStatus/" + credentials.getUserId();
-                            System.out.println("Delete scheduled DataSource");
-                            System.out.println(url);
-                            obj1 = new JsonObject();
-                            obj1.add(connId,null);
-                            obj2 = new JsonObject();
-                            obj2.add("$unset", obj1);
-                            headers.add("Content-Type", "application/json");
-                            System.out.println("Datasourcecontroller deletedatasource"+obj2.toString());
-                            httpEntity = new HttpEntity<Object>(obj2.toString(), headers);
-                            restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-                            out = restTemplate.exchange(URI.create(url), HttpMethod.PATCH, httpEntity, String.class);
-                		}
-                	}
-                    System.out.println(connId + "***********Deleted!!!!**************");
-                    JsonObject respBody = new JsonObject();
-                    respBody.addProperty("data", "Sucessfully Deleted");
-                    respBody.addProperty("status", "200");
-                    return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-                }
-            }
-            else {
-				System.out.println("Session expired!");
-    			JsonObject respBody = new JsonObject();
-    			respBody.addProperty("message", "Sorry! Your session has expired");
-				respBody.addProperty("status", "33");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-            }
+        	if(Utilities.isSessionValid(session, credentials)) {
+        	String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
+			String url = mongoUrl + "/credentials/scheduledStatus?filter=" + filter;
+			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+            System.out.println("clientscheduledstatus");
+            System.out.println(uri);
+            HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
+			RestTemplate restTemplate = new RestTemplate();
+			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
+			JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
+			JsonObject respBody = new JsonObject();
+            if(obj.get("_returned").getAsInt() == 0 ? false : true)
+			{	
+           
+            JsonObject status= obj.getAsJsonObject().get(connId).getAsJsonObject();
+            System.out.println(status);
+				respBody.add("data",status);
+				respBody.addProperty("status", "200");
+				respBody.addProperty("message", "Scheduled Data Exist");
+			}else {
+				respBody.addProperty("data","null");
+				respBody.addProperty("status", "200");
+				respBody.addProperty("message", "Scheduled Data Not Exist");
+			}
+			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+            
+           
+        	}
         }
         catch(HttpClientErrorException e) {
             JsonObject respBody = new JsonObject();
