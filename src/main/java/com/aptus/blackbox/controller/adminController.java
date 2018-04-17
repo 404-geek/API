@@ -107,9 +107,6 @@ public class adminController {
 					respBody.addProperty("message", "Scheduled Data Not Exist");
 				}
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-	            
-	           
-	        	
 	        }
 	        catch(HttpClientErrorException e) {
 	            JsonObject respBody = new JsonObject();
