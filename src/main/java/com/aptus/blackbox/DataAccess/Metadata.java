@@ -22,8 +22,8 @@ abstract class Metadata {
 	private String rootUrl;
 	
 	protected void getDetails(String url,String userId) 
-	{try 
 	{
+		try {
 		 ResponseEntity<String> out = null;
 	        HttpHeaders headers = new HttpHeaders();
 	        headers.add("Cache-Control", "no-cache");
