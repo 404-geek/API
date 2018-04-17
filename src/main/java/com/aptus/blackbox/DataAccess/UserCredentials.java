@@ -1,5 +1,5 @@
 package com.aptus.blackbox.DataAccess;
 
-interface UserCredentials {
+abstract class UserCredentials {
 
 }

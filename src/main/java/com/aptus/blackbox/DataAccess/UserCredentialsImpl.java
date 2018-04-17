@@ -1,5 +1,5 @@
 package com.aptus.blackbox.DataAccess;
 
-public class UserCredentialsImpl implements UserCredentials{
+public class UserCredentialsImpl extends UserCredentials{
 
 }
