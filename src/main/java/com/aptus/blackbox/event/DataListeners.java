@@ -27,7 +27,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.aptus.blackbox.Service.ApplicationCredentials;
+import com.aptus.blackbox.DataService.ApplicationCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.threading.ConnectionsTaskScheduler;

@@ -30,9 +30,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.aptus.blackbox.Service.Credentials;
-import com.aptus.blackbox.index.UrlObject;
-import com.aptus.blackbox.index.objects;
+import com.aptus.blackbox.DataService.Credentials;
+import com.aptus.blackbox.DomainObjects.UrlObject;
+import com.aptus.blackbox.DomainObjects.objects;
 import com.google.gson.JsonObject;
 
 import sun.misc.*;

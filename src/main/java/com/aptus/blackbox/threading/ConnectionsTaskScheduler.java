@@ -17,15 +17,15 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import com.aptus.blackbox.Service.ApplicationCredentials;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PostExecutorComplete;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
-import com.aptus.blackbox.index.SrcObject;
+import com.aptus.blackbox.DataService.ApplicationCredentials;
+import com.aptus.blackbox.DomainObjects.SrcObject;
 import com.aptus.blackbox.index.Status;
-import com.aptus.blackbox.index.UrlObject;
+import com.aptus.blackbox.DomainObjects.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 @Component

@@ -3,8 +3,8 @@ package com.aptus.blackbox.event;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.aptus.blackbox.index.DestObject;
-import com.aptus.blackbox.index.SrcObject;
+import com.aptus.blackbox.DomainObjects.DestObject;
+import com.aptus.blackbox.DomainObjects.SrcObject;
 
 public class PushCredentials {
 	private SrcObject srcObj;

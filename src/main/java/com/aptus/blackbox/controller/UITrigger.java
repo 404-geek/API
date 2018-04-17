@@ -29,11 +29,11 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.aptus.blackbox.Service.ApplicationCredentials;
-import com.aptus.blackbox.Service.Credentials;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.ScheduleEventData;
-import com.aptus.blackbox.index.ConnObj;
+import com.aptus.blackbox.DataService.ApplicationCredentials;
+import com.aptus.blackbox.DataService.Credentials;
+import com.aptus.blackbox.DomainObjects.ConnObj;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;

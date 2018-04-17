@@ -1,4 +1,4 @@
-package com.aptus.blackbox.index;
+package com.aptus.blackbox.DomainObjects;
 
 import java.io.Serializable;
 import java.util.ArrayList;
