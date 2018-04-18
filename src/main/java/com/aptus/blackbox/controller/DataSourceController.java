@@ -25,6 +25,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PushCredentials;
+import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.DataService.ApplicationCredentials;
 import com.aptus.blackbox.DataService.Credentials;
 import com.aptus.blackbox.DomainObjects.ConnObj;
@@ -37,7 +38,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 @RestController
-public class DataSourceController {
+public class DataSourceController extends RESTFetch {
 	@Value("${spring.mongodb.ipAndPort}")
 	private String mongoUrl;
 	@Value("${homepage.url}")
@@ -162,7 +163,7 @@ public class DataSourceController {
 					credentials.setCurrDestValid(false);
 					fetchSrcCred();
 					System.out.println(srcObj+" "+credentials);
-					out = Utilities.token(srcObj.getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
+					out = token(srcObj.getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
 					System.out.println("OUt:"+out);
 					System.out.println("OUt:"+out.getStatusCode());
 					if (out.getStatusCode().is2xxSuccessful()) {

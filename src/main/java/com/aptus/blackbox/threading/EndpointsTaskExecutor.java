@@ -31,6 +31,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PostExecutorComplete;
+import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.DataService.ApplicationCredentials;
 import com.aptus.blackbox.DomainObjects.Cursor;
 import com.aptus.blackbox.DomainObjects.DestObject;
@@ -48,7 +49,7 @@ import com.google.gson.JsonSyntaxException;
 
 @Component
 @Scope("prototype")
-public class EndpointsTaskExecutor implements Runnable{
+public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	
 	@Value("${homepage.url}")
 	private String homeUrl;
@@ -124,18 +125,18 @@ public class EndpointsTaskExecutor implements Runnable{
         header.add("access-control-allow-credentials", "true");
         
 		try {
-			String url = Utilities.buildUrl(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
+			String url = buildUrl(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+endpoint.getLabel() + " = " + url);
 
-			HttpHeaders headers = Utilities.buildHeader(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
+			HttpHeaders headers = buildHeader(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
 			HttpEntity<?> httpEntity;
 			if (!endpoint.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> preBody = Utilities.buildBody(endpoint, scheduleObject.getSrcToken(),"THREAD	EXECUTOR RUN");
+				MultiValueMap<String, String> preBody = buildBody(endpoint, scheduleObject.getSrcToken(),"THREAD	EXECUTOR RUN");
 				Object postBody=null;
 				for(objects head:endpoint.getHeader())
 				{
 					if(head.getKey().equalsIgnoreCase("content-type")) {
-						postBody=Utilities.bodyBuilder(head.getValue(),preBody,"THREAD	EXECUTOR RUN");
+						postBody=bodyBuilder(head.getValue(),preBody,"THREAD	EXECUTOR RUN");
 						break;
 					}
 				}

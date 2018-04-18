@@ -6,7 +6,7 @@ import java.util.List;
 public class SrcObject implements Serializable {
 	private String name,authType,steps,refresh;
 	private UrlObject refreshToken,requestToken,accessCode,accessToken,validateCredentials;
-	private List<UrlObject> endPoints;
+	private List<UrlObject> DataEndPoints,InfoEndpoints,ImplicitEndpoints;
 	
 	public String getName() {
 		return name;
@@ -56,17 +56,29 @@ public class SrcObject implements Serializable {
 	public void setRefreshToken(UrlObject refreshToken) {
 		this.refreshToken = refreshToken;
 	}
-	public List<UrlObject> getEndPoints() {
-		return endPoints;
-	}
-	public void setEndPoints(List<UrlObject> endPoints) {
-		this.endPoints = endPoints;
-	}
 	public String getRefresh() {
 		return refresh;
 	}
 	public void setRefresh(String refresh) {
 		this.refresh = refresh;
+	}
+	public List<UrlObject> getDataEndPoints() {
+		return DataEndPoints;
+	}
+	public void setDataEndPoints(List<UrlObject> dataEndPoints) {
+		DataEndPoints = dataEndPoints;
+	}
+	public List<UrlObject> getInfoEndpoints() {
+		return InfoEndpoints;
+	}
+	public void setInfoEndpoints(List<UrlObject> infoEndpoints) {
+		InfoEndpoints = infoEndpoints;
+	}
+	public List<UrlObject> getImplicitEndpoints() {
+		return ImplicitEndpoints;
+	}
+	public void setImplicitEndpoints(List<UrlObject> implicitEndpoints) {
+		ImplicitEndpoints = implicitEndpoints;
 	}
 	
 }

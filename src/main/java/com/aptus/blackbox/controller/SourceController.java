@@ -28,6 +28,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.DataService.ApplicationCredentials;
 import com.aptus.blackbox.DataService.Credentials;
 import com.aptus.blackbox.DomainObjects.ConnObj;
@@ -43,7 +44,7 @@ import com.google.gson.JsonObject;
 
 @RestController
 //@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS,value="session")
-public class SourceController {
+public class SourceController extends RESTFetch {
 	
 	@Value("${spring.mongodb.ipAndPort}")
 	private String mongoUrl;
@@ -79,7 +80,7 @@ public class SourceController {
 				if (obj.getSteps().compareTo("TWO") == 0) {
 					ret = code(accessCode);
 				} else if (obj.getSteps().compareTo("THREE") == 0) {
-					ret = Utilities.token(requestToken,credentials.getSrcToken(),credentials.getUserId()+"SourceController.authsource");
+					ret = token(requestToken,credentials.getSrcToken(),credentials.getUserId()+"SourceController.authsource");
 					saveValues(ret);
 					ret = code(accessCode);
 				}
@@ -112,7 +113,7 @@ public class SourceController {
 		System.out.println("source : " + refreshToken.getUrl());
 		validateCredentials = obj.getValidateCredentials();
 		System.out.println("source : " + validateCredentials.getUrl());
-		endPoints = obj.getEndPoints();
+		endPoints = obj.getDataEndPoints();
 		System.out.println(endPoints.toString());
 		return obj;
 	}	
@@ -121,11 +122,11 @@ public class SourceController {
 		ResponseEntity<String> redirect = null;
 		HttpHeaders headers;
 		try {
-			String url = Utilities.buildUrl(object, credentials.getSrcToken(),credentials.getUserId()+"SourceController.code");
+			String url = buildUrl(object, credentials.getSrcToken(),credentials.getUserId()+"SourceController.code");
 
 			System.out.println(object.getLabel() + " = " + url);
 
-			headers = Utilities.buildHeader(object, credentials.getSrcToken(),credentials.getUserId()+"SourceController.code");
+			headers = buildHeader(object, credentials.getSrcToken(),credentials.getUserId()+"SourceController.code");
 			headers.setLocation(URI.create(url));
 			HttpEntity<?> httpEntity;			
 			redirect = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
@@ -149,20 +150,20 @@ public class SourceController {
 			for(Entry<String, String> entry:parameters.entrySet()) {
 				parameters.put(entry.getKey(),URLDecoder.decode(entry.getValue(), "UTF-8"));
 			}
-			String url = Utilities.buildUrl(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
+			String url = buildUrl(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
 			System.out.println(accessToken.getLabel() + " = " + url);
 
 			RestTemplate restTemplate = new RestTemplate();
 
-			HttpHeaders headers = Utilities.buildHeader(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
+			HttpHeaders headers = buildHeader(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
 			HttpEntity<?> httpEntity;
 			if (!accessToken.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> preBody = Utilities.buildBody(accessToken, credentials.getSrcToken(),"SourceController.handlefooo");
+				MultiValueMap<String, String> preBody = buildBody(accessToken, credentials.getSrcToken(),"SourceController.handlefooo");
 				Object postBody=null;
 				for(objects head:accessToken.getHeader())
 				{
 					if(head.getKey().equalsIgnoreCase("content-type")) {
-						postBody=Utilities.bodyBuilder(head.getValue(),preBody,"SourceController.handlefooo");
+						postBody=bodyBuilder(head.getValue(),preBody,"SourceController.handlefooo");
 						break;
 					}
 				}
@@ -183,7 +184,7 @@ public class SourceController {
 			 url =UrlEscapers.urlFragmentEscaper().escape(url);
 			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 			saveValues(out);
-			out = Utilities.token(validateCredentials,credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
+			out = token(validateCredentials,credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
 			System.out.println(out.getBody()+" "+out.getStatusCode());
 			System.out.println(out);
 			headers = new HttpHeaders();
