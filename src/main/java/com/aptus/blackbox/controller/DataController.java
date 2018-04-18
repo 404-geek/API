@@ -46,6 +46,7 @@ import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.DestinationAuthorisation;
+import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.DataService.ApplicationCredentials;
 import com.aptus.blackbox.DataService.Credentials;
 import com.aptus.blackbox.DomainObjects.ConnObj;
@@ -69,8 +70,7 @@ import com.google.gson.JsonSyntaxException;
 
 
 @RestController
-public class DataController extends DestinationAuthorisation{
-	private String tableName;
+public class DataController extends RESTFetch {
 	private Connection con = null;
 
 	@Value("${spring.mongodb.ipAndPort}")
@@ -155,7 +155,6 @@ public class DataController extends DestinationAuthorisation{
 	}
 public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map<String, String> destToken) throws SQLException {
 		System.out.println("pushDBController-driver: " + destObj.getDrivers());
-		this.tableName = tableName;
 		try {
 			System.out.println("TABLENAME: " + tableName);
 			// System.out.println("JSONSTRING: "+jsonString);
@@ -215,7 +214,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		}
 		return false;
 	}
-/*
+
 	public void connection(Map<String, String> destToken, DestObject destObj) throws SQLException {
 		try {
 
@@ -259,7 +258,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			e.printStackTrace();
 		}
 		return false;
-	}*/
+	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
 	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,
@@ -333,7 +332,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		try {
 			SrcObject obj = credentials.getSrcObj();
 			if (obj.getRefresh().equals("YES")) {
-				ret = Utilities.token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
+				ret = token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
 						"DataController.validateSourceCred");
 				if (!ret.getStatusCode().is2xxSuccessful()) {
 					JsonObject respBody = new JsonObject();
@@ -358,11 +357,11 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 							credentials.getUserId()));
 					System.out.println("token : " + credentials.getSrcToken().keySet() + ":"
 							+ credentials.getSrcToken().values());
-					ret = validateData(obj.getValidateCredentials(), obj.getEndPoints(), choice);
+					ret = validateData(obj.getValidateCredentials(), obj.getDataEndPoints(), choice);
 					return ret;
 				}
 			} else {
-				ret = Utilities.token(obj.getValidateCredentials(), credentials.getSrcToken(),
+				ret = token(obj.getValidateCredentials(), credentials.getSrcToken(),
 						"DataController.validateSourceCred");
 				if (!ret.getStatusCode().is2xxSuccessful()) {
 					credentials.setCurrSrcValid(false);
@@ -378,7 +377,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					ResponseEntity<String> out=null;
 					if(choice.equalsIgnoreCase("export")||choice.equalsIgnoreCase("view"))
 					{
-						out = fetchEndpointsData(obj.getEndPoints(), choice);
+						out = fetchEndpointsData(obj.getDataEndPoints(), choice);
 					}
 					else {
 						JsonObject respBody = new JsonObject();
@@ -404,7 +403,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		header.add("access-control-allow-origin", rootUrl);
 		header.add("access-control-allow-credentials", "true");
 		try {
-			ret = Utilities.token(valid, credentials.getSrcToken(), "DataController.validateData");
+			ret = token(valid, credentials.getSrcToken(), "DataController.validateData");
 			if (!ret.getStatusCode().is2xxSuccessful()) {
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("message", "Contact Support");
@@ -506,7 +505,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				ResponseEntity<String> out = validateSourceCred(choice);
 				System.out.println(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").getAsString());
 				if(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").toString().equalsIgnoreCase("\"200\"")) {
-					List<UrlObject> endpoints = credentials.getSrcObj().getEndPoints();
+					List<UrlObject> endpoints = credentials.getSrcObj().getDataEndPoints();
 					int totalRows=0;
 					Metering metring = new Metering();
 					metring.setConnId(credentials.getCurrConnId().getConnectionId());
@@ -597,19 +596,19 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			JsonArray mergedData = new JsonArray();
 			JsonObject respBody = new JsonObject();
 			//System.out.println("LABEL2" + endpoint.getLabel() + " " + credentials.getCurrConnId().getEndPoints());
-			String url = Utilities.buildUrl(endpoint, credentials.getSrcToken(), "DataController.fetchendpoint");
+			String url = buildUrl(endpoint, credentials.getSrcToken(), "DataController.fetchendpoint");
 			System.out.println(endpoint.getLabel() + " = " + url);
 			
-			HttpHeaders headers = Utilities.buildHeader(endpoint, credentials.getSrcToken(),
+			HttpHeaders headers = buildHeader(endpoint, credentials.getSrcToken(),
 					"DataController.fetchendpoint");
 			HttpEntity<?> httpEntity;
 			if (!endpoint.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> preBody = Utilities.buildBody(endpoint, credentials.getSrcToken(),
+				MultiValueMap<String, String> preBody = buildBody(endpoint, credentials.getSrcToken(),
 						"DataController.fetchendpoint");
 				Object postBody = null;
 				for (objects head : endpoint.getHeader()) {
 					if (head.getKey().equalsIgnoreCase("content-type")) {
-						postBody = Utilities.bodyBuilder(head.getValue(), preBody,
+						postBody = bodyBuilder(head.getValue(), preBody,
 								"DataController.fetchendpoint");
 						break;
 					}
@@ -719,10 +718,11 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				JFlat x = new JFlat(outputData);
 				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 				rows=json2csv.size()-1;
-				if (choice.equalsIgnoreCase("export") && truncateAndPush(credentials.getDestObj(),credentials.getDestToken())) {
+				String tableName = credentials.getCurrConnId().getConnectionId() + "_" + endpoint.getLabel();
+				if (choice.equalsIgnoreCase("export") && truncateAndPush(tableName)) {
 					
 					System.out.println("Export Data without schedule");
-					String tableName = credentials.getCurrConnId().getConnectionId() + "_" + endpoint.getLabel();
+					
 
 					System.out.println("SourceController-driver: " + credentials.getDestObj().getDrivers());
 
@@ -765,19 +765,19 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		return response;
 	}
 	
-	/*
-	 * private boolean truncateAndPush(DestObject destObj,Map<String, String> destToken) {
+	private boolean truncateAndPush(String tableName) {
 		try {
 			if (con == null || con.isClosed())
-				connection(destToken, destObj);
+				connection(credentials.getDestToken(), credentials.getDestObj());
 			PreparedStatement stmt;
 			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_name ="
-					+ destObj.getValue_quote_open() + credentials.getCurrConnId().getConnectionId()
-					+ destObj.getValue_quote_close() + ";");
+					+ credentials.getDestObj().getValue_quote_open() + tableName
+					+ credentials.getDestObj().getValue_quote_close() + ";");
 			ResultSet res = stmt.executeQuery();
 			res.first();
+			System.out.println(res.getInt("COUNT"));
 			if (res.getInt("COUNT") != 0) {
-				stmt = con.prepareStatement("DROP TABLE " + credentials.getCurrConnId().getConnectionId() + ";");
+				stmt = con.prepareStatement("DROP TABLE " + tableName + ";");
 				stmt.execute();
 			}
 			return true;
@@ -786,7 +786,6 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		}
 		return false;
 	}
-	*/
 	
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection")

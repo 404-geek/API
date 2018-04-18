@@ -22,25 +22,25 @@ import com.aptus.blackbox.DomainObjects.objects;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.JsonObject;
 
-public abstract class RESTFetch extends Authorization {
+public abstract class RESTFetch extends SourceAuthorization {
 	
 	protected ResponseEntity<String> token(UrlObject object,Map<String, String> values,String message) {
 		ResponseEntity<String> out = null;
 		try {
 			RestTemplate restTemplate = new RestTemplate();
 
-			String url = Utilities.buildUrl(object, values,message);
+			String url = buildUrl(object, values,message);
 			System.out.println(message+" "+object.getLabel() + " = " + url);
 
-			HttpHeaders headers = Utilities.buildHeader(object, values,message);
+			HttpHeaders headers = buildHeader(object, values,message);
 			HttpEntity<?> httpEntity;
 			if (!object.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> preBody = Utilities.buildBody(object, values,"");
+				MultiValueMap<String, String> preBody = buildBody(object, values,"");
 				Object postBody=null;
 				for(objects head:object.getHeader())
 				{
 					if(head.getKey().equalsIgnoreCase("content-type")) {
-						postBody=Utilities.bodyBuilder(head.getValue(),preBody,message);
+						postBody=bodyBuilder(head.getValue(),preBody,message);
 						break;
 					}
 				}
@@ -180,9 +180,8 @@ public abstract class RESTFetch extends Authorization {
 					value = obj.getValue();
 				
 				String s=" ";
-				oauth = new TreeMap<String, String>();
 				if(key.equalsIgnoreCase("authorization")) {
-					
+					s+=getAuthorization(token,obj.getValueList(),credentials,message);
 				}
 				else {
 					for(objects x:obj.getValueList())
@@ -192,7 +191,7 @@ public abstract class RESTFetch extends Authorization {
 						}
 						if(x.getKey().indexOf("signature")!=-1) {
 							
-							credentials.put(x.getKey(),signature(token,oauth,credentials,message));
+							credentials.put(x.getKey(),signature(token,credentials,message));
 						}
 						if(x.getValue().equals("codeValue"))
 							s+= x.getKey() + "=" + encode(credentials.get(x.getKey()))+",";
@@ -203,12 +202,6 @@ public abstract class RESTFetch extends Authorization {
 						}
 						else
 							s+= x.getKey() + "=" + encode(x.getValue())+",";
-						if(key.equalsIgnoreCase("authorization")) {
-							if(x.getValue().equals("codeValue"))
-								oauth.put(encode(x.getKey()),encode(credentials.get(x.getKey())));
-							else
-								oauth.put(encode(x.getKey()),encode(x.getValue()));
-						}
 					}
 				}
 				value+= s.substring(0,s.length()-1);

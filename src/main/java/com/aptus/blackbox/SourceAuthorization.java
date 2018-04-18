@@ -5,6 +5,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SignatureException;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.crypto.Mac;
@@ -15,18 +17,58 @@ import com.aptus.blackbox.DomainObjects.objects;
 
 import sun.misc.BASE64Encoder;
 
-public abstract class Authorization {
+public abstract class SourceAuthorization {
 	
-	protected String getAuthorization() {
-		
+	protected String getAuthorization(UrlObject token, List<objects> list, Map<String, String> credentials,String message) {
+		String s="";
+		try {
+			switch(token.getAuthorization()) {
+			case"BASIC":
+				String username="",password="";
+				for(objects x:list) {
+					if(x.getKey().equalsIgnoreCase("username"))
+						username=x.getValue();
+					else if(x.getKey().equalsIgnoreCase("password"))
+						password=x.getValue();
+				}
+				s+=new BASE64Encoder().encode((username+":"+password).getBytes());
+				break;
+			case"Auth1":
+				for(objects x:list)
+				{
+					if(x.getKey().indexOf("timestamp")!=-1) {
+						credentials.put(x.getKey(), timestamp());
+					}
+					if(x.getKey().indexOf("signature")!=-1) {
+						
+						credentials.put(x.getKey(),signature(token,credentials,message));
+					}
+					if(x.getValue().equals("codeValue"))
+						s+= x.getKey() + "=" + encode(credentials.get(x.getKey()))+",";
+					else
+						s+= x.getKey() + "=" + encode(x.getValue())+",";
+				}
+				break;
+			case"Auth2":
+				objects x = list.get(0);
+				s+= encode(credentials.get(x.getKey()))+",";
+				break;
+			}		
+			return s;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	protected String timestamp() {
 		String time = String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
 		return time.substring(0, time.length()-3);
 	}
-	protected String signature(UrlObject object,Map<String,String> params, Map<String, String> values,String message) throws Exception {
+	protected String signature(UrlObject object, Map<String, String> values,String message) throws Exception {
 		String consumerSecret=null;
+		Map<String,String> params = new HashMap<String, String>();
 		for(objects obj:object.getSignature()){
 			if(obj.getKey().toLowerCase().indexOf("secret")!=-1) {
 				consumerSecret = obj.getValue().toString();

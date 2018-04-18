@@ -22,6 +22,7 @@ import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PostExecutorComplete;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
+import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.DataService.ApplicationCredentials;
 import com.aptus.blackbox.DomainObjects.SrcObject;
 import com.aptus.blackbox.index.Status;
@@ -30,7 +31,7 @@ import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 @Component
 @Scope("prototype")
-public class ConnectionsTaskScheduler implements Runnable {
+public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
 
 	@Value("${homepage.url}")
 	private String homeUrl;
@@ -85,7 +86,7 @@ public class ConnectionsTaskScheduler implements Runnable {
     		applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
         	SrcObject obj = scheduleObjectInfo.getSrcObj();
             if (obj.getRefresh().equals("YES")) {
-                ret = Utilities.token(obj.getRefreshToken(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
+                ret = token(obj.getRefreshToken(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
                 if (!ret.getStatusCode().is2xxSuccessful()) {	
     				setOut(new Status("51","Re-authorize"));
     				return;
@@ -106,18 +107,18 @@ public class ConnectionsTaskScheduler implements Runnable {
         			SchedulingObjects schedulingObjects = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
         			applicationEventPublisher.publishEvent(new PushCredentials(schedulingObjects.getSrcObj(), schedulingObjects.getDestObj(), schedulingObjects.getSrcToken(), 
         					schedulingObjects.getDestToken(), schedulingObjects.getSrcName(), schedulingObjects.getDestName(), userId));
-        			setOut(validateData(obj.getValidateCredentials(), obj.getEndPoints()));
+        			setOut(validateData(obj.getValidateCredentials(), obj.getDataEndPoints()));
                     return ;
                 }
             } else {
-                ret = Utilities.token(obj.getValidateCredentials(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
+                ret = token(obj.getValidateCredentials(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
                 if (!ret.getStatusCode().is2xxSuccessful()) {                	
                 	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setSrcValid(false);
                 	setOut(new Status("51","Re-authorize"));
     				return;
                 } else {
                 	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setSrcValid(true);                    
-                    setOut(fetchEndpointsData(obj.getEndPoints()));
+                    setOut(fetchEndpointsData(obj.getDataEndPoints()));
                     return ;
                 }
             }
@@ -139,7 +140,7 @@ public class ConnectionsTaskScheduler implements Runnable {
 		header.add("access-control-allow-origin", rootUrl);
         header.add("access-control-allow-credentials", "true");
         try {
-            ret = Utilities.token(validateUrl,scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER VALIDATEDATA");
+            ret = token(validateUrl,scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER VALIDATEDATA");
             if (!ret.getStatusCode().is2xxSuccessful()) {   
 				return  new Status("55","Contact Support");
 				
