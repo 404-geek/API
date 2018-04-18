@@ -31,6 +31,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PostExecutorComplete;
+import com.aptus.blackbox.DestinationAuthorisation;
 import com.aptus.blackbox.DataService.ApplicationCredentials;
 import com.aptus.blackbox.DomainObjects.Cursor;
 import com.aptus.blackbox.DomainObjects.DestObject;
@@ -48,7 +49,7 @@ import com.google.gson.JsonSyntaxException;
 
 @Component
 @Scope("prototype")
-public class EndpointsTaskExecutor implements Runnable{
+public class EndpointsTaskExecutor extends DestinationAuthorisation implements Runnable {
 	
 	@Value("${homepage.url}")
 	private String homeUrl;
@@ -376,7 +377,7 @@ public class EndpointsTaskExecutor implements Runnable{
 		}
 	}
 
-	public boolean checkDB(String dbase,Map<String,String> destToken,DestObject destObj) throws SQLException {
+/*	public boolean checkDB(String dbase,Map<String,String> destToken,DestObject destObj) throws SQLException {
 
 		try {
 			if (con == null || con.isClosed())
@@ -405,7 +406,7 @@ public class EndpointsTaskExecutor implements Runnable{
 		}		
 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setDestValid(false);
 		return false;
-	}
+	}*/
 	
 	private boolean truncate(String tableName) {
     	try {

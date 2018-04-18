@@ -1,6 +1,5 @@
 package com.aptus.blackbox.controller;
 
-import java.io.FileWriter;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -46,6 +45,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.ScheduleEventData;
+import com.aptus.blackbox.DestinationAuthorisation;
 import com.aptus.blackbox.DataService.ApplicationCredentials;
 import com.aptus.blackbox.DataService.Credentials;
 import com.aptus.blackbox.DomainObjects.ConnObj;
@@ -69,7 +69,7 @@ import com.google.gson.JsonSyntaxException;
 
 
 @RestController
-public class DataController {
+public class DataController extends DestinationAuthorisation{
 	private String tableName;
 	private Connection con = null;
 
@@ -153,8 +153,7 @@ public class DataController {
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
-
-	public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map<String, String> destToken) throws SQLException {
+public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map<String, String> destToken) throws SQLException {
 		System.out.println("pushDBController-driver: " + destObj.getDrivers());
 		this.tableName = tableName;
 		try {
@@ -216,7 +215,7 @@ public class DataController {
 		}
 		return false;
 	}
-
+/*
 	public void connection(Map<String, String> destToken, DestObject destObj) throws SQLException {
 		try {
 
@@ -234,6 +233,7 @@ public class DataController {
 			e.printStackTrace();
 		}
 	}
+
 
 	public boolean checkDB(String dbase, Map<String, String> destToken, DestObject destObj) throws SQLException {
 
@@ -259,7 +259,7 @@ public class DataController {
 			e.printStackTrace();
 		}
 		return false;
-	}
+	}*/
 
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
 	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,
@@ -765,7 +765,8 @@ public class DataController {
 		return response;
 	}
 	
-	private boolean truncateAndPush(DestObject destObj,Map<String, String> destToken) {
+	/*
+	 * private boolean truncateAndPush(DestObject destObj,Map<String, String> destToken) {
 		try {
 			if (con == null || con.isClosed())
 				connection(destToken, destObj);
@@ -785,6 +786,8 @@ public class DataController {
 		}
 		return false;
 	}
+	*/
+	
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection")
 	private ResponseEntity<String> checkConnection(@RequestParam("choice") String choice,
