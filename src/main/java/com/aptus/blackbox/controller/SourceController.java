@@ -127,7 +127,8 @@ public class SourceController extends RESTFetch {
 			System.out.println(object.getLabel() + " = " + url);
 
 			headers = buildHeader(object, credentials.getSrcToken(),credentials.getUserId()+"SourceController.code");
-			headers.setLocation(URI.create(url));
+			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+			headers.setLocation(uri);
 			HttpEntity<?> httpEntity;			
 			redirect = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
 			System.out.println("redirect =" + redirect);
@@ -181,8 +182,7 @@ public class SourceController extends RESTFetch {
 //			}
 			HttpMethod method = (accessToken.getMethod() == "GET") ? HttpMethod.GET : HttpMethod.POST;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-			 url =UrlEscapers.urlFragmentEscaper().escape(url);
-			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
+			out = restTemplate.exchange(uri, method, httpEntity, String.class);
 			saveValues(out);
 			out = token(validateCredentials,credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
 			System.out.println(out.getBody()+" "+out.getStatusCode());
@@ -195,15 +195,17 @@ public class SourceController extends RESTFetch {
 				System.out.println("invalid access token");
 				Utilities.invalid();
 				credentials.setCurrSrcValid(false);				
-				url=homeUrl;
-				headers.setLocation(URI.create(url+"/close.html"));
+				url=homeUrl+"/close.html";
+				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+				headers.setLocation(uri);
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
 
 			} else {
 				Utilities.valid();
 				credentials.setCurrSrcValid(true);
-				url=homeUrl;
-				headers.setLocation(URI.create(url+"/close.html"));
+				url=homeUrl+"/close.html";
+				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+				headers.setLocation(uri);
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
 
 			}

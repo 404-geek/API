@@ -32,6 +32,9 @@ public abstract class SourceAuthorization {
 						password=x.getValue();
 				}
 				s+=new BASE64Encoder().encode((username+":"+password).getBytes());
+				s = s.replaceAll("\n", "");
+				System.out.println(s.indexOf('\n')+" "+username+" "+password);
+				s+=",";
 				break;
 			case"Auth1":
 				for(objects x:list)

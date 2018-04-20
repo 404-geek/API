@@ -51,8 +51,8 @@ public class adminController {
         if(choice.equals("add"))
         	{url=mongoUrl+"/credentials/"+type;
 			httpEntity = new HttpEntity<String>(body,headers);
-       
-        	out = restTemplate.exchange(URI.create(url), HttpMethod.POST, httpEntity, String.class);
+			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+        	out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity, String.class);
         	 JsonObject respBody = new JsonObject();
 
      		respBody.addProperty("status", "200");
@@ -62,7 +62,8 @@ public class adminController {
         else if(choice.equals("update"))
         {	url=mongoUrl+"/credentials/"+type+srcdestname;
         httpEntity = new HttpEntity<String>(body,headers);
-        	out=restTemplate.exchange(URI.create(url), HttpMethod.PATCH, httpEntity, String.class);
+        URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+        	out=restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity, String.class);
         	 JsonObject respBody = new JsonObject();
 
      		respBody.addProperty("status", "200");

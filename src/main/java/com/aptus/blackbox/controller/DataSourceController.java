@@ -170,8 +170,9 @@ public class DataSourceController extends RESTFetch {
 						System.out.println(type + "tick");
 						Utilities.valid();
 						credentials.setCurrSrcValid(true);
-						String url=homeUrl;
-						headers.setLocation(URI.create(url+"/close.html"));
+						String url=homeUrl+"/close.html";
+						URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+						headers.setLocation(uri);
 						//return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).headers(headers).body(null);
 						return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
 						//return  new ResponseEntity<String>("valid", null, HttpStatus.CREATED);
@@ -179,8 +180,9 @@ public class DataSourceController extends RESTFetch {
 					}
 					else {
 						String url =  baseUrl+"/authsource";
-						System.out.println(url);						
-						headers.setLocation(URI.create(url));
+						System.out.println(url);	
+						URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+						headers.setLocation(uri);
 						out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
 					}
 				}
@@ -192,8 +194,9 @@ public class DataSourceController extends RESTFetch {
 							"&db_password="+db_password+
 							"&server_host="+server_host+
 							"&server_port="+server_port;
-					System.out.println(url);					
-					headers.setLocation(URI.create(url));
+					System.out.println(url);	
+					URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+					headers.setLocation(uri);
 					out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);					
 				}				
 			} 
@@ -209,7 +212,8 @@ public class DataSourceController extends RESTFetch {
 							"&server_host="+server_host+
 							"&server_port="+server_port;
 				System.out.println(url);
-				headers.setLocation(URI.create(url));
+				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+				headers.setLocation(uri);
 				out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
 			}
 			return out;
@@ -233,7 +237,8 @@ public class DataSourceController extends RESTFetch {
 			headers.add("access-control-allow-origin", rootUrl);
             headers.add("access-control-allow-credentials", "true");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-			out = restTemplate.exchange(URI.create(url), HttpMethod.GET, httpEntity, String.class);
+			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
 			System.out.println(out.getBody());
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
@@ -316,7 +321,8 @@ public class DataSourceController extends RESTFetch {
                 System.out.println("68542168521"+body.toString());
                 httpEntity = new HttpEntity<Object>(body.toString(), headers);
                 RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-                out = restTemplate.exchange(URI.create(url), HttpMethod.PATCH, httpEntity, String.class);
+                URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+                out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity, String.class);
                 if (out.getStatusCode().is2xxSuccessful()) {  
                 	if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
                 		if(applicationCredentials.getApplicationCred().get(credentials
@@ -335,7 +341,8 @@ public class DataSourceController extends RESTFetch {
                             System.out.println("Datasourcecontroller deletedatasource"+obj2.toString());
                             httpEntity = new HttpEntity<Object>(obj2.toString(), headers);
                             restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-                            out = restTemplate.exchange(URI.create(url), HttpMethod.PATCH, httpEntity, String.class);
+                            uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+                            out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity, String.class);
                 		}
                 	}
                     System.out.println(connId + "***********Deleted!!!!**************");

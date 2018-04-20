@@ -28,6 +28,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PostExecutorComplete;
@@ -148,7 +149,8 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 			HttpMethod method = (endpoint.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+"Method : "+method);
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+url);
-			ResponseEntity<String> out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
+			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+			ResponseEntity<String> out = restTemplate.exchange(uri, method, httpEntity, String.class);
 			
 			//call destination validation and push data 
 			
@@ -209,7 +211,8 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 					System.out.println("break pData");
 					break;
 				}
-				out = restTemplate.exchange(URI.create(newurl), method, httpEntity, String.class);
+				uri = UriComponentsBuilder.fromUriString(newurl).build().encode().toUri();
+				out = restTemplate.exchange(uri, method, httpEntity, String.class);
 				System.out.println(gson.fromJson(out.getBody(), JsonObject.class).get("data"));
 				if (out.getBody() == null) {
 					System.out.println("break out.getBody");

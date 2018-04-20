@@ -28,7 +28,6 @@ public abstract class RESTFetch extends SourceAuthorization {
 		ResponseEntity<String> out = null;
 		try {
 			RestTemplate restTemplate = new RestTemplate();
-
 			String url = buildUrl(object, values,message);
 			System.out.println(message+" "+object.getLabel() + " = " + url);
 
@@ -52,7 +51,7 @@ public abstract class RESTFetch extends SourceAuthorization {
 			System.out.println(message+" "+"Method : "+method);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			System.out.println(message+" "+"----------------------------"+uri);
-			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
+			out = restTemplate.exchange(uri, method, httpEntity, String.class);
 			//System.out.println(out.getBody());
 		} 
 		catch(HttpClientErrorException e) {
@@ -159,10 +158,22 @@ public abstract class RESTFetch extends SourceAuthorization {
 			value+= s.substring(0,s.length()-1);
 			params += key+"="+value+"&";
 		}
-		String url= token.getUrl()+params.substring(0,params.length()-1);
+		String url= url(token.getUrl(), token, values)+params.substring(0,params.length()-1);
 		System.out.println(message+" "+url);
 		return url;
 		
+	}
+	protected String url(String url,UrlObject token,Map<String, String> values) {
+		String newUrl="";
+		for(String comp:url.split("/")) {
+			if(comp.startsWith("{")) {
+				newUrl+=(values.get(comp.substring(1,comp.length()-1))+"/");
+			}
+			else {
+				newUrl+=(comp+"/");
+			}
+		}
+		return newUrl.substring(0,newUrl.length()-1);
 	}
 	protected HttpHeaders buildHeader (UrlObject token, Map<String, String> credentials,String message) throws Exception
 	{

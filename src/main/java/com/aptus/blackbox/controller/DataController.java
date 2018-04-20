@@ -132,7 +132,8 @@ public class DataController extends RESTFetch {
 				System.out.println("Database credentials validated");
 				credentials.setDestToken(destCred);
 				String url = homeUrl;
-				headers.setLocation(URI.create(url + "/close.html"));
+				URI uri = UriComponentsBuilder.fromUriString(url+"/close.html").build().encode().toUri();
+				headers.setLocation(uri);
 				return new ResponseEntity<String>("", headers, HttpStatus.MOVED_PERMANENTLY);
 			} else {
 				System.out.println("Session expired!");
@@ -620,7 +621,8 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			HttpMethod method = (endpoint.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
 			System.out.println("Method : " + method);
 			System.out.println(url);
-			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
+			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+			out = restTemplate.exchange(uri, method, httpEntity, String.class);
 
 			Integer rows=0;
 			
@@ -697,7 +699,8 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 						System.out.println("break pData");
 						break;
 					}
-					out = restTemplate.exchange(URI.create(newurl), method, httpEntity, String.class);
+					uri = UriComponentsBuilder.fromUriString(newurl).build().encode().toUri();
+					out = restTemplate.exchange(uri, method, httpEntity, String.class);
 					
 					if (out.getBody() == null) {
 						System.out.println("break out.getBody");
