@@ -23,6 +23,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.DataService.ApplicationCredentials;
 import com.aptus.blackbox.DataService.Credentials;
 import com.aptus.blackbox.DomainObjects.ConnObj;
@@ -33,6 +34,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import ch.qos.logback.core.subst.Token;
 
 /*
  * "pagination":[
@@ -45,7 +48,7 @@ import com.google.gson.JsonObject;
  */
 
 @Controller
-public class home {
+public class home extends RESTFetch{
 	@Value("${spring.mongodb.ipAndPort}")
 	private String mongoUrl;
 	@Value("${homepage.url}")
@@ -305,6 +308,23 @@ public class home {
 				JsonArray endpoints=new JsonArray();
 				for(UrlObject obj:credentials.getSrcObj().getDataEndPoints()) {
 					endpoints.add(obj.getLabel());
+				}
+				for(UrlObject obj: credentials.getSrcObj().getImplicitEndpoints()) {
+					JsonElement strBody = new Gson().fromJson(token(obj, credentials.getSrcToken(), "filterendpoints").getBody(),JsonObject.class);
+					String path = obj.getData().getKey();
+					String param = obj.getData().getParam();
+					for(String element:path.split("::")){
+						if(strBody==null)
+							break;
+						if(element.equalsIgnoreCase("{}")) {
+							for(JsonElement ele:strBody.getAsJsonArray());{
+								
+							}
+						}
+						else {
+							strBody=strBody.getAsJsonObject().get(element);
+						}
+					}
 				}
 				jobj.add("endpoints", endpoints);
 				jobj.addProperty("status", "200");

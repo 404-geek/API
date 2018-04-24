@@ -1,0 +1,257 @@
+{
+    "_id": "ZOHOCRM",
+    "DataEndPoints": [
+        {
+            "Authorization": "Auth2",
+            "label": "Leads",
+            "url": "https://www.zohoapis.com/crm/v2/Leads",
+            "params": [],
+            "method": "GET",
+            "header": [
+                {
+                    "key": "response_type",
+                    "value": "code",
+                    "valueList": []
+                },
+                {
+                    "key": "Authorization",
+                    "value": "Zoho-oauthtoken ",
+                    "valueList": [
+                        {
+                            "key": "access_token",
+                            "value": "codeValueSpace",
+                            "valueList": []
+                        }
+                    ]
+                }
+            ],
+            "responseBody": [],
+            "pagination": [
+                {
+                    "key": "info::page",
+                    "param": "page",
+                    "type": "inc"
+                }
+            ]
+        },
+        {
+            "label": "Accounts",
+            "Authorization": "Auth2",
+            "url": "https://www.zohoapis.com/crm/v2/Accounts",
+            "params": [],
+            "method": "GET",
+            "header": [
+                {
+                    "key": "response_type",
+                    "value": "code",
+                    "valueList": []
+                },
+                {
+                    "key": "Authorization",
+                    "value": "Zoho-oauthtoken ",
+                    "valueList": [
+                        {
+                            "key": "access_token",
+                            "value": "codeValueSpace",
+                            "valueList": []
+                        }
+                    ]
+                }
+            ],
+            "responseBody": [],
+            "pagination": [
+                {
+                    "key": "info::page",
+                    "param": "page",
+                    "type": "inc"
+                }
+            ]
+        }
+    ],
+    "ImplicitEndpoints": [
+    	{
+            "Authorization": "Auth2",
+            "label": "modules",
+            "url": "https://www.zohoapis.com/crm/v2/settings/modules",
+            "params": [],
+            "method": "GET",
+            "header": [
+                {
+                    "key": "response_type",
+                    "value": "code",
+                    "valueList": []
+                },
+                {
+                    "key": "Authorization",
+                    "value": "Zoho-oauthtoken ",
+                    "valueList": [
+                        {
+                            "key": "access_token",
+                            "value": "codeValueSpace",
+                            "valueList": []
+                        }
+                    ]
+                }
+            ],
+            "responseBody": [],
+            "pagination": [
+                {
+                    "key": "info::page",
+                    "param": "page",
+                    "type": "inc"
+                }
+            ],
+            "data":
+            	{
+                    "key": "modules::[::{::api_name",
+                    "param": "api_name",
+                    "type": ""
+            	}
+        }
+    ],
+    "InfoEndpoints": [],
+    "_etag": {
+        "$oid": "5add9b904725286f38596942"
+    },
+    "accessCode": {
+        "label": "Authorize code",
+        "type": "URL_BUTTON",
+        "url": "https://accounts.zoho.com/oauth/v2/auth",
+        "params": [
+            {
+                "key": "response_type",
+                "value": "code",
+                "valueList": []
+            },
+            {
+                "key": "client_id",
+                "value": "1000.B87PC0Y1PJKS478545YQOMT14E3PFN",
+                "valueList": []
+            },
+            {
+                "key": "redirect_uri",
+                "value": "http://localhost:8080/oauth2/s2",
+                "valueList": []
+            },
+            {
+                "key": "scope",
+                "value": "ZohoCRM.org.read,ZohoCRM.modules.all,ZohoCRM.settings.all,ZohoCRM.users.read",
+                "valueList": []
+            },
+            {
+                "key": "access_type",
+                "value": "offline",
+                "valueList": []
+            }
+        ],
+        "method": "GET",
+        "header": [],
+        "responseBody": []
+    },
+    "accessToken": {
+        "label": "Access token",
+        "type": "URL_BUTTON",
+        "url": "https://accounts.zoho.com/oauth/v2/token",
+        "params": [
+            {
+                "key": "client_id",
+                "value": "1000.B87PC0Y1PJKS478545YQOMT14E3PFN",
+                "valueList": []
+            },
+            {
+                "key": "client_secret",
+                "value": "4fcbfed4d9de966d2fe150908c1b61941809c137ac",
+                "valueList": []
+            },
+            {
+                "key": "redirect_uri",
+                "value": "http://localhost:8080/oauth2/s2",
+                "valueList": []
+            },
+            {
+                "key": "grant_type",
+                "value": "authorization_code",
+                "valueList": []
+            },
+            {
+                "key": "code",
+                "value": "codeValue",
+                "valueList": []
+            }
+        ],
+        "method": "POST",
+        "header": [],
+        "responseBody": []
+    },
+    "authLegs": "Three-Legged",
+    "authType": "REST2.0",
+    "name": "ZOHOCRM",
+    "refresh": "YES",
+    "refreshToken": {
+        "label": "RefreshToken",
+        "type": "URL_BUTTON",
+        "url": "https://accounts.zoho.com/oauth/v2/token",
+        "params": [
+            {
+                "key": "client_id",
+                "value": "1000.B87PC0Y1PJKS478545YQOMT14E3PFN",
+                "valueList": []
+            },
+            {
+                "key": "client_secret",
+                "value": "4fcbfed4d9de966d2fe150908c1b61941809c137ac",
+                "valueList": []
+            },
+            {
+                "key": "refresh_token",
+                "value": "codeValue",
+                "valueList": []
+            },
+            {
+                "key": "grant_type",
+                "value": "refresh_token",
+                "valueList": []
+            }
+        ],
+        "method": "POST",
+        "header": [],
+        "responseBody": []
+    },
+    "requestToken": {
+        "label": "RequestToken",
+        "type": "URL_BUTTON",
+        "url": "",
+        "params": [],
+        "method": "",
+        "header": [],
+        "responseBody": []
+    },
+    "status": "active",
+    "steps": "TWO",
+    "validateCredentials": {
+        "Authorization": "Auth2",
+        "label": "validateCredentials",
+        "url": "https://www.zohoapis.com/crm/v2/Leads",
+        "params": [],
+        "method": "GET",
+        "header": [
+            {
+                "key": "response_type",
+                "value": "code",
+                "valueList": []
+            },
+            {
+                "key": "Authorization",
+                "value": "Zoho-oauthtoken ",
+                "valueList": [
+                    {
+                        "key": "access_token",
+                        "value": "codeValueSpace",
+                        "valueList": []
+                    }
+                ]
+            }
+        ],
+        "responseBody": []
+    }
+}
