@@ -309,23 +309,24 @@ public class home extends RESTFetch{
 				for(UrlObject obj:credentials.getSrcObj().getDataEndPoints()) {
 					endpoints.add(obj.getLabel());
 				}
-				for(UrlObject obj: credentials.getSrcObj().getImplicitEndpoints()) {
-					JsonElement strBody = new Gson().fromJson(token(obj, credentials.getSrcToken(), "filterendpoints").getBody(),JsonObject.class);
-					String path = obj.getData().getKey();
-					String param = obj.getData().getParam();
-					for(String element:path.split("::")){
-						if(strBody==null)
-							break;
-						if(element.equalsIgnoreCase("{}")) {
-							for(JsonElement ele:strBody.getAsJsonArray());{
-								
-							}
-						}
-						else {
-							strBody=strBody.getAsJsonObject().get(element);
-						}
-					}
-				}
+//				for(UrlObject obj: credentials.getSrcObj().getImplicitEndpoints()) {
+//					JsonElement strBody = new Gson().fromJson(token(obj, credentials.getSrcToken(), "filterendpoints").getBody(),JsonObject.class);
+//					String path = obj.getData().getKey();
+//					String param = obj.getData().getParam();
+//					String[] elementArr = path.split("::");
+//					for(){
+//						if(strBody==null)
+//							break;
+//						if(element.equalsIgnoreCase("{}")) {
+//							for(JsonElement ele:strBody.getAsJsonArray());{
+//								
+//							}
+//						}
+//						else {
+//							strBody=strBody.getAsJsonObject().get(element);
+//						}
+//					}
+//				}
 				jobj.add("endpoints", endpoints);
 				jobj.addProperty("status", "200");
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobj.toString());

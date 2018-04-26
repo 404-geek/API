@@ -103,16 +103,13 @@
             ],
             "data":
             	{
-                    "key": "modules::[::{::api_name",
+                    "key": "modules[::api_name{::srhg",
                     "param": "api_name",
                     "type": ""
             	}
         }
     ],
     "InfoEndpoints": [],
-    "_etag": {
-        "$oid": "5add9b904725286f38596942"
-    },
     "accessCode": {
         "label": "Authorize code",
         "type": "URL_BUTTON",
