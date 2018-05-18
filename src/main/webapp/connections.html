@@ -1,0 +1,149 @@
+<!doctype html>
+
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8"></meta>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"></meta>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous"></link>
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Roboto:300,400,500,700" type="text/css"></link>
+    <link rel="stylesheet" href="css/blackbox.css"></link>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+
+    <script src="js/connections.js"></script>
+    <title>Hello</title>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand navbar-dark navbar-color">
+        <a class="navbar-brand" href="#">BlackBox</a>
+        <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="datasources.html">Home
+                    <span class="sr-only">(current)</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="connections.html">Datasources</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="row mt-5">
+            <div id="connections" class="col">
+
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="display-modal" tabindex="-1" role="dialog" aria-labelledby="display-modal" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Data</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="modal-body"></p>
+                    <form method="get" id="destination-form" style="display: none;">
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="list-group col" id="prev-conn">
+                                </div>
+                                <div class="col">
+                                    <div class="form-group">
+                                        <label for="InputDatabaseName">Database Name</label>
+                                        <input type="text" class="form-control" id="InputDatabaseName" placeholder="Database Name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="InputUsername">Username</label>
+                                        <input type="text" class="form-control" id="InputUsername" placeholder="Username" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="InputPassword">Password</label>
+                                        <input type="password" class="form-control" id="InputPassword" placeholder="Password" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="InputHostname">Hostname</label>
+                                        <input type="text" class="form-control" id="InputHostname" placeholder="Hostname" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="InputPort">Port</label>
+                                        <input type="text" class="form-control" id="InputPort" placeholder="Port" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </div>
+                    </form>
+
+                    <div id="refresh-connection" class="row" style="display: none;">
+                        <div id="source-col" class="col" style="display: none;">
+                            <div class="d-flex">
+                                <div class="mx-auto">
+                                    <div class="text-center" id="selectedSource"></div>
+                                    <button type="button" id="selectedSourceLinkAuthenticate" class="btn btn-light mx-auto">Authenticate Source</button>
+                                    <button type="button" id="selectedSourceLinkValidate" class="btn btn-light mx-auto">
+                                        Validate Source
+                                        <span id="sourceValidatedIndicator" style="display: none;" class="badge badge-pill badge-success">
+                                            <i style="font-size:12px;" class="material-icons">check</i>
+                                        </span>
+                                        <span id="sourceNotValidatedIndicator" style="display: none;" class="badge badge-pill badge-danger">
+                                            <i style="font-size:12px;" class="material-icons">clear</i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="destination-col" class="col" style="display: none;">
+                            <div class="d-flex">
+                                <div class="mx-auto">
+                                    <div class="text-center" id="selectedDestination"></div>
+                                    <button type="button" id="selectedDestinationLinkAuthenticate" class="btn btn-light mx-auto" data-toggle="modal" data-target="#destinationFormModal">Authenticate Destination</button>
+                                    <button type="button" id="selectedDestinationLinkValidate" class="btn btn-light mx-auto">
+                                        Validate Destination
+                                        <span id="destinationValidatedIndicator" style="display: none;" class="badge badge-pill badge-success">
+                                            <i style="font-size:12px;" class="material-icons">check</i>
+                                        </span>
+                                        <span id="destinationNotValidatedIndicator" style="display: none;" class="badge badge-pill badge-danger">
+                                            <i style="font-size:12px;" class="material-icons">clear</i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mx-auto mb-2">
+                        <button type="button" id="datasource" class="btn btn-light" style="display: none;">Update DataSource</button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+
+</html>
