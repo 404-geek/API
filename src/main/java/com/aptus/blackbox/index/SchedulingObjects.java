@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
-import com.aptus.blackbox.DomainObjects.DestObject;
-import com.aptus.blackbox.DomainObjects.SrcObject;
 import com.aptus.blackbox.event.Metering;
+import com.aptus.blackbox.models.DestObject;
+import com.aptus.blackbox.models.SrcObject;
 
 public class SchedulingObjects implements Serializable{
 	private boolean SrcValid,DestValid;

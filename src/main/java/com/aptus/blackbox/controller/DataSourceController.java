@@ -26,12 +26,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.RESTFetch;
-import com.aptus.blackbox.DataService.ApplicationCredentials;
-import com.aptus.blackbox.DataService.Credentials;
-import com.aptus.blackbox.DomainObjects.ConnObj;
-import com.aptus.blackbox.DomainObjects.DestObject;
+import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.dataService.Config;
+import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.index.Parser;
-import com.aptus.blackbox.DomainObjects.SrcObject;
+import com.aptus.blackbox.models.ConnObj;
+import com.aptus.blackbox.models.DestObject;
+import com.aptus.blackbox.models.SrcObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -39,21 +40,15 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 @RestController
 public class DataSourceController extends RESTFetch {
-	@Value("${spring.mongodb.ipAndPort}")
-	private String mongoUrl;
-	@Value("${homepage.url}")
-	private String homeUrl;
-	@Value("${base.url}")
-	private String baseUrl;
-	@Value("${access.control.allow.origin}")
-	private String rootUrl;
-	
+
 	@Autowired
 	private Credentials credentials;	
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
 	@Autowired
 	private ApplicationEventPublisher applicationEventPublisher;
+	@Autowired
+	private Config config;
 	
 	private SrcObject srcObj;
 	private DestObject destObj;
@@ -67,13 +62,13 @@ public class DataSourceController extends RESTFetch {
 		System.out.println(type+ " "+srcdestId);
 		if (type.equalsIgnoreCase("source")) {
 			
-			srcObj = new Parser("source",srcdestId.toUpperCase(),mongoUrl).getSrcProp();
+			srcObj = new Parser("source",srcdestId.toUpperCase(),config.getMongoUrl()).getSrcProp();
 			credentials.setSrcObj(srcObj);
 			credentials.setCurrSrcName(srcdestId.toLowerCase());
 			credentials.setCurrSrcValid(false);
 			
 		} else {
-			destObj = new Parser("destination",srcdestId.toUpperCase(),mongoUrl).getDestProp();
+			destObj = new Parser("destination",srcdestId.toUpperCase(),config.getMongoUrl()).getDestProp();
 			credentials.setDestObj(destObj);
 			credentials.setCurrDestName(srcdestId.toLowerCase());
 			credentials.setCurrDestValid(false);
@@ -96,7 +91,7 @@ public class DataSourceController extends RESTFetch {
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
@@ -116,7 +111,7 @@ public class DataSourceController extends RESTFetch {
 					name = credentials.getCurrDestName();
 					filter = "{\"_id\":{\"$regex\":\".*"+name.toLowerCase() + ".*\"}}";
 				}						
-				url = mongoUrl+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
+				url = config.getMongoUrl()+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
 				 
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();				
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
@@ -155,13 +150,14 @@ public class DataSourceController extends RESTFetch {
 		HttpHeaders headers = new HttpHeaders();
 		headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {			
-			if (credentials.isUsrSrcExist() && credentials.isUsrDestExist()) {				
+			if (credentials.isUsrSrcExist() || credentials.isUsrDestExist()) {				
 				if(type.equalsIgnoreCase("source")) {
 					credentials.setCurrDestValid(false);
 					fetchSrcCred();
+					System.out.println(type+" credentials already exist");
 					System.out.println(srcObj+" "+credentials);
 					out = token(srcObj.getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
 					System.out.println("OUt:"+out);
@@ -170,7 +166,7 @@ public class DataSourceController extends RESTFetch {
 						System.out.println(type + "tick");
 						Utilities.valid();
 						credentials.setCurrSrcValid(true);
-						String url=homeUrl+"/close.html";
+						String url="/close.html";
 						URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 						headers.setLocation(uri);
 						//return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).headers(headers).body(null);
@@ -179,7 +175,7 @@ public class DataSourceController extends RESTFetch {
 						// tick
 					}
 					else {
-						String url =  baseUrl+"/authsource";
+						String url =  "/authsource";
 						System.out.println(url);	
 						URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 						headers.setLocation(uri);
@@ -188,7 +184,7 @@ public class DataSourceController extends RESTFetch {
 				}
 				else {
 					credentials.setCurrDestValid(false);
-					String url =  baseUrl+"/authdestination?"+
+					String url =  "/authdestination?"+
 							"database_name="+database_name+
 							"&db_username="+db_username+
 							"&db_password="+db_password+
@@ -203,9 +199,9 @@ public class DataSourceController extends RESTFetch {
 			else {
 				String url;
 				if (type.equalsIgnoreCase("source"))
-					url = baseUrl+"/authsource";
+					url = "/authsource";
 				else
-					url =  baseUrl+"/authdestination?"+
+					url =  "/authdestination?"+
 							"database_name="+database_name+
 							"&db_username="+db_username+
 							"&db_password="+db_password+
@@ -231,10 +227,10 @@ public class DataSourceController extends RESTFetch {
 		try {
 			appId = credentials.getCurrSrcName();
 			RestTemplate restTemplate = new RestTemplate();
-			String url = mongoUrl+"/credentials/sourceCredentials/" + userid.toLowerCase()+"_"+appId.toLowerCase();
+			String url = config.getMongoUrl()+"/credentials/sourceCredentials/" + userid.toLowerCase()+"_"+appId.toLowerCase();
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", rootUrl);
+			headers.add("access-control-allow-origin", config.getRootUrl());
             headers.add("access-control-allow-credentials", "true");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
@@ -261,7 +257,7 @@ public class DataSourceController extends RESTFetch {
 			@RequestParam("srcdestId") String srcDestId, HttpSession session) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
@@ -302,13 +298,13 @@ public class DataSourceController extends RESTFetch {
         ResponseEntity<String> out = null;
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache");
-        headers.add("access-control-allow-origin", rootUrl);
+        headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
         try {         
             HttpEntity<?> httpEntity;
             if (Utilities.isSessionValid(session, credentials)) {
         		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
-                String url = mongoUrl + "/credentials/userCredentials/" + credentials.getUserId();
+                String url = config.getMongoUrl() + "/credentials/userCredentials/" + credentials.getUserId();
                 System.out.println("DeleteDataSource");
                 System.out.println(url);
                 JsonObject obj1 = new JsonObject();
@@ -330,7 +326,7 @@ public class DataSourceController extends RESTFetch {
                 			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
                     				.getUserId()).getSchedulingObjects().get(connId).getThread()
                 					, false, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
-                			url = mongoUrl + "/credentials/scheduledStatus/" + credentials.getUserId();
+                			url = config.getMongoUrl() + "/credentials/scheduledStatus/" + credentials.getUserId();
                             System.out.println("Delete scheduled DataSource");
                             System.out.println(url);
                             obj1 = new JsonObject();
@@ -382,7 +378,7 @@ public class DataSourceController extends RESTFetch {
 			System.out.println(filteredEndpoints.get("filteredendpoints") + " " + filteredEndpoints.keySet());
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", rootUrl);
+			headers.add("access-control-allow-origin", config.getRootUrl());
 			headers.add("access-control-allow-credentials", "true");
 			if (Utilities.isSessionValid(session, credentials)) {
 				// if(validateCredentials==null||endPoints==null||refreshToken==null) {
@@ -432,14 +428,14 @@ public class DataSourceController extends RESTFetch {
 					jsonObj.add("srcdestId", eachObj);
 					JsonObject addToSetObj = new JsonObject();
 					addToSetObj.add("$addToSet", jsonObj);
-					credentials.setUserExist(Utilities.postpatchMetaData(addToSetObj, "user", "PATCH",credentials.getUserId(),mongoUrl));
+					credentials.setUserExist(Utilities.postpatchMetaData(addToSetObj, "user", "PATCH",credentials.getUserId(),config.getMongoUrl()));
 				} else {
 					// userCredentials
 					jsonObj = new JsonObject();
 					jsonObj.add("srcdestId", eachArray);
 					JsonObject addToSetObj = new JsonObject();
 					jsonObj.addProperty("_id", credentials.getUserId().toLowerCase());
-					credentials.setUserExist(Utilities.postpatchMetaData(jsonObj, "user", "POST",credentials.getUserId(),mongoUrl));
+					credentials.setUserExist(Utilities.postpatchMetaData(jsonObj, "user", "POST",credentials.getUserId(),config.getMongoUrl()));
 				}
 				applicationEventPublisher.publishEvent(new PushCredentials(srcObj, destObj,credentials.getSrcToken() , credentials.getDestToken(),
 						credentials.getCurrSrcName(), credentials.getCurrDestName(), credentials.getUserId()));				

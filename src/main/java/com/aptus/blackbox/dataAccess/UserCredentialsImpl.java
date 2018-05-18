@@ -1,4 +1,4 @@
-package com.aptus.blackbox.DataAccess;
+package com.aptus.blackbox.dataAccess;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
@@ -16,10 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.aptus.blackbox.DataService.ApplicationCredentials;
-import com.aptus.blackbox.DataService.Credentials;
-import com.aptus.blackbox.DomainObjects.ConnObj;
+import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.event.PushCredentials;
+import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;

@@ -23,10 +23,10 @@ import com.aptus.blackbox.event.PostExecutorComplete;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.RESTFetch;
-import com.aptus.blackbox.DataService.ApplicationCredentials;
-import com.aptus.blackbox.DomainObjects.SrcObject;
+import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.index.Status;
-import com.aptus.blackbox.DomainObjects.UrlObject;
+import com.aptus.blackbox.models.SrcObject;
+import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 @Component

@@ -12,9 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 
-import com.aptus.blackbox.DataService.ApplicationCredentials;
-import com.aptus.blackbox.DataService.Credentials;
-import com.aptus.blackbox.DomainObjects.DestObject;
+import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.models.DestObject;
 
 abstract public class DestinationAuthorisation {
 	

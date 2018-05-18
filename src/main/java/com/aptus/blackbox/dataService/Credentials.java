@@ -1,4 +1,4 @@
-package com.aptus.blackbox.DataService;
+package com.aptus.blackbox.dataService;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -10,10 +10,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 
-import com.aptus.blackbox.DomainObjects.ConnObj;
-import com.aptus.blackbox.DomainObjects.DestObject;
 import com.aptus.blackbox.index.SchedulingObjects;
-import com.aptus.blackbox.DomainObjects.SrcObject;
+import com.aptus.blackbox.models.ConnObj;
+import com.aptus.blackbox.models.DestObject;
+import com.aptus.blackbox.models.SrcObject;
 
 @Service
 @Scope(proxyMode = ScopedProxyMode.TARGET_CLASS,value="session")

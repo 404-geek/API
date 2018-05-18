@@ -3,7 +3,7 @@ $(document).ready(function () {
 	$.ajax({
 		crossOrigin: true,
 		type: "GET",
-		url: "http://localhost:8080/getsrcdest",
+		url: "http://localhost:8080/blackbox/getsrcdest",
 		cache: false,
 		xhrFields: {
 			withCredentials: true
@@ -56,7 +56,7 @@ $(document).ready(function () {
 					if (id == key) {
 
 						$("#selectedSource").html('<div class="d-inline-block border"><div class="m-2"><img class="rounded-circle" width="75" height="75" src="' + source.logo + '"><p class="text-center">' + source.name + '</p></div></div>');
-						var url = 'http://localhost:8080/validate?type=source&srcdestId=' + key;
+						var url = 'http://localhost:8080/blackbox/validate?type=source&srcdestId=' + key;
 						console.log(url);
 						$("#selectedSourceLinkAuthenticate").click(function () {
 							window.open(url, "_blank", 'width=800, height=600, menubar=no, resizable=no, scrollbars=no, status=no, toolbar=no, location=no');
@@ -68,7 +68,7 @@ $(document).ready(function () {
 							$.ajax({
 								crossOrigin: true,
 								type: "GET",
-								url: "http://localhost:8080/isvalid?type=source&srcdestId=" + src,
+								url: "http://localhost:8080/blackbox/isvalid?type=source&srcdestId=" + src,
 								cache: false,
 								xhrFields: {
 									withCredentials: true
@@ -126,7 +126,7 @@ $(document).ready(function () {
 							e.preventDefault();
 							console.log("jhgvgif");
 							$('#destinationFormModal').modal('hide');
-							var url = 'http://localhost:8080/validate?type=destination&srcdestId=' + srcdestid + "&database_name=" + $('#InputDatabaseName').val() + "&db_username=" + $('#InputUsername').val() + "&db_password=" + $('#InputPassword').val() + "&server_host=" + $('#InputHostname').val() + "&server_port=" + $('#InputPort').val();
+							var url = 'http://localhost:8080/blackbox/validate?type=destination&srcdestId=' + srcdestid + "&database_name=" + $('#InputDatabaseName').val() + "&db_username=" + $('#InputUsername').val() + "&db_password=" + $('#InputPassword').val() + "&server_host=" + $('#InputHostname').val() + "&server_port=" + $('#InputPort').val();
 							window.open(url, "_blank", 'width=800, height=600, menubar=no, resizable=no, scrollbars=no, status=no, toolbar=no, location=no');
 						});
 						var dst = key;
@@ -134,7 +134,7 @@ $(document).ready(function () {
 							$.ajax({
 								crossOrigin: true,
 								type: "GET",
-								url: "http://localhost:8080/isvalid?type=destination&srcdestId=" + dst,
+								url: "http://localhost:8080/blackbox/isvalid?type=destination&srcdestId=" + dst,
 								cache: false,
 								xhrFields: {
 									withCredentials: true
@@ -164,7 +164,7 @@ $(document).ready(function () {
 							$.ajax({
 								crossOrigin: true,
 								type: "GET",
-								url: "http://localhost:8080/fetchdbs?destId=" + dst,
+								url: "http://localhost:8080/blackbox/fetchdbs?destId=" + dst,
 								cache: false,
 								xhrFields: {
 									withCredentials: true
@@ -212,7 +212,7 @@ $(document).ready(function () {
 				$.ajax({
 					crossOrigin: true,
 					type: "GET",
-					url: "http://localhost:8080/filterendpoints",
+					url: "http://localhost:8080/blackbox/filterendpoints",
 					cache: false,
 					xhrFields: {
 						withCredentials: true
@@ -239,7 +239,7 @@ $(document).ready(function () {
 					crossOrigin: true,
 					data: { "filteredendpoints": JSON.stringify(obj) },
 					type: "POST",
-					url: "http://localhost:8080/createdatasource",
+					url: "http://localhost:8080/blackbox/createdatasource",
 					cache: false,
 					xhrFields: {
 						withCredentials: true

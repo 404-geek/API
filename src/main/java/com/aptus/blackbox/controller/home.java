@@ -5,10 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
-import javax.ws.rs.core.Application;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -16,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,18 +23,17 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.RESTFetch;
-import com.aptus.blackbox.DataService.ApplicationCredentials;
-import com.aptus.blackbox.DataService.Credentials;
-import com.aptus.blackbox.DomainObjects.ConnObj;
+import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.dataService.Config;
+import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.index.ScheduleInfo;
-import com.aptus.blackbox.DomainObjects.UrlObject;
+import com.aptus.blackbox.models.ConnObj;
+import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
-import ch.qos.logback.core.subst.Token;
 
 /*
  * "pagination":[
@@ -49,34 +47,41 @@ import ch.qos.logback.core.subst.Token;
 
 @Controller
 public class home extends RESTFetch{
-	@Value("${spring.mongodb.ipAndPort}")
-	private String mongoUrl;
-	@Value("${homepage.url}")
-	private String homeUrl;
-	@Value("${base.url}")
-	private String baseUrl;
-	@Value("${access.control.allow.origin}")
-	private String rootUrl;
 	
 	@Autowired
 	private Credentials credentials;
 	
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
-
-
+	
+	@Autowired
+	private Config config;
+	
+	
+	@RequestMapping(value="/blackbox")
+	private ResponseEntity<String> log(@RequestParam("userId") String user,@RequestHeader("abc") String abc)
+	{
+		JsonObject respBody = new JsonObject();
+		respBody.addProperty("id", user);
+		respBody.addProperty("status", "200");
+		respBody.addProperty("header", abc);
+		
+		return ResponseEntity.status(HttpStatus.OK).headers(null).body(respBody.toString());
+	}
+	
 	@RequestMapping(value="/login")
 	private ResponseEntity<String> login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
 	{
 		try {
+		
 			System.out.println(user);			
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", rootUrl);
+			headers.add("access-control-allow-origin", config.getRootUrl());
             headers.add("access-control-allow-credentials", "true");
 			JsonObject respBody = new JsonObject();
 			if(existUser(user,"userInfo")){
-				String url = mongoUrl+"/credentials/userInfo/"+user;
+				String url = config.getMongoUrl()+"/credentials/userInfo/"+user;
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				HttpHeaders header = new HttpHeaders();
 				// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -120,7 +125,7 @@ public class home extends RESTFetch{
 	{
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
 		try {			
 			System.out.println(params);	
@@ -142,7 +147,7 @@ public class home extends RESTFetch{
 				ResponseEntity<String> out = null;
 				String url = "";				
 				RestTemplate restTemplate = new RestTemplate();
-				url = mongoUrl + "/credentials/userInfo";				
+				url = config.getMongoUrl() + "/credentials/userInfo";				
 				System.out.println(url);
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(body.toString(),headers);
 				out = restTemplate.exchange(url, HttpMethod.POST , httpEntity, String.class);
@@ -176,7 +181,7 @@ public class home extends RESTFetch{
 	{
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
         headers.add("Content-Type", "application/json");
 		try {
@@ -184,7 +189,7 @@ public class home extends RESTFetch{
 			System.out.println("updating" + params);			
 			JsonObject respBody = new JsonObject();
 			String userId=params.get("_id").toString();
-			String url = mongoUrl+"/credentials/userInfo/"+ userId;
+			String url = config.getMongoUrl()+"/credentials/userInfo/"+ userId;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			JsonObject body = new JsonObject();
 
@@ -233,12 +238,12 @@ public class home extends RESTFetch{
 			//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 			String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
 			String url;
-			url = mongoUrl+"/credentials/"+type+"?filter=" + filter;
+			url = config.getMongoUrl()+"/credentials/"+type+"?filter=" + filter;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			HttpHeaders headers = new HttpHeaders();
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", rootUrl);
+			headers.add("access-control-allow-origin", config.getRootUrl());
             headers.add("access-control-allow-credentials", "true");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
@@ -257,13 +262,15 @@ public class home extends RESTFetch{
 	}
 
 	
+	
+	
 	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdest")
 	private ResponseEntity<String> getSrcDest(HttpSession session) {
 		ResponseEntity<String> s=null;
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
 		try {
 			System.out.println(session.getId());			
@@ -271,7 +278,7 @@ public class home extends RESTFetch{
 				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
-				String url = mongoUrl+"/credentials/SrcDstlist/srcdestlist";			 
+				String url = config.getMongoUrl()+"/credentials/SrcDstlist/srcdestlist";			 
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				HttpHeaders header = new HttpHeaders();
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
@@ -299,7 +306,7 @@ public class home extends RESTFetch{
 	{
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {			
 			if(Utilities.isSessionValid(session,credentials)) {
@@ -352,7 +359,7 @@ public class home extends RESTFetch{
 		String dataSource=null;
 		HttpHeaders headers = new HttpHeaders();			
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
@@ -360,7 +367,7 @@ public class home extends RESTFetch{
 				ResponseEntity<String> out = null;
 				RestTemplate restTemplate = new RestTemplate();
 				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
-				String url = mongoUrl+"/credentials/userCredentials/"+credentials.getUserId();
+				String url = config.getMongoUrl()+"/credentials/userCredentials/"+credentials.getUserId();
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				HttpHeaders header = new HttpHeaders();
 				// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -381,7 +388,7 @@ public class home extends RESTFetch{
 					credentials.setConnectionIds(conObj.getConnectionId(), conObj);
 				}
 				
-			    url = mongoUrl+"/credentials/SrcDstlist/srcdestlist";
+			    url = config.getMongoUrl()+"/credentials/SrcDstlist/srcdestlist";
 			    uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				out  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
 				respBody.add("images",gson.fromJson(out.getBody(), JsonElement.class));				

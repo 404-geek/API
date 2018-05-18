@@ -27,7 +27,8 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.aptus.blackbox.DataService.ApplicationCredentials;
+import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.threading.ConnectionsTaskScheduler;
@@ -40,14 +41,8 @@ import com.google.gson.JsonSyntaxException;
 
 @Component
 public class DataListeners {
-	@Value("${spring.mongodb.ipAndPort}")
-	private String mongoUrl;
-	@Value("${homepage.url}")
-	private String homeUrl;
-	@Value("${base.url}")
-	private String baseUrl;
-	@Value("${access.control.allow.origin}")
-	private String rootUrl;
+	@Autowired
+	private Config config;
 	
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
@@ -122,7 +117,7 @@ public class DataListeners {
 					jsonObj.addProperty("_id",
 							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getSrcName().toLowerCase());
 					jsonObj.add("credentials", sourceBody);
-					Utilities.postpatchMetaData(jsonObj, "source", "POST",pushCredentials.getUserId(),mongoUrl);
+					Utilities.postpatchMetaData(jsonObj, "source", "POST",pushCredentials.getUserId(),config.getMongoUrl());
 					System.out.println(sourceBody);
 				}
 				// destCredentials
@@ -139,7 +134,7 @@ public class DataListeners {
 							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase() + "_"
 									+ pushCredentials.getDestToken().get("database_name"));
 					jsonObj.add("credentials", destBody);
-					Utilities.postpatchMetaData(jsonObj, "destination", "POST",pushCredentials.getUserId(),mongoUrl);
+					Utilities.postpatchMetaData(jsonObj, "destination", "POST",pushCredentials.getUserId(),config.getMongoUrl());
 					System.out.println(destBody);
 				}
 			} catch (Exception e) {
@@ -180,7 +175,7 @@ public class DataListeners {
 			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
 			String filter = "{\"_id\":\"" + userId.toLowerCase() + "\"}";
 			String url;
-			url = mongoUrl+"/credentials/scheduledStatus?filter=" + filter;
+			url = config.getMongoUrl()+"/credentials/scheduledStatus?filter=" + filter;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			HttpHeaders headers = new HttpHeaders();
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -199,12 +194,12 @@ public class DataListeners {
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 			httpEntity = new HttpEntity<Object>(connStatus.toString(),headers);
 			if(isPost) {
-				url = mongoUrl+"/credentials/scheduledStatus";
+				url = config.getMongoUrl()+"/credentials/scheduledStatus";
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity,String.class);
 			}
 			else {
-				url = mongoUrl+"/credentials/scheduledStatus/"+userId;
+				url = config.getMongoUrl()+"/credentials/scheduledStatus/"+userId;
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
 			}
@@ -226,7 +221,7 @@ public class DataListeners {
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
         headers.add("Content-Type", "application/json");
         Gson gson = new Gson();
@@ -235,7 +230,7 @@ public class DataListeners {
 			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
 			String filter = "{\"_id\":\"" + metering.getUserId() + "\"}";
 			String url;
-			url = mongoUrl+"/credentials/metering?filter=" + filter;
+			url = config.getMongoUrl()+"/credentials/metering?filter=" + filter;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();		
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
@@ -257,7 +252,7 @@ public class DataListeners {
 			time.add("Endpoints", endPoints);
 			System.out.println(out.getBody());
 			if(jobj.get("_returned").getAsInt() == 0 ? false : true) {
-				url = mongoUrl+"/credentials/metering/"+metering.getUserId().toLowerCase();
+				url = config.getMongoUrl()+"/credentials/metering/"+metering.getUserId().toLowerCase();
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();		
 				httpEntity = new HttpEntity<Object>(headers);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
@@ -294,7 +289,7 @@ public class DataListeners {
 					addtoset.addProperty("Total rows",TotalRows+metering.getTotalRowsFetched());
 				}
 				System.out.println(addtoset);
-				url = mongoUrl+"/credentials/metering/"+metering.getUserId();
+				url = config.getMongoUrl()+"/credentials/metering/"+metering.getUserId();
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				httpEntity = new HttpEntity<Object>(addtoset.toString(),headers);
 				out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
@@ -311,7 +306,7 @@ public class DataListeners {
 				upper.add(metering.getConnId(), connId);
 				upper.addProperty("Total rows", metering.getTotalRowsFetched());
 				httpEntity = new HttpEntity<Object>(upper.toString(),headers);
-				url = mongoUrl+"/credentials/metering";
+				url = config.getMongoUrl()+"/credentials/metering";
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();	
 				out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity,String.class);
 			}

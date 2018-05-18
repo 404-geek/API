@@ -9,8 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
-import com.aptus.blackbox.DomainObjects.DestObject;
-import com.aptus.blackbox.DomainObjects.SrcObject;
+import com.aptus.blackbox.models.DestObject;
+import com.aptus.blackbox.models.SrcObject;
 import com.google.gson.Gson;
 public class Parser implements Serializable{
 	Parser(){}

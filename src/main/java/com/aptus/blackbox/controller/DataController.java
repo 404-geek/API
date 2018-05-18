@@ -47,16 +47,17 @@ import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.DestinationAuthorisation;
 import com.aptus.blackbox.RESTFetch;
-import com.aptus.blackbox.DataService.ApplicationCredentials;
-import com.aptus.blackbox.DataService.Credentials;
-import com.aptus.blackbox.DomainObjects.ConnObj;
-import com.aptus.blackbox.DomainObjects.Cursor;
-import com.aptus.blackbox.DomainObjects.DestObject;
+import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.dataService.Config;
+import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.index.SchedulingObjects;
-import com.aptus.blackbox.DomainObjects.SrcObject;
-import com.aptus.blackbox.DomainObjects.UrlObject;
-import com.aptus.blackbox.DomainObjects.objects;
+import com.aptus.blackbox.models.ConnObj;
+import com.aptus.blackbox.models.Cursor;
+import com.aptus.blackbox.models.DestObject;
+import com.aptus.blackbox.models.SrcObject;
+import com.aptus.blackbox.models.UrlObject;
+import com.aptus.blackbox.models.objects;
 import com.aptus.blackbox.utils.Utilities;
 import com.github.opendevl.JFlat;
 import com.google.gson.Gson;
@@ -73,15 +74,8 @@ import com.google.gson.JsonSyntaxException;
 public class DataController extends RESTFetch {
 	private Connection con = null;
 
-	@Value("${spring.mongodb.ipAndPort}")
-	private String mongoUrl;
-	@Value("${homepage.url}")
-	private String homeUrl;
-	@Value("${base.url}")
-	private String baseUrl;
-	@Value("${access.control.allow.origin}")
-	private String rootUrl;
-
+	@Autowired
+	private Config config;
 	@Autowired
 	private Credentials credentials;
 	@Autowired
@@ -107,7 +101,7 @@ public class DataController extends RESTFetch {
 		credentials.setCurrDestValid(false);
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, credentials)) {
@@ -131,8 +125,8 @@ public class DataController extends RESTFetch {
 				credentials.setCurrDestValid(true);
 				System.out.println("Database credentials validated");
 				credentials.setDestToken(destCred);
-				String url = homeUrl;
-				URI uri = UriComponentsBuilder.fromUriString(url+"/close.html").build().encode().toUri();
+				//String url = config.getHomeUrl();
+				URI uri = UriComponentsBuilder.fromUriString("/close.html").build().encode().toUri();
 				headers.setLocation(uri);
 				return new ResponseEntity<String>("", headers, HttpStatus.MOVED_PERMANENTLY);
 			} else {
@@ -267,7 +261,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		ResponseEntity<String> ret = null;
 		HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", rootUrl);
+		header.add("access-control-allow-origin", config.getRootUrl());
 		header.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(httpsession, credentials)) {
@@ -328,7 +322,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		ResponseEntity<String> ret = null;
 		HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", rootUrl);
+		header.add("access-control-allow-origin", config.getRootUrl());
 		header.add("access-control-allow-credentials", "true");
 		try {
 			SrcObject obj = credentials.getSrcObj();
@@ -401,7 +395,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		ResponseEntity<String> ret = null;
 		HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", rootUrl);
+		header.add("access-control-allow-origin", config.getRootUrl());
 		header.add("access-control-allow-credentials", "true");
 		try {
 			ret = token(valid, credentials.getSrcToken(), "DataController.validateData");
@@ -435,7 +429,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 	private ResponseEntity<String> fetchEndpointsData(List<UrlObject> endpoints, String choice) {
 		HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", rootUrl);
+		header.add("access-control-allow-origin", config.getRootUrl());
 		header.add("access-control-allow-credentials", "true");
 		ResponseEntity<String> out = null;
 		try {
@@ -498,7 +492,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			@RequestParam("endpoint") String endpoint,HttpSession session){		
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		byte[] check1;
 		try {
@@ -557,7 +551,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 							}					
 							check1 = sheet.getBytes();					
 							headers.add("Cache-Control", "no-cache");
-							headers.add("access-control-allow-origin", rootUrl);
+							headers.add("access-control-allow-origin", config.getRootUrl());
 							headers.add("access-control-allow-credentials", "true");
 							headers.add("charset", "utf-8");
 							headers.add("content-disposition", "attachment; filename=" +
@@ -796,7 +790,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			@RequestParam("connId") String connId, HttpSession httpsession) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		ResponseEntity<String> out = null;
 		Gson gson = new Gson();
@@ -870,7 +864,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, credentials)) {
@@ -879,7 +873,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				String name = destId;
 				String filter = "{\"_id\":{\"$regex\":\".*" + credentials.getUserId().toLowerCase() + "_"
 						+ name.toLowerCase() + ".*\"}}";
-				String url = mongoUrl + "/credentials/destinationCredentials?filter=" + filter;
+				String url = config.getMongoUrl() + "/credentials/destinationCredentials?filter=" + filter;
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);

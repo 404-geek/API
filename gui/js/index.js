@@ -12,7 +12,7 @@ $(document).ready(function () {
       xhrFields: {
         withCredentials: true
        },
-      url: "http://localhost:8080/login",
+      url: "http://localhost:8080/blackbox/login",
       success: function (data) {
         console.log(data);
         response = JSON.parse(data);

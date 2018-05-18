@@ -1,4 +1,4 @@
-package com.aptus.blackbox.DataService;
+package com.aptus.blackbox.dataService;
 
 import java.io.Serializable;
 import java.util.HashMap;

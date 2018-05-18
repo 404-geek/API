@@ -29,12 +29,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.RESTFetch;
-import com.aptus.blackbox.DataService.ApplicationCredentials;
-import com.aptus.blackbox.DataService.Credentials;
-import com.aptus.blackbox.DomainObjects.ConnObj;
-import com.aptus.blackbox.DomainObjects.SrcObject;
-import com.aptus.blackbox.DomainObjects.UrlObject;
-import com.aptus.blackbox.DomainObjects.objects;
+import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.dataService.Config;
+import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.models.ConnObj;
+import com.aptus.blackbox.models.SrcObject;
+import com.aptus.blackbox.models.UrlObject;
+import com.aptus.blackbox.models.objects;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.common.net.UrlEscapers;
 import com.google.gson.Gson;
@@ -46,19 +47,13 @@ import com.google.gson.JsonObject;
 //@Scope(proxyMode = ScopedProxyMode.TARGET_CLASS,value="session")
 public class SourceController extends RESTFetch {
 	
-	@Value("${spring.mongodb.ipAndPort}")
-	private String mongoUrl;
-	@Value("${homepage.url}")
-	private String homeUrl;
-	@Value("${base.url}")
-	private String baseUrl;
-	@Value("${access.control.allow.origin}")
-	private String rootUrl;
 
 	@Autowired
 	private Credentials credentials;
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
+	@Autowired
+	private Config config;
 
 
 	private String refresh;
@@ -71,7 +66,7 @@ public class SourceController extends RESTFetch {
 		ResponseEntity<String> ret = null;
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
 		try {			
 			if(Utilities.isSessionValid(session,credentials)) {
@@ -114,7 +109,7 @@ public class SourceController extends RESTFetch {
 		validateCredentials = obj.getValidateCredentials();
 		System.out.println("source : " + validateCredentials.getUrl());
 		endPoints = obj.getDataEndPoints();
-		System.out.println(endPoints.toString());
+		System.out.println(endPoints);
 		return obj;
 	}	
         
@@ -189,13 +184,13 @@ public class SourceController extends RESTFetch {
 			System.out.println(out);
 			headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", rootUrl);
+			headers.add("access-control-allow-origin", config.getRootUrl());
 			headers.add("access-control-allow-credentials", "true");
 			if (!out.getStatusCode().is2xxSuccessful()) {
 				System.out.println("invalid access token");
 				Utilities.invalid();
 				credentials.setCurrSrcValid(false);				
-				url=homeUrl+"/close.html";
+				url="/close.html";
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				headers.setLocation(uri);
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
@@ -203,7 +198,7 @@ public class SourceController extends RESTFetch {
 			} else {
 				Utilities.valid();
 				credentials.setCurrSrcValid(true);
-				url=homeUrl+"/close.html";
+				url="/close.html";
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				headers.setLocation(uri);
 				return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);

@@ -3,6 +3,7 @@ package com.aptus.blackbox.controller;
 import java.net.URI;
 
 import org.springframework.http.HttpEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -19,6 +20,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -26,14 +28,16 @@ import com.google.gson.JsonObject;
 @RestController
 public class adminController {
 
-	@Value("${spring.mongodb.ipAndPort}")
-	private String mongoUrl;
-	@Value("${homepage.url}")
-	private String homeUrl;
-	@Value("${base.url}")
-	private String baseUrl;
-	@Value("${access.control.allow.origin}")
-	private String rootUrl;
+	@Autowired
+	private Config config;
+	
+	@RequestMapping(method = RequestMethod.GET, value = "/mongoPath")
+	private ResponseEntity<String> modifyMongoPath(@RequestParam("mongoPath") String mongoPath) {
+		config.setMongoUrl(mongoPath);
+		JsonObject obj=new JsonObject();
+		obj.addProperty("MongoPath", config.getMongoUrl());
+		return ResponseEntity.status(HttpStatus.OK).headers(null).body(obj.toString().toString());
+	}
 	
 	@RequestMapping(method = RequestMethod.POST, value = "/addsrcdest")
 	private ResponseEntity<String> addSource(@RequestBody String body,@RequestParam("type") String type, @RequestParam("choice") String choice, @RequestParam("sourcename") String srcdestname)
@@ -41,7 +45,7 @@ public class adminController {
 		ResponseEntity<String> out = null;
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		headers.add("Content-Type", "application/json");
 		String url;
@@ -49,7 +53,7 @@ public class adminController {
 		
         RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
         if(choice.equals("add"))
-        	{url=mongoUrl+"/credentials/"+type;
+        	{url=config.getMongoUrl()+"/credentials/"+type;
 			httpEntity = new HttpEntity<String>(body,headers);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
         	out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity, String.class);
@@ -60,7 +64,7 @@ public class adminController {
      		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
         	}
         else if(choice.equals("update"))
-        {	url=mongoUrl+"/credentials/"+type+srcdestname;
+        {	url=config.getMongoUrl()+"/credentials/"+type+srcdestname;
         httpEntity = new HttpEntity<String>(body,headers);
         URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
         	out=restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity, String.class);
@@ -80,12 +84,12 @@ public class adminController {
 		  ResponseEntity<String> out = null;
 	        HttpHeaders headers = new HttpHeaders();
 	        headers.add("Cache-Control", "no-cache");
-	        headers.add("access-control-allow-origin", rootUrl);
+	        headers.add("access-control-allow-origin", config.getRootUrl());
 	        headers.add("access-control-allow-credentials", "true");
 	        try {         
 	        	
 	        	String filter = "{\"_id\":\"" + userId.toLowerCase() + "\"}";
-				String url = mongoUrl + "/credentials/userCredentials?filter=" + filter;
+				String url = config.getMongoUrl() + "/credentials/userCredentials?filter=" + filter;
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 	            System.out.println("viewdatasource fror admin");
 	            System.out.println(uri);
@@ -128,12 +132,12 @@ public class adminController {
 		  ResponseEntity<String> out = null;
 	        HttpHeaders headers = new HttpHeaders();
 	        headers.add("Cache-Control", "no-cache");
-	        headers.add("access-control-allow-origin", rootUrl);
+	        headers.add("access-control-allow-origin", config.getRootUrl());
 	        headers.add("access-control-allow-credentials", "true");
 	        try {         
 	        	
 	        	String filter = "{\"_id\":\"" + userId.toLowerCase() + "\"}";
-				String url = mongoUrl + "/credentials/metering?filter=" + filter;
+				String url = config.getMongoUrl() + "/credentials/metering?filter=" + filter;
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 	            System.out.println("metering info for admin");
 	            System.out.println(uri);

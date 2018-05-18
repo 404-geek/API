@@ -1,4 +1,4 @@
-package com.aptus.blackbox.DataAccess;
+package com.aptus.blackbox.dataAccess;
 
 import java.net.URI;
 

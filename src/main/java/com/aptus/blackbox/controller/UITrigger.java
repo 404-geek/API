@@ -1,7 +1,5 @@
 package com.aptus.blackbox.controller;
 
-import static org.mockito.Matchers.endsWith;
-
 import java.net.URI;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -29,12 +27,13 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.dataService.Config;
+import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.ScheduleEventData;
-import com.aptus.blackbox.DataService.ApplicationCredentials;
-import com.aptus.blackbox.DataService.Credentials;
-import com.aptus.blackbox.DomainObjects.ConnObj;
 import com.aptus.blackbox.index.SchedulingObjects;
+import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -44,14 +43,7 @@ import com.google.gson.JsonObject;
 @RestController
 public class UITrigger {
 
-	@Value("${spring.mongodb.ipAndPort}")
-	private String mongoUrl;
-	@Value("${homepage.url}")
-	private String homeUrl;
-	@Value("${base.url}")
-	private String baseUrl;
-	@Value("${access.control.allow.origin}")
-	private String rootUrl;
+
 	
 	@Autowired
 	private Credentials credentials;	
@@ -61,6 +53,8 @@ public class UITrigger {
 	private ApplicationEventPublisher applicationEventPublisher;
 	@Autowired
 	private ApplicationContext Context;
+	@Autowired
+	private Config config;
 	
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/clientscheduledstatus")
@@ -68,12 +62,12 @@ public class UITrigger {
         ResponseEntity<String> out = null;
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache");
-        headers.add("access-control-allow-origin", rootUrl);
+        headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
         try {         
         	if(Utilities.isSessionValid(session, credentials)) {
         	String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
-			String url = mongoUrl + "/credentials/scheduledStatus?filter=" + filter;
+			String url = config.getMongoUrl() + "/credentials/scheduledStatus?filter=" + filter;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
             System.out.println("clientscheduledstatus");
             System.out.println(uri);
@@ -123,13 +117,13 @@ public class UITrigger {
 	public ResponseEntity<Object> getScheduledStatus(HttpSession session) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, credentials)) {
 				
 				String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
-				String url = mongoUrl + "/credentials/scheduledStatus?filter=" + filter;
+				String url = config.getMongoUrl() + "/credentials/scheduledStatus?filter=" + filter;
 
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				HttpHeaders header = new HttpHeaders();
@@ -173,7 +167,7 @@ public class UITrigger {
 		HttpHeaders headers = new HttpHeaders();
 		JsonObject respBody = new JsonObject();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", rootUrl);
+		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		if (Utilities.isSessionValid(session, credentials)) {
 			if(credentials.getConnectionIds(connId).getSourceName().
@@ -186,7 +180,7 @@ public class UITrigger {
 					RestTemplate restTemplate = new RestTemplate();
 					//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 					String filter = "filter={\"_id\":\""+credentials.getUserId()+"\"}&filter={\""+connId+"\":{\"$exists\":true,\"$ne\":null}}";
-					String url = mongoUrl+"/credentials/scheduledStatus?" + filter;
+					String url = config.getMongoUrl()+"/credentials/scheduledStatus?" + filter;
 					URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 					HttpHeaders header = new HttpHeaders();
 					// header.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");

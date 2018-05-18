@@ -3,7 +3,7 @@ $(document).ready(function() {
     $.ajax({
 		crossOrigin: true,
       	type: "GET",
-		url: "http://localhost:8080/getconnectionids",
+		url: "http://localhost:8080/blackbox/getconnectionids",
 		cache: false,
 		xhrFields: {
 			withCredentials: true
@@ -37,7 +37,7 @@ $(document).ready(function() {
         	$.ajax({
                 crossOrigin: true,
                 type: "GET",
-                url: "http://localhost:8080/deletedatasource?connId="+ connId,
+                url: "http://localhost:8080/blackbox/deletedatasource?connId="+ connId,
                 cache: false,
                 xhrFields: {
                     withCredentials: true
@@ -58,7 +58,7 @@ $(document).ready(function() {
         	$.ajax({
 	            crossOrigin: true,
 	            type: "GET",
-	            url: "http://localhost:8080/checkconnection?connId="+ connId + "&choice="+ buttonType,
+	            url: "http://localhost:8080/blackbox/checkconnection?connId="+ connId + "&choice="+ buttonType,
 	            cache: false,
 	            xhrFields: {
 	                withCredentials: true
@@ -71,7 +71,7 @@ $(document).ready(function() {
 	                    $('#refresh-connection').show();
 	                    $('#source-col').show();
 	                    $("#selectedSource").html('<div class="d-inline-block border"><div class="m-2"><img class="rounded-circle" width="75" height="75" src="' + logo.source[source].logo + '"><p class="text-center">' + logo.source[source].name + '</p></div></div>');
-	                    var url = 'http://localhost:8080/validate?type=source&srcdestId=' + source;
+	                    var url = 'http://localhost:8080/blackbox/validate?type=source&srcdestId=' + source;
 	                    $("#selectedSourceLinkAuthenticate").click(function(){
 	                        window.open(url, "_blank", 'width=800, height=600, menubar=no, resizable=no, scrollbars=no, status=no, toolbar=no, location=no');
 	                    });
@@ -80,7 +80,7 @@ $(document).ready(function() {
 	                        $.ajax({
 	                            crossOrigin: true,
 	                            type: "GET",
-	                            url: "http://localhost:8080/isvalid?type=source&srcdestId=" + src,
+	                            url: "http://localhost:8080/blackbox/isvalid?type=source&srcdestId=" + src,
 	                            cache: false,
 	                            xhrFields: {
 	                                withCredentials: true
@@ -120,7 +120,7 @@ $(document).ready(function() {
 							$.ajax({
 								crossOrigin: true,
 								type: "GET",
-								url: "http://localhost:8080/fetchdbs?destId=" + dst,
+								url: "http://localhost:8080/blackbox/fetchdbs?destId=" + dst,
 								cache: false,
 								xhrFields: {
 									withCredentials: true
@@ -158,7 +158,7 @@ $(document).ready(function() {
 	                        $.ajax({
 	                            crossOrigin: true,
 	                            type: "GET",
-	                            url: "http://localhost:8080/isvalid?type=destination&srcdestId=" + dst,
+	                            url: "http://localhost:8080/blackbox/isvalid?type=destination&srcdestId=" + dst,
 	                            cache: false,
 	                            xhrFields: {
 	                                withCredentials: true
@@ -190,7 +190,7 @@ $(document).ready(function() {
 	                    $('#destination-col').show();
 
 	                    $("#selectedSource").html('<div class="d-inline-block border"><div class="m-2"><img class="rounded-circle" width="75" height="75" src="' + logo.source[source].logo + '"><p class="text-center">' + logo.source[source].name + '</p></div></div>');
-	                    var url = 'http://localhost:8080/validate?type=source&srcdestId=' + source;
+	                    var url = 'http://localhost:8080/blackbox/validate?type=source&srcdestId=' + source;
 	                    $("#selectedSourceLinkAuthenticate").click(function(){
 	                        window.open(url, "_blank", 'width=800, height=600, menubar=no, resizable=no, scrollbars=no, status=no, toolbar=no, location=no');
 	                    });
@@ -199,7 +199,7 @@ $(document).ready(function() {
 	                        $.ajax({
 	                            crossOrigin: true,
 	                            type: "GET",
-	                            url: "http://localhost:8080/isvalid?type=source&srcdestId=" + src,
+	                            url: "http://localhost:8080/blackbox/isvalid?type=source&srcdestId=" + src,
 	                            cache: false,
 	                            xhrFields: {
 	                                withCredentials: true
@@ -235,7 +235,7 @@ $(document).ready(function() {
 							$.ajax({
 								crossOrigin: true,
 								type: "GET",
-								url: "http://localhost:8080/fetchdbs?destId=" + dst,
+								url: "http://localhost:8080/blackbox/fetchdbs?destId=" + dst,
 								cache: false,
 								xhrFields: {
 									withCredentials: true
@@ -273,7 +273,7 @@ $(document).ready(function() {
 	                        $.ajax({
 	                            crossOrigin: true,
 	                            type: "GET",
-	                            url: "http://localhost:8080/isvalid?type=destination&srcdestId=" + dst,
+	                            url: "http://localhost:8080/blackbox/isvalid?type=destination&srcdestId=" + dst,
 	                            cache: false,
 	                            xhrFields: {
 	                                withCredentials: true
@@ -307,7 +307,7 @@ $(document).ready(function() {
 	                }
 	                $("#destination-form").submit(function(e){
 	                    e.preventDefault();
-	                    var url = 'http://localhost:8080/validate?type=destination&srcdestId=' + destination + "&database_name=" + $('#InputDatabaseName').val() + "&db_username=" + $('#InputUsername').val() + "&db_password=" + $('#InputPassword').val() + "&server_host=" + $('#InputHostname').val() + "&server_port=" + $('#InputPort').val();
+	                    var url = 'http://localhost:8080/blackbox/validate?type=destination&srcdestId=' + destination + "&database_name=" + $('#InputDatabaseName').val() + "&db_username=" + $('#InputUsername').val() + "&db_password=" + $('#InputPassword').val() + "&server_host=" + $('#InputHostname').val() + "&server_port=" + $('#InputPort').val();
 	                    window.open(url, "_blank", 'width=800, height=600, menubar=no, resizable=no, scrollbars=no, status=no, toolbar=no, location=no');
 	                    
 	                    $("#modal-body").show();
@@ -321,7 +321,7 @@ $(document).ready(function() {
             $.ajax({
                 crossOrigin: true,
                 type: "POST",
-                url: "http://localhost:8080/createdatasource",
+                url: "http://localhost:8080/blackbox/createdatasource",
                 cache: false,
                 xhrFields: {
                     withCredentials: true

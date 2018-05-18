@@ -17,8 +17,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.aptus.blackbox.DomainObjects.UrlObject;
-import com.aptus.blackbox.DomainObjects.objects;
+import com.aptus.blackbox.models.UrlObject;
+import com.aptus.blackbox.models.objects;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.JsonObject;
 

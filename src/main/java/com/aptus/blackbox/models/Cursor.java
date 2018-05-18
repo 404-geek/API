@@ -1,4 +1,4 @@
-package com.aptus.blackbox.DomainObjects;
+package com.aptus.blackbox.models;
 
 import java.io.Serializable;
 
