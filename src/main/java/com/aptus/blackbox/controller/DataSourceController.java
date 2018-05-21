@@ -2,12 +2,12 @@ package com.aptus.blackbox.controller;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -23,15 +23,16 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.aptus.blackbox.event.InterruptThread;
-import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.event.InterruptThread;
+import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.index.Parser;
 import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.DestObject;
+import com.aptus.blackbox.models.Endpoint;
 import com.aptus.blackbox.models.SrcObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
@@ -95,7 +96,6 @@ public class DataSourceController extends RESTFetch {
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
-        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				credentials.setCurrConnId(null);
 				System.out.println(srcdestId);
 				srcDestId(type,srcdestId);
@@ -261,7 +261,6 @@ public class DataSourceController extends RESTFetch {
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
-        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				boolean isvalid = false;
 				System.out.println(type+" "+srcDestId);
 				if(type.equals("source")){
@@ -303,7 +302,6 @@ public class DataSourceController extends RESTFetch {
         try {         
             HttpEntity<?> httpEntity;
             if (Utilities.isSessionValid(session, credentials)) {
-        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
                 String url = config.getMongoUrl() + "/credentials/userCredentials/" + credentials.getUserId();
                 System.out.println("DeleteDataSource");
                 System.out.println(url);
@@ -369,11 +367,18 @@ public class DataSourceController extends RESTFetch {
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
     }
 	
-	@RequestMapping(method = RequestMethod.POST, value = "/createdatasource")
-	private ResponseEntity<String> createDataSource(@RequestParam Map<String, String> filteredEndpoints,
+	@RequestMapping(method = RequestMethod.GET, value = "/createdatasource")
+	private ResponseEntity<String> createDataSource(@RequestParam(value = "filteredEndpoints", required=false) Map<String, String> filteredEndpoints,
 			HttpSession session) {
 		ResponseEntity<String> ret = null;
 		try {
+			filteredEndpoints = new HashMap<>();
+			filteredEndpoints.put("filteredendpoints", "{\"endpoints\": [{\n" + 
+					"		\"key\":\"Others\",\n" + 
+					"		\"value\": [\n" + 
+					"			\"Leads\",\n" + 
+					"			\"Accounts\"\n" + 
+					"		]}]}");
 			System.out.println(filteredEndpoints.getClass());
 			System.out.println(filteredEndpoints.get("filteredendpoints") + " " + filteredEndpoints.keySet());
 			HttpHeaders headers = new HttpHeaders();
@@ -384,8 +389,7 @@ public class DataSourceController extends RESTFetch {
 				// if(validateCredentials==null||endPoints==null||refreshToken==null) {
 				// init();
 				// }
-        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
-				String endpnts = "", conId;								
+				String conId;								
 				conId = credentials.getUserId() + "_" + credentials.getCurrSrcName() + "_" + credentials.getCurrDestName() + "_"
 						+ String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
 				Gson gson = new Gson();
@@ -396,9 +400,10 @@ public class DataSourceController extends RESTFetch {
 				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
 						.getAsJsonObject().get("endpoints").getAsJsonArray();
 				ConnObj currobj = new ConnObj();
+				Endpoint endpoint = new Endpoint();
 				for (JsonElement obj : endpoints) {
-					endpnts += obj.getAsString() + ",";
-					currobj.setEndPoints(obj.getAsString());
+					endpoint = gson.fromJson(obj, Endpoint.class);
+					currobj.setEndPoints(endpoint);
 				}
 				currobj.setConnectionId(conId);
 				currobj.setSourceName(credentials.getCurrSrcName());
@@ -407,10 +412,17 @@ public class DataSourceController extends RESTFetch {
 				currobj.setScheduled(schedule);
 				credentials.setCurrConnId(currobj);
 				credentials.setConnectionIds(conId, currobj);
-				endpnts = endpnts.substring(0, endpnts.length() - 1).toLowerCase();
+				
 				JsonObject jsonObj;
 				JsonArray endPointsArray = new JsonArray();
-				endPointsArray.add(endpnts);
+				
+				for(Endpoint end: currobj.getEndPoints()) {
+					JsonObject temp = new JsonObject();
+					temp.addProperty("key",end.getKey());
+					temp.add("value", gson.fromJson(gson.toJson(end.getValue()),JsonArray.class));
+					endPointsArray.add(temp);
+				}
+				
 				JsonArray eachArray = new JsonArray();
 				JsonObject values = new JsonObject();
 				values.addProperty("sourceName", credentials.getCurrSrcName().toLowerCase());

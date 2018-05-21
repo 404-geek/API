@@ -7,7 +7,7 @@ import java.util.List;
 public class ConnObj implements Serializable {
 	private String sourceName,destName,connectionId,scheduled;
 	private long period;
-	private List<String> endPoints=new ArrayList<String>();
+	private List<Endpoint> endPoints=new ArrayList<Endpoint>();
 	public String getSourceName() {
 		return sourceName;
 	}
@@ -26,13 +26,13 @@ public class ConnObj implements Serializable {
 	public void setConnectionId(String connectionId) {
 		this.connectionId = connectionId;
 	}
-	public List<String> getEndPoints() {
+	public List<Endpoint> getEndPoints() {
 		return endPoints;
 	}
-	public void setEndPoints(String endPoint) {
+	public void setEndPoints(Endpoint endPoint) {
 		this.endPoints.add(endPoint);
 	}
-	public void setEndPoints(List<String> endPoint) {
+	public void setEndPoints(List<Endpoint> endPoint) {
 		this.endPoints.clear();
 		this.endPoints.addAll(endPoint);
 	}

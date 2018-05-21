@@ -265,8 +265,6 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		header.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(httpsession, credentials)) {
-				applicationCredentials.getApplicationCred().get(credentials.getUserId())
-						.setLastAccessTime(httpsession.getLastAccessedTime());
 				if (credentials.getCurrConnId().getScheduled().equalsIgnoreCase("true")
 						&& choice.equalsIgnoreCase("export")) {
 					SchedulingObjects schObj = new SchedulingObjects();
