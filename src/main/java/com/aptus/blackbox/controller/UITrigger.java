@@ -1,24 +1,24 @@
 package com.aptus.blackbox.controller;
 
 import java.net.URI;
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
-import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,10 +33,11 @@ import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.index.SchedulingObjects;
+import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.models.ConnObj;
+import com.aptus.blackbox.models.Endpoint;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
@@ -211,8 +212,17 @@ public class UITrigger {
 		        			schObj.setLastPushed(ZonedDateTime.now().toInstant().toEpochMilli());
 		        			for(Entry<String, JsonElement> endpoint:scheduledData.entrySet()) {
 		        				if(endpoint.getValue().isJsonObject()) {
-		        					schObj.setEndPointStatus(endpoint.getKey().toString(), null);
-		        					connObj.setEndPoints(endpoint.getKey());
+		        					Map<String,Status> mp = new HashMap<>();
+		        					Endpoint endp = new Endpoint();
+		        					endp.setKey(endpoint.getKey());
+		        					for(Entry<String, JsonElement>end : endpoint.getValue().getAsJsonObject().entrySet()) {
+		        						if(end.getValue().isJsonObject()) {
+		        							mp.put(end.getKey(), new Status("N.A","N.A"));
+		        							endp.addValue(end.getKey());
+		        						}
+		        					}
+		        					schObj.setEndPointStatus(endpoint.getKey().toString(), mp);
+		        					connObj.setEndPoints(endp);
 		        				}
 		        			}
 		        			connObj.setScheduled("true");

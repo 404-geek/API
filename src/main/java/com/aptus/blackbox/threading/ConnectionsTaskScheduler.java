@@ -3,6 +3,8 @@ package com.aptus.blackbox.threading;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,26 +19,22 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import com.aptus.blackbox.RESTFetch;
+import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PostExecutorComplete;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
-import com.aptus.blackbox.RESTFetch;
-import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.models.SrcObject;
 import com.aptus.blackbox.models.UrlObject;
-import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 @Component
 @Scope("prototype")
 public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
 
-	@Value("${homepage.url}")
-	private String homeUrl;
-	@Value("${base.url}")
-	private String baseUrl;
+	
 	@Value("${access.control.allow.origin}")
 	private String rootUrl;
 	@Autowired
@@ -80,8 +78,12 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     				get(connectionId).setStatus("31");   	
     		for(String endpt:applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().keySet())
     		{
-    			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
-    			get(connectionId).setEndPointStatus(endpt, new Status("31","Running"));
+    			for(String end:applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
+    	    			get(connectionId).getEndPointStatus().get(endpt).keySet()) {
+    				
+    				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
+        			get(connectionId).getEndPointStatus().get(endpt).put(end, new Status("31","Running"));
+    			}    			
     		}
     		applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
         	SrcObject obj = scheduleObjectInfo.getSrcObj();
@@ -162,8 +164,6 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
 		header.add("access-control-allow-origin", rootUrl);
         header.add("access-control-allow-credentials", "true");
     		try {
-    			Gson gson=new Gson();
-    			RestTemplate restTemplate = new RestTemplate();
     			
     			Metering metring = new Metering();
     			metring.setConnId(connectionId);
@@ -171,15 +171,28 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     			metring.setType("Export");
     			metring.setUserId(userId);
     			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMetering(metring);
+    			Map<String,UrlObject> endp = new HashMap<>();
     			for(UrlObject object:endpoints) {
-    				if(scheduleObjectInfo.getEndPointStatus().containsKey(object.getLabel())) {
+    				endp.put(object.getLabel(), object);
+    			}
+    			for(Entry<String, Map<String, Status>> catagory:scheduleObjectInfo.getEndPointStatus().entrySet()) {
+    				for(Entry<String,Status> end:catagory.getValue().entrySet()) {    					
     					System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor");
         				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
-        				endpointsTaskExecutor.setEndpointsTaskExecutor(object, connectionId, userId,Thread.currentThread());
+        				endpointsTaskExecutor.setEndpointsTaskExecutor(endp.get(end.getKey()), connectionId, userId,Thread.currentThread(),catagory.getKey());
         				//Context.getAutowireCapableBeanFactory().autowireBean(endpointsTaskExecutor);
         				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
     				}
     			}
+//    			for(UrlObject object:endpoints) {
+//    				if(scheduleObjectInfo.getEndPointStatus().containsKey(object.getLabel())) {
+//    					System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor");
+//        				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
+//        				endpointsTaskExecutor.setEndpointsTaskExecutor(object, connectionId, userId,Thread.currentThread());
+//        				//Context.getAutowireCapableBeanFactory().autowireBean(endpointsTaskExecutor);
+//        				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
+//    				}
+//    			}
     			return new Status("31","Success");
     		} catch (Exception e) {
     			System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA");

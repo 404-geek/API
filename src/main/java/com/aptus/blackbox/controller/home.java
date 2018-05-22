@@ -1,12 +1,16 @@
 package com.aptus.blackbox.controller;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -57,18 +61,7 @@ public class home extends RESTFetch{
 	@Autowired
 	private Config config;
 	
-	
-	@RequestMapping(value="/blackbox")
-	private ResponseEntity<String> log(@RequestParam("userId") String user,@RequestHeader("abc") String abc)
-	{
-		JsonObject respBody = new JsonObject();
-		respBody.addProperty("id", user);
-		respBody.addProperty("status", "200");
-		respBody.addProperty("header", abc);
 		
-		return ResponseEntity.status(HttpStatus.OK).headers(null).body(respBody.toString());
-	}
-	
 	@RequestMapping(value="/login")
 	private ResponseEntity<String> login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
 	{
@@ -89,17 +82,18 @@ public class home extends RESTFetch{
 				RestTemplate restTemplate = new RestTemplate();
 				ResponseEntity<String> out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
 				JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
+				credentials.setSessionId(user,session.getId());
 //				if(!obj.get("password").toString().equals(pass)) {
 //					respBody.addProperty("id", user);
 //					respBody.addProperty("status", "404");
 //					return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
 //				}
-				existUser(user, "userCredentials");
 				applicationCredentials.setApplicationCred(user, new ScheduleInfo());
 				applicationCredentials.getApplicationCred().get(user).setLastAccessTime(session.getLastAccessedTime());
-				credentials.setSessionId(user,session.getId());
-				getConnectionIds(session);
-				System.out.println(session.getId());
+
+				if(existUser(user, "userCredentials"))
+					getConnectionIds(session);
+								System.out.println(session.getId());
 				respBody.addProperty("id", user);
 				respBody.addProperty("status", "200");
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
@@ -275,10 +269,9 @@ public class home extends RESTFetch{
 		try {
 			System.out.println(session.getId());			
 			if(Utilities.isSessionValid(session,credentials)) {
-				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
-				String url = config.getMongoUrl()+"/credentials/SrcDstlist/srcdestlist";			 
+				String url = config.getMongoUrl()+"/credentials/SrcDstlist/srcdestlist";
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				HttpHeaders header = new HttpHeaders();
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
@@ -312,30 +305,23 @@ public class home extends RESTFetch{
 			if(Utilities.isSessionValid(session,credentials)) {
 				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				JsonObject jobj = new JsonObject();
+				JsonObject catagory = new JsonObject();
 				JsonArray endpoints=new JsonArray();
 				for(UrlObject obj:credentials.getSrcObj().getDataEndPoints()) {
 					endpoints.add(obj.getLabel());
 				}
-//				for(UrlObject obj: credentials.getSrcObj().getImplicitEndpoints()) {
-//					JsonElement strBody = new Gson().fromJson(token(obj, credentials.getSrcToken(), "filterendpoints").getBody(),JsonObject.class);
-//					String path = obj.getData().getKey();
-//					String param = obj.getData().getParam();
-//					String[] elementArr = path.split("::");
-//					for(){
-//						if(strBody==null)
-//							break;
-//						if(element.equalsIgnoreCase("{}")) {
-//							for(JsonElement ele:strBody.getAsJsonArray());{
-//								
-//							}
-//						}
-//						else {
-//							strBody=strBody.getAsJsonObject().get(element);
-//						}
-//					}
-//				}
-				jobj.add("endpoints", endpoints);
+				catagory.add("Others", endpoints);
+		        List<String> list;
+		        Gson gson = new Gson();
+				for(UrlObject obj:credentials.getSrcObj().getImplicitEndpoints()) {
+					ResponseEntity<String> data = token(obj, credentials.getSrcToken(), "filteredEndpoints");					
+					list = new ArrayList<String>();
+					list = Utilities.check(obj.getData(), gson.fromJson(data.getBody(),JsonElement.class), list);
+					catagory.add(obj.getLabel(), gson.fromJson(gson.toJson(list),JsonArray.class));
+				}
+				jobj.add("endpoints", catagory);
 				jobj.addProperty("status", "200");
+				System.out.println(jobj.toString());
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobj.toString());
 			}
 			else
@@ -354,6 +340,7 @@ public class home extends RESTFetch{
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 	
+	
 	@RequestMapping(value="/getconnectionids")
 	private ResponseEntity<String> getConnectionIds(HttpSession session) {
 		String dataSource=null;
@@ -363,7 +350,6 @@ public class home extends RESTFetch{
         headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
-        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				ResponseEntity<String> out = null;
 				RestTemplate restTemplate = new RestTemplate();
 				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));

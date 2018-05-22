@@ -148,17 +148,25 @@ public class DataListeners {
 			SchedulingObjects tempScheduleObj = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
 			System.out.println("UserId is "+userId+" connId is "+connectionId);
 			System.out.println(s+tempScheduleObj.getStatus()+" : "+tempScheduleObj.getMessage());
-			Iterator<Entry<String, Status>> entry=tempScheduleObj.getEndPointStatus().entrySet().iterator();
+			Iterator<Entry<String, Map<String, Status>>> entry=tempScheduleObj.getEndPointStatus().entrySet().iterator();
 			JsonObject connStatus = new JsonObject();
 			JsonObject temp = new JsonObject();
-			JsonObject endpointStatus = new JsonObject();
 			while(entry.hasNext())
 			{
-				Entry<String, Status> e = entry.next();
-				System.out.println(s + e.getKey()+" : "+e.getValue());			
-				endpointStatus.addProperty("status", e.getValue().getStatus());
-				endpointStatus.addProperty("messsage", e.getValue().getMessage());
-				temp.add(e.getKey(), endpointStatus);
+				JsonObject catagoryStatus = new JsonObject();
+				Entry<String, Map<String, Status>> e = entry.next();
+				System.out.println(s + e.getKey()+" : "+e.getValue());
+				Iterator<Entry<String, Status>> itr = e.getValue().entrySet().iterator();
+				System.out.println("loop1");
+				while(itr.hasNext()) {
+					JsonObject endpointStatus = new JsonObject();
+					Entry<String, Status> it = itr.next();
+					endpointStatus.addProperty("status", it.getValue().getStatus());
+					endpointStatus.addProperty("messsage", it.getValue().getMessage());
+					catagoryStatus.add(it.getKey(), endpointStatus);
+					System.out.println("\tloop2");
+				}				
+				temp.add(e.getKey(), catagoryStatus);
 			}
 			String value = new Date(new Timestamp(tempScheduleObj.getNextPush()).getTime())+"";
 			temp.addProperty("Last Succesfully Pushed", new Date(new Timestamp(tempScheduleObj.getLastPushed()).getTime())+"");

@@ -15,7 +15,7 @@ public class SchedulingObjects implements Serializable{
 	private boolean SrcValid,DestValid;
 	private String status,message,DestName,SrcName;
 	private long lastPushed,nextPush,period;
-	private Map<String,Status>endPointStatus = new HashMap<>();
+	private Map<String,Map<String,Status>>endPointStatus = new HashMap<String,Map<String,Status>>();
 	private Metering metering = new Metering();
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
@@ -82,18 +82,19 @@ public class SchedulingObjects implements Serializable{
 	public void setNextPush(long nextPush) {
 		this.nextPush = nextPush;
 	}
-	public Map<String,Status> getEndPointStatus() {
+	public Map<String, Map<String, Status>> getEndPointStatus() {
 		return endPointStatus;
 	}
 	public List<String> getstatus() {
-		List<String> ret = new ArrayList<String>();
-		this.endPointStatus.values().iterator().forEachRemaining(col -> ret.add(col.getStatus()));
+		List<String> ret = new ArrayList<String>();		
+		this.endPointStatus.values().iterator()
+		.forEachRemaining(col -> col.values().iterator().forEachRemaining(cal -> ret.add(cal.getStatus())));		
 		return ret;
 	}
-	public void setEndPointStatus(Map<String,Status> endPointStatus) {
+	public void setEndPointStatus(Map<String, Map<String, Status>> endPointStatus) {
 		this.endPointStatus = endPointStatus;
 	}
-	public void setEndPointStatus(String endPoint,Status endPointStatus) {
+	public void setEndPointStatus(String endPoint,Map<String, Status> endPointStatus) {
 		this.endPointStatus.put(endPoint, endPointStatus);
 	}
 	public long getPeriod() {
