@@ -164,8 +164,8 @@ public class DataSourceController extends RESTFetch {
 					System.out.println(type+" credentials already exist");
 					System.out.println(srcObj+" "+credentials);
 					out = token(srcObj.getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
-					System.out.println("OUt:"+out);
-					System.out.println("OUt:"+out.getStatusCode());
+					//System.out.println("OUt:"+out);
+					//System.out.println("OUt:"+out.getStatusCode());
 					if (out.getStatusCode().is2xxSuccessful()) {
 						System.out.println(type + "tick");
 						Utilities.valid();
@@ -180,6 +180,7 @@ public class DataSourceController extends RESTFetch {
 					}
 					else {
 						String url =  "/authsource";
+						System.out.println("/authsource called");	
 						System.out.println(url);	
 						URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 						headers.setLocation(uri);

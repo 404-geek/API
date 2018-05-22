@@ -673,7 +673,8 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 									System.out.println(jobj);
 									ele = ele.get(jobj).getAsJsonObject();
 								} else {
-									System.out.println(ele.get(jobj));
+									//System.out.println(ele.get(jobj));
+									
 									pData = ele.get(jobj) == null ? null : ele.get(jobj).getAsString();
 									break;
 								}
@@ -860,6 +861,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				if(selectAction) {
 					if(!choice.equalsIgnoreCase("export"))
 						headers=out.getHeaders();
+					System.out.println("************");
 					System.out.println(out.getBody());
 					System.out.println(out.getHeaders().values()+""+out.getHeaders().getContentLength()+"");
 				}

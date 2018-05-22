@@ -67,7 +67,8 @@ public class home extends RESTFetch{
 	{
 		try {
 		
-			System.out.println(user);			
+			System.out.println(user);		
+			System.out.println("/inside login");		
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
 			headers.add("access-control-allow-origin", config.getRootUrl());
@@ -268,7 +269,7 @@ public class home extends RESTFetch{
 			//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 			String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
 			String url;
-			url = config.getMongoUrl()+"/credentials/"+type+"?filterss=" + filter;
+			url = config.getMongoUrl()+"/credentials/"+type+"?filter=" + filter;
 			System.out.println(url);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			HttpHeaders headers = new HttpHeaders();
