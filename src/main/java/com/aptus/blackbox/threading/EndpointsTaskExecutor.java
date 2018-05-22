@@ -53,10 +53,6 @@ import com.google.gson.JsonSyntaxException;
 @Scope("prototype")
 public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	
-	@Value("${homepage.url}")
-	private String homeUrl;
-	@Value("${base.url}")
-	private String baseUrl;
 	@Value("${access.control.allow.origin}")
 	private String rootUrl;
 	
@@ -66,13 +62,14 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	private ApplicationEventPublisher applicationEventPublisher;
 
 	private UrlObject endpoint;
-	private String connectionId,userId;
+	private String connectionId,userId,catagory;
 	private Status result;
 	private SchedulingObjects scheduleObject;	
 	private Connection con = null;
 	private static final Logger LOGGER = LoggerFactory.getLogger(EndpointsTaskExecutor.class);
 	
-	public void setEndpointsTaskExecutor(UrlObject endpoint, String connectionId,String user,Thread parent) {
+	public void setEndpointsTaskExecutor(UrlObject endpoint, String connectionId,String user,Thread parent,String catagory) {
+		this.catagory = catagory;
 		this.endpoint=endpoint;
 		this.connectionId=connectionId;
 		this.userId = user;
@@ -81,10 +78,16 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	
 	public void setResult(Status result) {
 		this.result = result;
-		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setEndPointStatus(endpoint.getLabel(),result);
-		scheduleObject = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
+		
+		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects()
+		.get(connectionId).getEndPointStatus().get(catagory).put(endpoint.getLabel(),result);
+		
+		scheduleObject = applicationCredentials.getApplicationCred().get(userId)
+				.getSchedulingObjects().get(connectionId);
+		
 		for(String e:scheduleObject.getstatus())
 			System.out.println(e);
+		
 		if(!scheduleObject.getstatus().contains("31")) {
 			if(!scheduleObject.getstatus().contains("32")) {
 				long time = ZonedDateTime.now().toInstant().toEpochMilli();
@@ -213,15 +216,14 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 				}
 				uri = UriComponentsBuilder.fromUriString(newurl).build().encode().toUri();
 				out = restTemplate.exchange(uri, method, httpEntity, String.class);
-				System.out.println(gson.fromJson(out.getBody(), JsonObject.class).get("data"));
 				if (out.getBody() == null) {
 					System.out.println("break out.getBody");
 					break;
 				}
-				else if (gson.fromJson(out.getBody(), JsonObject.class).get("data").getAsJsonArray().toString().equals("[]")) {
-					System.out.println("break out.getBody.empty");
-					break;
-				}
+//				else if (gson.fromJson(out.getBody(), JsonObject.class).get("data").getAsJsonArray().toString().equals("[]")) {
+//					System.out.println("break out.getBody.empty");
+//					break;
+//				}
 				
 				mergedData.add(gson.fromJson(out.getBody().toString(), JsonElement.class));
 			}

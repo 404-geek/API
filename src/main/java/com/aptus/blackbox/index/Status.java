@@ -8,6 +8,9 @@ public class Status {
 		this.status=status;
 		this.message=message;
 	}
+	public Status() {
+		// TODO Auto-generated constructor stub
+	}
 	public String getStatus() {
 		return status;
 	}

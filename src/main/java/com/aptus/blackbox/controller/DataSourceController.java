@@ -9,6 +9,8 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -376,7 +378,6 @@ public class DataSourceController extends RESTFetch {
 			filteredEndpoints.put("filteredendpoints", "{\"endpoints\": [{\n" + 
 					"		\"key\":\"Others\",\n" + 
 					"		\"value\": [\n" + 
-					"			\"Leads\",\n" + 
 					"			\"Accounts\"\n" + 
 					"		]}]}");
 			System.out.println(filteredEndpoints.getClass());
@@ -395,7 +396,7 @@ public class DataSourceController extends RESTFetch {
 				Gson gson = new Gson();
 //				String schedule = filteredEndpoints.get("scheduled");
 //				String period = filteredEndpoints.get("period");
-				String schedule = "false";
+				String schedule = "true";
 				String period = "120";
 				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
 						.getAsJsonObject().get("endpoints").getAsJsonArray();
@@ -410,8 +411,10 @@ public class DataSourceController extends RESTFetch {
 				currobj.setDestName(credentials.getCurrDestName());
 				currobj.setPeriod((Integer.parseInt(period)*1000));
 				currobj.setScheduled(schedule);
+				
 				credentials.setCurrConnId(currobj);
-				credentials.setConnectionIds(conId, currobj);
+				System.out.println("DatasourceController:createdatasource\t"+credentials.getCurrConnId().getConnectionId());
+				credentials.setConnectionIds(conId, currobj);	
 				
 				JsonObject jsonObj;
 				JsonArray endPointsArray = new JsonArray();

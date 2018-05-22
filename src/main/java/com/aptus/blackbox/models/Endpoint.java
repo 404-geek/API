@@ -18,5 +18,8 @@ public class Endpoint implements Serializable {
 	public void setValue(List<String> value) {
 		this.value = value;
 	}
+	public void addValue(String value) {
+		this.value.add(value);
+	}
 	
 }

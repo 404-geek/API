@@ -9,6 +9,8 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -86,11 +88,12 @@ public class home extends RESTFetch{
 //					respBody.addProperty("status", "404");
 //					return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
 //				}
-				if(existUser(user, "userCredentials"))
-					getConnectionIds(session);
 				applicationCredentials.setApplicationCred(user, new ScheduleInfo());
 				applicationCredentials.getApplicationCred().get(user).setLastAccessTime(session.getLastAccessedTime());
-				System.out.println(session.getId());
+
+				if(existUser(user, "userCredentials"))
+					getConnectionIds(session);
+								System.out.println(session.getId());
 				respBody.addProperty("id", user);
 				respBody.addProperty("status", "200");
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
@@ -347,7 +350,6 @@ public class home extends RESTFetch{
         headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,credentials)) {
-        		applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				ResponseEntity<String> out = null;
 				RestTemplate restTemplate = new RestTemplate();
 				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
