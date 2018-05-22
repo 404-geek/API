@@ -18,11 +18,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -33,6 +33,7 @@ import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.UrlObject;
+import com.aptus.blackbox.security.ExceptionHandling;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -60,8 +61,7 @@ public class home extends RESTFetch{
 	
 	@Autowired
 	private Config config;
-	
-		
+
 	@RequestMapping(value="/login")
 	private ResponseEntity<String> login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
 	{
@@ -73,8 +73,13 @@ public class home extends RESTFetch{
 			headers.add("access-control-allow-origin", config.getRootUrl());
             headers.add("access-control-allow-credentials", "true");
 			JsonObject respBody = new JsonObject();
-			if(existUser(user,"userInfo")){
+			ResponseEntity<String> ret=null;
+			ret = existUser(user,"userInfo");
+ 			//System.out.println(new Gson().fromJson(existUser(user,"userInfo").getBody(),JsonObject.class).getAsJsonObject().get("code"));
+			if(new Gson().fromJson(ret.getBody(),JsonObject.class).getAsJsonObject().get("code").getAsString().equals("200")){
+				System.out.println("inside login");
 				String url = config.getMongoUrl()+"/credentials/userInfo/"+user;
+				System.out.println(url);
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				HttpHeaders header = new HttpHeaders();
 				// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -91,23 +96,54 @@ public class home extends RESTFetch{
 				applicationCredentials.setApplicationCred(user, new ScheduleInfo());
 				applicationCredentials.getApplicationCred().get(user).setLastAccessTime(session.getLastAccessedTime());
 
-				if(existUser(user, "userCredentials"))
+				if(new Gson().fromJson((existUser(user, "userCredentials").getBody()),JsonObject.class).getAsJsonObject().get("code").getAsString().equals("200"))
 					getConnectionIds(session);
 								System.out.println(session.getId());
 				respBody.addProperty("id", user);
 				respBody.addProperty("status", "200");
+				System.out.println("inside if");
+				//throw new Handling("Some Exception");
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}
 			else{
-				respBody.addProperty("id", user);
+				System.out.println(ret.getBody());
+				/*respBody.addProperty("id", user);
 				respBody.addProperty("status", "404");
-				return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
+				System.out.println(respBody.toString());
+				*/
+				//return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+				return ret;
 			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+		
+	/*	catch (Exception e) {
+			//ExceptionHandling exceptionHandling=new ExceptionHandling()
+			// TODO Auto-generated catch block
+			System.out.println("inside home handling catch");
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.OK).body(null);
+			
+		}*/
+		
+		catch (HttpStatusCodeException e) {
+			
+			System.out.println("Inside login catch");
+			ResponseEntity<String> out = null;
+			e.getStatusCode();
+			
+			ExceptionHandling exceptionhandling=new ExceptionHandling();
+			out = exceptionhandling.clientException(e);
+			System.out.println(out.getBody());
+			//System.out.println(out.getStatusCode().toString());
+			return out;
+			//ResponseEntity.status(HttpStatus.OK).body(null);
+			
+		}
+		
+		
+		
+		//return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 		//store in credentials
 	}
 	
@@ -126,7 +162,7 @@ public class home extends RESTFetch{
 			String userId=params.get("_id");
 			JsonObject respBody = new JsonObject();			
         	headers.add("Content-Type", "application/json");
-			if(existUser(userId,"userInfo")){			
+			if(existUser(userId,"userInfo").getBody().contains("200")){			
 				System.out.println("User ID Exists");
 				respBody.addProperty("id", userId);
 				respBody.addProperty("status", "61");
@@ -223,16 +259,17 @@ public class home extends RESTFetch{
 	 * Takes user_id as input, checks if user already exists and stores true/false accordingly in credentials.
 	 * Return type: void 
 	 */
-	private boolean existUser(String userId,String type) {
+	private ResponseEntity<String> existUser(String userId,String type) {
+		ResponseEntity<String> out = null;
 		try {
 			boolean ret=false;
-			ResponseEntity<String> out = null;
 			credentials.setUserId(userId);
 			RestTemplate restTemplate = new RestTemplate();
 			//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 			String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
 			String url;
-			url = config.getMongoUrl()+"/credentials/"+type+"?filter=" + filter;
+			url = config.getMongoUrl()+"/credentials/"+type+"?filterss=" + filter;
+			System.out.println(url);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			HttpHeaders headers = new HttpHeaders();
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -241,18 +278,47 @@ public class home extends RESTFetch{
             headers.add("access-control-allow-credentials", "true");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
+			System.out.println("inside existuser");
 			System.out.println(out.getBody());
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
 			ret=jobj.get("_returned").getAsInt() == 0 ? false : true;
 			if(type.equalsIgnoreCase("usercredentials"))
 				credentials.setUserExist(ret);
-			return ret;
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("home.index");
+			
+			//System.out.println(ret);
+			JsonObject respBody = new JsonObject();
+			if(ret)
+			{
+				 respBody.addProperty("code", "200");
+				 respBody.addProperty("message", "User found");
+				return ResponseEntity.status(HttpStatus.OK).body(respBody.toString());
+			}
+			else
+			{
+				 respBody.addProperty("code", "404");
+				 respBody.addProperty("message", "User not found");
+				return ResponseEntity.status(HttpStatus.OK).body(respBody.toString());
+			}
 		}
-		return false;
+
+		
+		
+				
+		
+		catch (HttpStatusCodeException e) {
+			
+			System.out.println("Inside exituser catch");
+			e.getStatusCode();
+			
+			ExceptionHandling exceptionhandling=new ExceptionHandling();
+			out = exceptionhandling.clientException(e);
+			//System.out.println(out.getBody());
+			//System.out.println(out.getStatusCode().toString());
+			return out;//ResponseEntity.status(HttpStatus.OK).body(null);
+			
+		}
+		
 	}
 
 	
@@ -260,6 +326,7 @@ public class home extends RESTFetch{
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdest")
 	private ResponseEntity<String> getSrcDest(HttpSession session) {
+		System.out.println("INSIDE /getsrcdst");
 		ResponseEntity<String> s=null;
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -267,6 +334,7 @@ public class home extends RESTFetch{
 		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
 		try {
+			
 			System.out.println(session.getId());			
 			if(Utilities.isSessionValid(session,credentials)) {
 				String name;
@@ -297,6 +365,7 @@ public class home extends RESTFetch{
 	@RequestMapping(value="/filterendpoints")
 	private ResponseEntity<String> filterendpoints(HttpSession session)
 	{
+		System.out.println("INSIDE /filterendpoints");
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
@@ -343,6 +412,7 @@ public class home extends RESTFetch{
 	
 	@RequestMapping(value="/getconnectionids")
 	private ResponseEntity<String> getConnectionIds(HttpSession session) {
+		System.out.println("INSIDE /getconnectionids");
 		String dataSource=null;
 		HttpHeaders headers = new HttpHeaders();			
 		headers.add("Cache-Control", "no-cache");
@@ -369,11 +439,11 @@ public class home extends RESTFetch{
 				ConnObj conObj = new ConnObj();
 				JsonElement data = gson.fromJson(out.getBody(), JsonElement.class);
 				JsonArray srcdestId = data.getAsJsonObject().get("srcdestId").getAsJsonArray();
-				for(JsonElement ele:srcdestId) {
+				/*for(JsonElement ele:srcdestId) {
 					conObj = gson.fromJson(ele, ConnObj.class);
 					credentials.setConnectionIds(conObj.getConnectionId(), conObj);
 				}
-				
+				*/
 			    url = config.getMongoUrl()+"/credentials/SrcDstlist/srcdestlist";
 			    uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				out  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);

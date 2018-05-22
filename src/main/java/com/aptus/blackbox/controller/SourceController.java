@@ -54,6 +54,7 @@ public class SourceController extends RESTFetch {
 
 	@RequestMapping(method = RequestMethod.GET, value = "/authsource")
 	private ResponseEntity<String> source(HttpSession session) {
+		System.out.println("inside authsource");
 		credentials.setCurrSrcValid(false);
 		ResponseEntity<String> ret = null;
 		HttpHeaders headers = new HttpHeaders();
