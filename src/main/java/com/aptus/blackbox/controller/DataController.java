@@ -122,11 +122,22 @@ public class DataController extends RESTFetch {
 				credentials.setDestToken(destCred);
 				DestObject destObj = credentials.getDestObj();
 				Map<String, String> destToken = credentials.getDestToken();
-				if (!checkDB(destToken.get("database_name"), destToken, destObj)) {
+				
+				System.out.println(checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("message").toString());
+				
+				if (!checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("status").getAsBoolean())
+				{
 					credentials.setCurrDestValid(false);
 					System.out.println("Invalid database credentials");
+					URI uri = UriComponentsBuilder.fromUriString("/close.html").build().encode().toUri();
+					headers.setLocation(uri);
+					return new ResponseEntity<String>("", headers, HttpStatus.NOT_FOUND);
+					
 					// invalid
 				}
+				
+				else if(checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("status").getAsBoolean())
+				{
 				credentials.setCurrDestValid(true);
 				System.out.println("Database credentials validated");
 				credentials.setDestToken(destCred);
@@ -134,6 +145,8 @@ public class DataController extends RESTFetch {
 				URI uri = UriComponentsBuilder.fromUriString("/close.html").build().encode().toUri();
 				headers.setLocation(uri);
 				return new ResponseEntity<String>("", headers, HttpStatus.MOVED_PERMANENTLY);
+				
+				}
 			} else {
 				System.out.println("Session expired!");
 				JsonObject respBody = new JsonObject();
@@ -160,7 +173,8 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			// System.out.println("JSONSTRING: "+jsonString);
 
 			PreparedStatement preparedStmt;
-			if (checkDB(destToken.get("database_name"), destToken, destObj)) {
+			System.out.println(checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("message").toString());
+			if (checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("status").getAsBoolean()) {
 				if (con == null || con.isClosed())
 					connection(destToken, destObj);
 				credentials.setCurrDestValid(true);
@@ -215,7 +229,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		return false;
 	}
 
-	public void connection(Map<String, String> destToken, DestObject destObj) throws SQLException {
+	public ResponseEntity<String> connection(Map<String, String> destToken, DestObject destObj) throws SQLException {
 		try {
 
 			System.out.println("DataController-driver: " + destObj.getDrivers());
@@ -224,19 +238,39 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					+ destObj.getDbnameseparator() + destToken.get("database_name");
 			System.out.println(url);
 			con = DriverManager.getConnection(url, destToken.get("db_username"), destToken.get("db_password"));
-		} catch (SQLException e) {
+		} 
+		
+		
+		catch (SQLException  e) {
+			
+			System.out.println("inside connection sql exception");
+			
+			JsonObject respBody = new JsonObject();
+            respBody.addProperty("code", "0");
+            respBody.addProperty("message", "connction error in client database");
+            System.out.println(e.getMessage());
+            System.out.println(respBody.toString());
+            //return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			
+			
+			
+			return ResponseEntity.status(HttpStatus.OK).body(respBody.toString());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (Exception e) {
+			
+		}
+		
+		catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return ResponseEntity.status(HttpStatus.OK).headers(null).body(null);
 	}
 
 
-	public boolean checkDB(String dbase, Map<String, String> destToken, DestObject destObj) throws SQLException {
-
+	public JsonObject checkDB(String dbase, Map<String, String> destToken, DestObject destObj) throws SQLException {
+		JsonObject resbody = new JsonObject();
 		try {
+			
 			if (con == null || con.isClosed())
 				connection(destToken, destObj);
 			Statement stmt = con.createStatement();
@@ -246,18 +280,34 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			ResultSet res = stmt.executeQuery(query);
 			if (res.next()) {
 				con.close();
-				return true;
+				
+				resbody.addProperty("status", true);
+				resbody.addProperty("message", "conncetion success");
+				resbody.addProperty("code", "200");
+				return resbody;
 			}
 			con.close();
-			return false;
+
 		} catch (SQLException e) {
+			
+			System.out.println(e.getErrorCode());
+			System.out.println("check clientdatabase");
+			resbody.addProperty("status", false);
+			resbody.addProperty("message", "conncetion failed to client database");
+			resbody.addProperty("code", "0");
+			return resbody;
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (Exception e) {
+			
+			resbody.addProperty("status", false);
+			resbody.addProperty("message", "conncetion failed");
+			resbody.addProperty("code", "500");
+			return resbody;
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
-		return false;
+		return resbody;
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
@@ -753,7 +803,8 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 									System.out.println(jobj);
 									ele = ele.get(jobj).getAsJsonObject();
 								} else {
-									System.out.println(ele.get(jobj));
+									//System.out.println(ele.get(jobj));
+									
 									pData = ele.get(jobj) == null ? null : ele.get(jobj).getAsString();
 									break;
 								}
@@ -941,6 +992,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				if(selectAction) {
 					if(!choice.equalsIgnoreCase("export"))
 						headers=out.getHeaders();
+					System.out.println("************");
 					System.out.println(out.getBody());
 					System.out.println(out.getHeaders().values()+""+out.getHeaders().getContentLength()+"");
 				}

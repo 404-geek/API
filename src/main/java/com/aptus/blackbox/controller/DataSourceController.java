@@ -1,6 +1,7 @@
 package com.aptus.blackbox.controller;
 
 import java.net.URI;
+import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -22,8 +23,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import java.sql.*;
 
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
@@ -36,6 +39,7 @@ import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.DestObject;
 import com.aptus.blackbox.models.Endpoint;
 import com.aptus.blackbox.models.SrcObject;
+import com.aptus.blackbox.security.ExceptionHandling;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -92,6 +96,7 @@ public class DataSourceController extends RESTFetch {
 		
 		
 		ResponseEntity<String> out = null;
+		System.out.println("inside validate");
 		int res = 0;
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -116,7 +121,7 @@ public class DataSourceController extends RESTFetch {
 					filter = "{\"_id\":{\"$regex\":\".*"+name.toLowerCase() + ".*\"}}";
 				}						
 				url = config.getMongoUrl()+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
-				 
+				System.out.println("************************url********");
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();				
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
@@ -141,7 +146,10 @@ public class DataSourceController extends RESTFetch {
 				respBody.addProperty("status", "33");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
 			}
-		} catch (Exception e) {
+		
+		}		
+		
+		catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("home.verifyuser");
 		}
@@ -150,8 +158,11 @@ public class DataSourceController extends RESTFetch {
 
 	private ResponseEntity<String> initialiser(String type,String database_name,String db_username,String db_password,String server_host,String server_port) {
 		//add destination fetch and validation
+		System.out.println("inside initialiser function");
 		ResponseEntity<String> out = null;
 		HttpHeaders headers = new HttpHeaders();
+		
+		//System.out.println("inside initialiser");
 		headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
@@ -164,8 +175,8 @@ public class DataSourceController extends RESTFetch {
 					System.out.println(type+" credentials already exist");
 					System.out.println(srcObj+" "+credentials);
 					out = token(srcObj.getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
-					System.out.println("OUt:"+out);
-					System.out.println("OUt:"+out.getStatusCode());
+					//System.out.println("OUt:"+out);
+					System.out.println("Out status code :"+out.getStatusCode());
 					if (out.getStatusCode().is2xxSuccessful()) {
 						System.out.println(type + "tick");
 						Utilities.valid();
@@ -180,6 +191,7 @@ public class DataSourceController extends RESTFetch {
 					}
 					else {
 						String url =  "/authsource";
+						System.out.println("/authsource called");	
 						System.out.println(url);	
 						URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 						headers.setLocation(uri);
@@ -217,7 +229,27 @@ public class DataSourceController extends RESTFetch {
 				out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
 			}
 			return out;
-		} catch (Exception e) {
+			
+		} 
+		
+
+		catch (HttpStatusCodeException e) {
+			
+			System.out.println("Inside initialiser catch");
+			e.getStatusCode();
+			
+			ExceptionHandling exceptionhandling=new ExceptionHandling();
+			out = exceptionhandling.clientException(e);
+			//System.out.println(out.getBody());
+			//System.out.println(out.getStatusCode().toString());
+			return out;//ResponseEntity.status(HttpStatus.OK).body(null);
+			
+		}
+		
+		
+		
+		
+		catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("home.init");
 		}
@@ -227,6 +259,7 @@ public class DataSourceController extends RESTFetch {
 	private void fetchSrcCred() {
 		ResponseEntity<String> out = null;
 		int res = 0;
+		System.out.println("inside fetchSrcCred");
 		String userid = credentials.getUserId(), appId;
 		try {
 			appId = credentials.getCurrSrcName();
@@ -250,7 +283,25 @@ public class DataSourceController extends RESTFetch {
 				credentials.setSrcToken(key,value);
 			}
 			System.out.println(credentials.getSrcToken().keySet()+" : "+credentials.getSrcToken().values());
-		} catch (Exception e) {
+		} 
+		
+		catch (HttpStatusCodeException e) {
+			
+			System.out.println("Inside fetchSrcCred catch");
+			ResponseEntity<String> out1 = null;
+			e.getStatusCode();
+			
+			ExceptionHandling exceptionhandling=new ExceptionHandling();
+			out = exceptionhandling.clientException(e);
+			System.out.println(out.getBody());
+			//System.out.println(out.getStatusCode().toString());
+			//ResponseEntity.status(HttpStatus.OK).body(null);
+			
+		}
+		
+		
+		
+		catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("home.fetch");
 		}

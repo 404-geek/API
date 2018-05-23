@@ -14,11 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
+import com.aptus.blackbox.security.ExceptionHandling;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.JsonObject;
 
@@ -27,6 +29,8 @@ public abstract class RESTFetch extends SourceAuthorization {
 	protected ResponseEntity<String> token(UrlObject object,Map<String, String> values,String message) {
 		ResponseEntity<String> out = null;
 		try {
+			
+			System.out.println("inside token function");
 			RestTemplate restTemplate = new RestTemplate();
 			String url = buildUrl(object, values,message);
 			System.out.println(message+" "+object.getLabel() + " = " + url);
@@ -49,18 +53,52 @@ public abstract class RESTFetch extends SourceAuthorization {
 			}
 			HttpMethod method = (object.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
 			System.out.println(message+" "+"Method : "+method);
+			url = "https://api.linkedin.com/v1/people/~";
+			System.out.println("url :" + url.toString());
+			System.out.println("********");
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			System.out.println(message+" "+"----------------------------"+uri);
 			out = restTemplate.exchange(uri, method, httpEntity, String.class);
-			//System.out.println(out.getBody());
+			System.out.println("token status code" + out.getStatusCode());
+			System.out.println(out.getBody());
 		} 
+		
+		
+
+		
+		
+		
 		catch(HttpClientErrorException e) {
+			System.out.println("inside token catch");
 			System.out.println(e.getMessage());
-			if(!e.getMessage().startsWith("2")) {
+			
+			System.out.println(e.getStatusCode());
+			
+			ExceptionHandling exceptionhandling=new ExceptionHandling();
+			out = exceptionhandling.clientException(e);
+			//System.out.println(out.getBody());
+			//System.out.println(out.getStatusCode().toString());
+			//ResponseEntity.status(HttpStatus.OK).body(null);
+			
+			/*if(!e.getMessage().startsWith("2")) {
 				out =  new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-			}
+			}*/
+			
+			JsonObject respBody = new JsonObject();
+			System.out.println(out);
+			System.out.println("token status code" + out.getStatusCode());
+			
+			respBody.addProperty("code", "200");
+			respBody.addProperty("message", "User found");
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respBody.toString());
+			
+			
+
+			//return out;
 		}
 		catch (Exception e) {
+			
+			System.out.println("inside token function exception");
 			e.printStackTrace();
 
 			System.out.println("\nutilities.token");
