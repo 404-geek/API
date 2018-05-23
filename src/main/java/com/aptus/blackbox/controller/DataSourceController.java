@@ -104,6 +104,8 @@ public class DataSourceController extends RESTFetch {
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
+			System.out.println("inside validate function");
+			
 			if(Utilities.isSessionValid(session,credentials)) {
 				credentials.setCurrConnId(null);
 				System.out.println(srcdestId);

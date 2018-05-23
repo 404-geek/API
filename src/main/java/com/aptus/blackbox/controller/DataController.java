@@ -638,7 +638,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					}
 				}
 			}
-			for (UrlObject object : endpoints) {
+			/*for (UrlObject object : endpoints) {
 				
 				System.out.println("LABEL1" + object.getLabel());
 				boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
@@ -663,7 +663,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					}
 					endPoint.add(object.getLabel(),datum);
 				}
-			}
+			}*/
 			metring.setTotalRowsFetched(totalRows);
 			if(!choice.equalsIgnoreCase("view")) {
 				applicationEventPublisher.publishEvent(metring);
