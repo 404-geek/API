@@ -8,7 +8,7 @@ public class UrlObject implements Serializable {
 	private String label,type,url,method,responseString,responseBodyType,Authorization;
 	private List<objects> params,header,responseBody,signature;
 	private List<Cursor> pagination;
-	private String data;	
+	private String data,catagory;	
 	
 	public List<objects> getSignature() {
 		return signature;
@@ -87,6 +87,12 @@ public class UrlObject implements Serializable {
 	}
 	public void setData(String data) {
 		this.data = data;
+	}
+	public String getCatagory() {
+		return catagory;
+	}
+	public void setCatagory(String catagory) {
+		this.catagory = catagory;
 	}
 	
 }

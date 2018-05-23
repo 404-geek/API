@@ -11,6 +11,8 @@ import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 
 
 
@@ -55,5 +57,8 @@ private static final Logger LOGGER = LoggerFactory.getLogger(ThreadPoolTaskConfi
         return eventMulticaster;
     }
     
+    
+
+
 
 }

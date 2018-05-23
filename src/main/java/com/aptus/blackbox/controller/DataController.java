@@ -122,11 +122,22 @@ public class DataController extends RESTFetch {
 				credentials.setDestToken(destCred);
 				DestObject destObj = credentials.getDestObj();
 				Map<String, String> destToken = credentials.getDestToken();
-				if (!checkDB(destToken.get("database_name"), destToken, destObj)) {
+				
+				System.out.println(checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("message").toString());
+				
+				if (!checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("status").getAsBoolean())
+				{
 					credentials.setCurrDestValid(false);
 					System.out.println("Invalid database credentials");
+					URI uri = UriComponentsBuilder.fromUriString("/close.html").build().encode().toUri();
+					headers.setLocation(uri);
+					return new ResponseEntity<String>("", headers, HttpStatus.NOT_FOUND);
+					
 					// invalid
 				}
+				
+				else if(checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("status").getAsBoolean())
+				{
 				credentials.setCurrDestValid(true);
 				System.out.println("Database credentials validated");
 				credentials.setDestToken(destCred);
@@ -134,6 +145,8 @@ public class DataController extends RESTFetch {
 				URI uri = UriComponentsBuilder.fromUriString("/close.html").build().encode().toUri();
 				headers.setLocation(uri);
 				return new ResponseEntity<String>("", headers, HttpStatus.MOVED_PERMANENTLY);
+				
+				}
 			} else {
 				System.out.println("Session expired!");
 				JsonObject respBody = new JsonObject();
@@ -160,7 +173,8 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			// System.out.println("JSONSTRING: "+jsonString);
 
 			PreparedStatement preparedStmt;
-			if (checkDB(destToken.get("database_name"), destToken, destObj)) {
+			System.out.println(checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("message").toString());
+			if (checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("status").getAsBoolean()) {
 				if (con == null || con.isClosed())
 					connection(destToken, destObj);
 				credentials.setCurrDestValid(true);
@@ -215,7 +229,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		return false;
 	}
 
-	public void connection(Map<String, String> destToken, DestObject destObj) throws SQLException {
+	public ResponseEntity<String> connection(Map<String, String> destToken, DestObject destObj) throws SQLException {
 		try {
 
 			System.out.println("DataController-driver: " + destObj.getDrivers());
@@ -224,19 +238,39 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					+ destObj.getDbnameseparator() + destToken.get("database_name");
 			System.out.println(url);
 			con = DriverManager.getConnection(url, destToken.get("db_username"), destToken.get("db_password"));
-		} catch (SQLException e) {
+		} 
+		
+		
+		catch (SQLException  e) {
+			
+			System.out.println("inside connection sql exception");
+			
+			JsonObject respBody = new JsonObject();
+            respBody.addProperty("code", "0");
+            respBody.addProperty("message", "connction error in client database");
+            System.out.println(e.getMessage());
+            System.out.println(respBody.toString());
+            //return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			
+			
+			
+			return ResponseEntity.status(HttpStatus.OK).body(respBody.toString());
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (Exception e) {
+			
+		}
+		
+		catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return ResponseEntity.status(HttpStatus.OK).headers(null).body(null);
 	}
 
 
-	public boolean checkDB(String dbase, Map<String, String> destToken, DestObject destObj) throws SQLException {
-
+	public JsonObject checkDB(String dbase, Map<String, String> destToken, DestObject destObj) throws SQLException {
+		JsonObject resbody = new JsonObject();
 		try {
+			
 			if (con == null || con.isClosed())
 				connection(destToken, destObj);
 			Statement stmt = con.createStatement();
@@ -246,18 +280,34 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			ResultSet res = stmt.executeQuery(query);
 			if (res.next()) {
 				con.close();
-				return true;
+				
+				resbody.addProperty("status", true);
+				resbody.addProperty("message", "conncetion success");
+				resbody.addProperty("code", "200");
+				return resbody;
 			}
 			con.close();
-			return false;
+
 		} catch (SQLException e) {
+			
+			System.out.println(e.getErrorCode());
+			System.out.println("check clientdatabase");
+			resbody.addProperty("status", false);
+			resbody.addProperty("message", "conncetion failed to client database");
+			resbody.addProperty("code", "0");
+			return resbody;
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		} catch (Exception e) {
+			
+			resbody.addProperty("status", false);
+			resbody.addProperty("message", "conncetion failed");
+			resbody.addProperty("code", "500");
+			return resbody;
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
-		return false;
+		return resbody;
 	}
 	
 	
@@ -328,6 +378,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		header.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(httpsession, credentials)) {
+				System.out.println(credentials.getCurrConnId() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
 				if (credentials.getCurrConnId().getScheduled().equalsIgnoreCase("true")
 						&& choice.equalsIgnoreCase("export")) {
 					SchedulingObjects schObj = new SchedulingObjects();
@@ -343,9 +394,9 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					for (Endpoint endpoint : credentials.getCurrConnId().getEndPoints()) {
 						Map<String,Status> sat = new HashMap<>();
 						for(String end :endpoint.getValue()) {
-							sat.put(end, new Status("aaoiv", "message"));
+							sat.put(end, null);
 						}
-						schObj.setEndPointStatus(endpoint.getKey(), sat);
+						schObj.setEndPointStatus(endpoint.getName(), sat);
 					}
 					if (applicationCredentials.getApplicationCred().keySet().contains(credentials.getUserId())) {
 						applicationCredentials.getApplicationCred().get(credentials.getUserId())
@@ -509,13 +560,92 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			metring.setTime(new Date()+"");
 			metring.setType(choice);
 			metring.setUserId(credentials.getUserId());
+			
+			Map<String,List<UrlObject>> endp = new HashMap<>();
+			for(UrlObject object:endpoints) {
+				if(endp.containsKey(object.getCatagory())) {
+					endp.get(object.getCatagory()).add(object);
+				}
+				else {
+					List<UrlObject> lst = new ArrayList<>();
+					lst.add(object);
+    				endp.put(object.getCatagory(), lst);
+				}
+			}
+			
+			for(Endpoint endpnt : credentials.getCurrConnId().getEndPoints()) {
+				if(endpnt.getName().equalsIgnoreCase("others")) {
+					for(UrlObject object:endp.get(endpnt.getName())) {
+						if(endpnt.getValue().contains(object.getLabel())){
+							System.out.println("LABEL1" + object.getLabel());
+							boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
+							System.out.println(value + " " + object.getLabel().toLowerCase());
+							
+							if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
+								
+								Map<JsonElement,Integer> data1 = paginate(choice,object);
+								
+								Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
+								JsonElement datum=entry.getKey();
+								Integer rows=entry.getValue();
+								
+								if(choice.equalsIgnoreCase("view")) {
+									if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
+										success=false;
+									}
+								}
+								else {
+									totalRows+=rows;
+									metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+								}
+								endPoint.add(object.getLabel(),datum);
+							}
+						}
+					}
+				}
+				else {
+					UrlObject object = endp.get(endpnt.getName()).get(0);
+					for(String endpntLable:endpnt.getValue()) {
+						object.setLabel(endpntLable);
+						Map<String,String> ne = new HashMap<>();
+						ne.put(endpnt.getName(), endpntLable);
+						object.setUrl(url(object.getUrl(), ne));
+						System.out.println("LABEL1" + object.getLabel());
+						boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
+						System.out.println(value + " " + object.getLabel().toLowerCase());
+						
+						if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
+							
+							Map<JsonElement,Integer> data1 = paginate(choice,object);
+							
+							Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
+							JsonElement datum=entry.getKey();
+							Integer rows=entry.getValue();
+							
+							if(choice.equalsIgnoreCase("view")) {
+								if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
+									success=false;
+								}
+							}
+							else {
+								totalRows+=rows;
+								metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+							}
+							endPoint.add(object.getLabel(),datum);
+						}
+					}
+				}
+			}
 			for (UrlObject object : endpoints) {
+				
 				System.out.println("LABEL1" + object.getLabel());
 				boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
 				System.out.println(value + " " + object.getLabel().toLowerCase());
+				
 				if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
 					
 					Map<JsonElement,Integer> data1 = paginate(choice,object);
+					
 					Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
 					JsonElement datum=entry.getKey();
 					Integer rows=entry.getValue();
@@ -864,7 +994,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		try {
 			boolean selectAction = false;
 			JsonElement respBody = new JsonObject();
-			System.out.println(credentials.getCurrConnId());
+			System.out.println(credentials.getCurrConnId() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
 			if (Utilities.isSessionValid(httpsession, credentials)) {
 				applicationCredentials.getApplicationCred().get(credentials.getUserId())
 						.setLastAccessTime(httpsession.getLastAccessedTime());
@@ -916,6 +1046,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				currConnId.setPeriod(credentials.getConnectionIds(connId).getPeriod());
 				currConnId.setScheduled(credentials.getConnectionIds(connId).getScheduled());
 				credentials.setConnectionIds(connId, currConnId);
+				credentials.setCurrConnId(currConnId);
 				if(selectAction) {
 					if(!choice.equalsIgnoreCase("export"))
 						headers=out.getHeaders();
