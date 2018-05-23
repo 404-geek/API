@@ -141,11 +141,13 @@ public class DataController extends RESTFetch {
 				credentials.setCurrDestValid(true);
 				System.out.println("Database credentials validated");
 				credentials.setDestToken(destCred);
+				JsonObject jobject = new JsonObject();
+				jobject.addProperty("isvalid",credentials.isCurrDestValid());
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobject.toString());
 				//String url = config.getHomeUrl();
-				URI uri = UriComponentsBuilder.fromUriString("/close.html").build().encode().toUri();
-				headers.setLocation(uri);
-				return new ResponseEntity<String>("", headers, HttpStatus.MOVED_PERMANENTLY);
-				
+//				URI uri = UriComponentsBuilder.fromUriString("/close.html").build().encode().toUri();
+//				headers.setLocation(uri);
+//				return new ResponseEntity<String>("", headers, HttpStatus.MOVED_PERMANENTLY);				
 				}
 			} else {
 				System.out.println("Session expired!");
