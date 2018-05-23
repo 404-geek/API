@@ -960,7 +960,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 	
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection")
-	private ResponseEntity<String> checkConnection(@RequestParam("choice") String choice,
+	public ResponseEntity<String> checkConnection(@RequestParam("choice") String choice,
 			@RequestParam("connId") String connId, HttpSession httpsession) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
