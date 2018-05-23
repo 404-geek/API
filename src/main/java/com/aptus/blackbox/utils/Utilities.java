@@ -3,6 +3,8 @@ package com.aptus.blackbox.utils;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
+
 import javax.servlet.http.HttpSession;
 
 import org.springframework.http.HttpEntity;
@@ -52,6 +54,34 @@ public class Utilities {
         }
         return list;
     }	
+	public static List<String> checkByPath(String path[],final int pos, JsonElement jsonElement, List<String> list) {
+
+		if (jsonElement.isJsonObject()) {
+
+//			System.out.println("All keys");
+//			jsonElement.getAsJsonObject().entrySet().forEach(e -> System.out.println(e.getKey()));
+
+			Entry<String, JsonElement> entry = jsonElement.getAsJsonObject().entrySet().stream()
+					.filter(e -> e.getKey().equals(path[pos])).findFirst().orElse(null);
+	//		System.out.println("k=" + entry.getKey());
+			if (entry == null)
+				return list;
+				
+
+			if (pos == path.length - 1) {
+				list.add(entry.getValue().getAsString());
+				return list;
+			}
+			return checkByPath(path, pos + 1, entry.getValue(), list);
+
+		} else if (jsonElement.isJsonArray()) {
+			for (JsonElement jsonElement1 : jsonElement.getAsJsonArray()) {
+				list = checkByPath(path, pos , jsonElement1, list);
+			}
+		}
+		return list;
+	}
+
 	public static boolean postpatchMetaData(JsonObject body, String type, String method,String userId,String mongoUrl) {
 		try {
 

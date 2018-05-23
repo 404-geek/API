@@ -259,6 +259,64 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		}
 		return false;
 	}
+	
+	
+	@RequestMapping(method = RequestMethod.GET, value = "/getInfoEndpoints")
+	private void getInfoEndpoints(){
+		ResponseEntity<String> ret = null;
+		HttpHeaders header = new HttpHeaders();
+		header.add("Cache-Control", "no-cache");
+		header.add("access-control-allow-origin", config.getRootUrl());
+		header.add("access-control-allow-credentials", "true");
+	
+			try {
+				RestTemplate restTemplate = new RestTemplate();
+				Gson gson = new Gson();
+				List<UrlObject> infoEndpoints = credentials.getSrcObj().getInfoEndpoints();
+				HttpMethod method;
+				for(UrlObject infoEndpoint:infoEndpoints) {
+					
+					String url = buildUrl(infoEndpoint, credentials.getSrcToken(),credentials.getUserId()+"getInfoEndpoints");
+					System.out.println(url);
+					URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+					
+					HttpHeaders headers = buildHeader(infoEndpoint, credentials.getSrcToken(),credentials.getUserId()+"getInfoEndpoints");
+					HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
+					
+					if (!infoEndpoint.getResponseBody().isEmpty()) {
+						MultiValueMap<String, String> preBody = buildBody(infoEndpoint, credentials.getSrcToken(),"getInfoEndpoints");
+						Object postBody=null;
+						for(objects head:infoEndpoint.getHeader())
+						{
+							if(head.getKey().equalsIgnoreCase("content-type")) {
+								postBody=bodyBuilder(head.getValue(),preBody,"getInfoEndpoints");
+								break;
+							}
+						}
+						httpEntity = new HttpEntity<Object>(postBody, headers);
+					} else {
+						httpEntity = new HttpEntity<Object>(headers);
+					}
+					
+					method = (infoEndpoint.getMethod() == "GET") ? HttpMethod.GET : HttpMethod.POST;
+					ret = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
+					List<String> list = new ArrayList<String>();
+					JsonElement element = new Gson().fromJson(ret.getBody(), JsonElement.class);
+					String arr[] = infoEndpoint.getData().split("::");
+					list = Utilities.checkByPath(arr, 0, element, list);
+					System.out.println(infoEndpoint.getLabel()+" : "+list);
+					
+				}
+			} catch (RestClientException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+		
+	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
 	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,
