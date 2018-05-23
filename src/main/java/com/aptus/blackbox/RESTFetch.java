@@ -53,7 +53,7 @@ public abstract class RESTFetch extends SourceAuthorization {
 			}
 			HttpMethod method = (object.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
 			System.out.println(message+" "+"Method : "+method);
-			url = "https://api.linkedin.com/v1/people/~";
+			//url = "https://api.linkedin.com/v1/people/~";
 			System.out.println("url :" + url.toString());
 			System.out.println("********");
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();

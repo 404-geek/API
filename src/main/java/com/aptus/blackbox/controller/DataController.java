@@ -578,12 +578,12 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			for(Endpoint endpnt : credentials.getCurrConnId().getEndPoints()) {
 				if(endpnt.getName().equalsIgnoreCase("others")) {
 					for(UrlObject object:endp.get(endpnt.getName())) {
+						
+						System.out.println("LABEL1" + object.getLabel());
+						boolean value = endpnt.getValue().contains(object.getLabel());
+						System.out.println(value + " " + object.getLabel().toLowerCase());
+						
 						if(endpnt.getValue().contains(object.getLabel())){
-							System.out.println("LABEL1" + object.getLabel());
-							boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
-							System.out.println(value + " " + object.getLabel().toLowerCase());
-							
-							if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
 								
 								Map<JsonElement,Integer> data1 = paginate(choice,object);
 								
@@ -602,7 +602,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 								}
 								endPoint.add(object.getLabel(),datum);
 							}
-						}
+						
 					}
 				}
 				else {
@@ -613,57 +613,57 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 						ne.put(endpnt.getName(), endpntLable);
 						object.setUrl(url(object.getUrl(), ne));
 						System.out.println("LABEL1" + object.getLabel());
-						boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
+						boolean value = endpnt.getValue().contains(object.getLabel());
 						System.out.println(value + " " + object.getLabel().toLowerCase());
 						
-						if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
-							
-							Map<JsonElement,Integer> data1 = paginate(choice,object);
-							
-							Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
-							JsonElement datum=entry.getKey();
-							Integer rows=entry.getValue();
-							
-							if(choice.equalsIgnoreCase("view")) {
-								if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
-									success=false;
+						if(endpnt.getValue().contains(object.getLabel())){
+								
+								Map<JsonElement,Integer> data1 = paginate(choice,object);
+								
+								Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
+								JsonElement datum=entry.getKey();
+								Integer rows=entry.getValue();
+								
+								if(choice.equalsIgnoreCase("view")) {
+									if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
+										success=false;
+									}
 								}
+								else {
+									totalRows+=rows;
+									metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+								}
+								endPoint.add(object.getLabel(),datum);
 							}
-							else {
-								totalRows+=rows;
-								metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
-							}
-							endPoint.add(object.getLabel(),datum);
-						}
 					}
 				}
 			}
-			for (UrlObject object : endpoints) {
-				
-				System.out.println("LABEL1" + object.getLabel());
-				boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
-				System.out.println(value + " " + object.getLabel().toLowerCase());
-				
-				if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
-					
-					Map<JsonElement,Integer> data1 = paginate(choice,object);
-					
-					Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
-					JsonElement datum=entry.getKey();
-					Integer rows=entry.getValue();
-					
-					if(choice.equalsIgnoreCase("view")) {
-						if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
-							success=false;
-						}
-					}
-					else {
-						totalRows+=rows;
-						metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
-					}
-					endPoint.add(object.getLabel(),datum);
-				}
-			}
+//			for (UrlObject object : endpoints) {
+//				
+//				System.out.println("LABEL1" + object.getLabel());
+//				boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
+//				System.out.println(value + " " + object.getLabel().toLowerCase());
+//				
+//				if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
+//					
+//					Map<JsonElement,Integer> data1 = paginate(choice,object);
+//					
+//					Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
+//					JsonElement datum=entry.getKey();
+//					Integer rows=entry.getValue();
+//					
+//					if(choice.equalsIgnoreCase("view")) {
+//						if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
+//							success=false;
+//						}
+//					}
+//					else {
+//						totalRows+=rows;
+//						metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+//					}
+//					endPoint.add(object.getLabel(),datum);
+//				}
+//			}
 			metring.setTotalRowsFetched(totalRows);
 			if(!choice.equalsIgnoreCase("view")) {
 				applicationEventPublisher.publishEvent(metring);
