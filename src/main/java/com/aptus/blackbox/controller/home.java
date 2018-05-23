@@ -356,6 +356,24 @@ public class home extends RESTFetch{
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
 			}
 		}
+		
+		
+		catch (HttpStatusCodeException e) {
+			
+			System.out.println("Inside getsrcdest catch");
+			ResponseEntity<String> out = null;
+			e.getStatusCode();
+			
+			ExceptionHandling exceptionhandling=new ExceptionHandling();
+			out = exceptionhandling.clientException(e);
+			System.out.println(out.getBody());
+			//System.out.println(out.getStatusCode().toString());
+			return out;
+			//ResponseEntity.status(HttpStatus.OK).body(null);
+			
+		}
+		
+		
 		catch(Exception e) {
 			e.printStackTrace();
 		}
