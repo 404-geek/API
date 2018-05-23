@@ -268,7 +268,7 @@ public class home extends RESTFetch{
 			//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 			String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
 			String url;
-			url = config.getMongoUrl()+"/credentials/"+type+"?filterss=" + filter;
+			url = config.getMongoUrl()+"/credentials/"+type+"?filters=" + filter;
 			System.out.println(url);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			HttpHeaders headers = new HttpHeaders();
@@ -374,19 +374,27 @@ public class home extends RESTFetch{
 			if(Utilities.isSessionValid(session,credentials)) {
 				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				JsonObject jobj = new JsonObject();
-				JsonObject catagory = new JsonObject();
+				JsonArray catagory = new JsonArray();
+				JsonObject temp = new JsonObject();
 				JsonArray endpoints=new JsonArray();
 				for(UrlObject obj:credentials.getSrcObj().getDataEndPoints()) {
 					endpoints.add(obj.getLabel());
 				}
-				catagory.add("Others", endpoints);
+				temp.add("value", endpoints);
+				temp.addProperty("name", "others");
+				temp.addProperty("key", "Others");
+				catagory.add(temp);
 		        List<String> list;
 		        Gson gson = new Gson();
 				for(UrlObject obj:credentials.getSrcObj().getImplicitEndpoints()) {
+					temp = new JsonObject();
 					ResponseEntity<String> data = token(obj, credentials.getSrcToken(), "filteredEndpoints");					
 					list = new ArrayList<String>();
 					list = Utilities.check(obj.getData(), gson.fromJson(data.getBody(),JsonElement.class), list);
-					catagory.add(obj.getLabel(), gson.fromJson(gson.toJson(list),JsonArray.class));
+					temp.add("value", gson.fromJson(gson.toJson(list),JsonArray.class));
+					temp.addProperty("name", obj.getCatagory());
+					temp.addProperty("key", obj.getLabel());
+					catagory.add(temp);
 				}
 				jobj.add("endpoints", catagory);
 				jobj.addProperty("status", "200");

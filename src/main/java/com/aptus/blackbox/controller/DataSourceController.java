@@ -378,7 +378,8 @@ public class DataSourceController extends RESTFetch {
 		try {
 			filteredEndpoints = new HashMap<>();
 			filteredEndpoints.put("filteredendpoints", "{\"endpoints\": [{\n" + 
-					"		\"key\":\"Others\",\n" + 
+					"		\"name\":\"module_api_name\",\n" + 
+					"		\"key\":\"modules\",\n" +
 					"		\"value\": [\n" + 
 					"			\"Accounts\"\n" + 
 					"		]}]}");
@@ -423,7 +424,7 @@ public class DataSourceController extends RESTFetch {
 				
 				for(Endpoint end: currobj.getEndPoints()) {
 					JsonObject temp = new JsonObject();
-					temp.addProperty("key",end.getKey());
+					temp.addProperty("key",end.getName());
 					temp.add("value", gson.fromJson(gson.toJson(end.getValue()),JsonArray.class));
 					endPointsArray.add(temp);
 				}
@@ -456,6 +457,7 @@ public class DataSourceController extends RESTFetch {
 				}
 				applicationEventPublisher.publishEvent(new PushCredentials(srcObj, destObj,credentials.getSrcToken() , credentials.getDestToken(),
 						credentials.getCurrSrcName(), credentials.getCurrDestName(), credentials.getUserId()));				
+				credentials.setCurrConnId(currobj);
 				JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "DataSource created");
 				respBody.addProperty("status", "200");

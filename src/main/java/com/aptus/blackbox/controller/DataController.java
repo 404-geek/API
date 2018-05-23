@@ -270,6 +270,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		header.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(httpsession, credentials)) {
+				System.out.println(credentials.getCurrConnId() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
 				if (credentials.getCurrConnId().getScheduled().equalsIgnoreCase("true")
 						&& choice.equalsIgnoreCase("export")) {
 					SchedulingObjects schObj = new SchedulingObjects();
@@ -285,9 +286,9 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					for (Endpoint endpoint : credentials.getCurrConnId().getEndPoints()) {
 						Map<String,Status> sat = new HashMap<>();
 						for(String end :endpoint.getValue()) {
-							sat.put(end, new Status("aaoiv", "message"));
+							sat.put(end, null);
 						}
-						schObj.setEndPointStatus(endpoint.getKey(), sat);
+						schObj.setEndPointStatus(endpoint.getName(), sat);
 					}
 					if (applicationCredentials.getApplicationCred().keySet().contains(credentials.getUserId())) {
 						applicationCredentials.getApplicationCred().get(credentials.getUserId())
@@ -451,13 +452,92 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			metring.setTime(new Date()+"");
 			metring.setType(choice);
 			metring.setUserId(credentials.getUserId());
+			
+			Map<String,List<UrlObject>> endp = new HashMap<>();
+			for(UrlObject object:endpoints) {
+				if(endp.containsKey(object.getCatagory())) {
+					endp.get(object.getCatagory()).add(object);
+				}
+				else {
+					List<UrlObject> lst = new ArrayList<>();
+					lst.add(object);
+    				endp.put(object.getCatagory(), lst);
+				}
+			}
+			
+			for(Endpoint endpnt : credentials.getCurrConnId().getEndPoints()) {
+				if(endpnt.getName().equalsIgnoreCase("others")) {
+					for(UrlObject object:endp.get(endpnt.getName())) {
+						if(endpnt.getValue().contains(object.getLabel())){
+							System.out.println("LABEL1" + object.getLabel());
+							boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
+							System.out.println(value + " " + object.getLabel().toLowerCase());
+							
+							if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
+								
+								Map<JsonElement,Integer> data1 = paginate(choice,object);
+								
+								Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
+								JsonElement datum=entry.getKey();
+								Integer rows=entry.getValue();
+								
+								if(choice.equalsIgnoreCase("view")) {
+									if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
+										success=false;
+									}
+								}
+								else {
+									totalRows+=rows;
+									metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+								}
+								endPoint.add(object.getLabel(),datum);
+							}
+						}
+					}
+				}
+				else {
+					UrlObject object = endp.get(endpnt.getName()).get(0);
+					for(String endpntLable:endpnt.getValue()) {
+						object.setLabel(endpntLable);
+						Map<String,String> ne = new HashMap<>();
+						ne.put(endpnt.getName(), endpntLable);
+						object.setUrl(url(object.getUrl(), ne));
+						System.out.println("LABEL1" + object.getLabel());
+						boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
+						System.out.println(value + " " + object.getLabel().toLowerCase());
+						
+						if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
+							
+							Map<JsonElement,Integer> data1 = paginate(choice,object);
+							
+							Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
+							JsonElement datum=entry.getKey();
+							Integer rows=entry.getValue();
+							
+							if(choice.equalsIgnoreCase("view")) {
+								if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
+									success=false;
+								}
+							}
+							else {
+								totalRows+=rows;
+								metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+							}
+							endPoint.add(object.getLabel(),datum);
+						}
+					}
+				}
+			}
 			for (UrlObject object : endpoints) {
+				
 				System.out.println("LABEL1" + object.getLabel());
 				boolean value = credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim());
 				System.out.println(value + " " + object.getLabel().toLowerCase());
+				
 				if (credentials.getCurrConnId().getEndPoints().contains(object.getLabel().trim())) {
 					
 					Map<JsonElement,Integer> data1 = paginate(choice,object);
+					
 					Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
 					JsonElement datum=entry.getKey();
 					Integer rows=entry.getValue();
@@ -805,7 +885,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		try {
 			boolean selectAction = false;
 			JsonElement respBody = new JsonObject();
-			System.out.println(credentials.getCurrConnId());
+			System.out.println(credentials.getCurrConnId() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
 			if (Utilities.isSessionValid(httpsession, credentials)) {
 				applicationCredentials.getApplicationCred().get(credentials.getUserId())
 						.setLastAccessTime(httpsession.getLastAccessedTime());
@@ -857,6 +937,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				currConnId.setPeriod(credentials.getConnectionIds(connId).getPeriod());
 				currConnId.setScheduled(credentials.getConnectionIds(connId).getScheduled());
 				credentials.setConnectionIds(connId, currConnId);
+				credentials.setCurrConnId(currConnId);
 				if(selectAction) {
 					if(!choice.equalsIgnoreCase("export"))
 						headers=out.getHeaders();

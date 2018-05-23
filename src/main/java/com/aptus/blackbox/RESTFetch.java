@@ -158,12 +158,12 @@ public abstract class RESTFetch extends SourceAuthorization {
 			value+= s.substring(0,s.length()-1);
 			params += key+"="+value+"&";
 		}
-		String url= url(token.getUrl(), token, values)+params.substring(0,params.length()-1);
+		String url= url(token.getUrl(),  values)+params.substring(0,params.length()-1);
 		System.out.println(message+" "+url);
 		return url;
 		
 	}
-	protected String url(String url,UrlObject token,Map<String, String> values) {
+	protected String url(String url,Map<String, String> values) {
 		String newUrl="";
 		for(String comp:url.split("/")) {
 			if(comp.startsWith("{")) {

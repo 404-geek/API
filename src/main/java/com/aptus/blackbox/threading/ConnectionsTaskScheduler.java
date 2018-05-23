@@ -1,11 +1,13 @@
 package com.aptus.blackbox.threading;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.jasper.tagplugins.jstl.core.Url;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -171,18 +173,46 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     			metring.setType("Export");
     			metring.setUserId(userId);
     			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMetering(metring);
-    			Map<String,UrlObject> endp = new HashMap<>();
+    			Map<String,List<UrlObject>> endp = new HashMap<>();
     			for(UrlObject object:endpoints) {
-    				endp.put(object.getLabel(), object);
+    				if(endp.containsKey(object.getCatagory())) {
+    					endp.get(object.getCatagory()).add(object);
+    				}
+    				else {
+    					List<UrlObject> lst = new ArrayList<>();
+    					lst.add(object);
+        				endp.put(object.getCatagory(), lst);
+    				}
     			}
     			for(Entry<String, Map<String, Status>> catagory:scheduleObjectInfo.getEndPointStatus().entrySet()) {
-    				for(Entry<String,Status> end:catagory.getValue().entrySet()) {    					
-    					System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor");
-        				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
-        				endpointsTaskExecutor.setEndpointsTaskExecutor(endp.get(end.getKey()), connectionId, userId,Thread.currentThread(),catagory.getKey());
-        				//Context.getAutowireCapableBeanFactory().autowireBean(endpointsTaskExecutor);
-        				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
-    				}
+    				//for(Entry<String,Status> end:catagory.getValue().entrySet()) {
+    				Map<String,Status> end = catagory.getValue();
+    					if(catagory.getKey().equalsIgnoreCase("others")) {    						
+    						for(UrlObject endpnt:endp.get(catagory.getKey())) {
+    							if(end.containsKey(endpnt.getLabel())) {
+    								System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor");
+    	            				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
+    	            				endpointsTaskExecutor.setEndpointsTaskExecutor(endpnt, connectionId, userId,Thread.currentThread(),catagory.getKey());
+    	            				//Context.getAutowireCapableBeanFactory().autowireBean(endpointsTaskExecutor);
+    	            				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
+    							}
+    						}
+    					}
+    					else {
+    						UrlObject endpnt = endp.get(catagory.getKey()).get(0);
+    						for(String endpntName:end.keySet()) {
+    							endpnt.setLabel(endpntName);
+    							Map<String,String> ne = new HashMap<>();
+    							ne.put(catagory.getKey(), endpntName);
+    							endpnt.setUrl(url(endpnt.getUrl(), ne));
+    							
+    							System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor");
+	            				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
+	            				endpointsTaskExecutor.setEndpointsTaskExecutor(endpnt, connectionId, userId,Thread.currentThread(),catagory.getKey());
+	            				//Context.getAutowireCapableBeanFactory().autowireBean(endpointsTaskExecutor);
+	            				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
+    						}
+    					}
     			}
 //    			for(UrlObject object:endpoints) {
 //    				if(scheduleObjectInfo.getEndPointStatus().containsKey(object.getLabel())) {
