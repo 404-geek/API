@@ -53,14 +53,13 @@ public abstract class RESTFetch extends SourceAuthorization {
 			}
 			HttpMethod method = (object.getMethod().equals("GET")) ? HttpMethod.GET : HttpMethod.POST;
 			System.out.println(message+" "+"Method : "+method);
-			url = "https://api.linkedin.com/v1/people/~";
 			System.out.println("url :" + url.toString());
-			System.out.println("********");
+			System.out.println("******1**");
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			System.out.println(message+" "+"----------------------------"+uri);
 			out = restTemplate.exchange(uri, method, httpEntity, String.class);
-			System.out.println("token status code" + out.getStatusCode());
-			System.out.println(out.getBody());
+			System.out.println("token status code  : " + out.getStatusCode());
+			//System.out.println(out.getBody());
 		} 
 		
 		
@@ -71,7 +70,6 @@ public abstract class RESTFetch extends SourceAuthorization {
 		catch(HttpClientErrorException e) {
 			System.out.println("inside token catch");
 			System.out.println(e.getMessage());
-			
 			System.out.println(e.getStatusCode());
 			
 			ExceptionHandling exceptionhandling=new ExceptionHandling();
@@ -85,11 +83,8 @@ public abstract class RESTFetch extends SourceAuthorization {
 			}*/
 			
 			JsonObject respBody = new JsonObject();
-			System.out.println(out);
-			System.out.println("token status code" + out.getStatusCode());
-			
-			respBody.addProperty("code", "200");
-			respBody.addProperty("message", "User found");
+			respBody.addProperty("code", "400");
+			respBody.addProperty("message", "invalid token url");
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respBody.toString());
 			
 			

@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
@@ -56,9 +57,11 @@ public class DataSourceController extends RESTFetch {
 	private ApplicationEventPublisher applicationEventPublisher;
 	@Autowired
 	private Config config;
+	@Autowired
+	private ApplicationContext Context;
 	
-	private SrcObject srcObj;
-	private DestObject destObj;
+//	private SrcObject srcObj;
+//	private DestObject destObj;
 	/*
 	 * input:  type(source/destination) and its name
 	 * Parses its configuration file and stores it in credentials
@@ -69,14 +72,13 @@ public class DataSourceController extends RESTFetch {
 		System.out.println(type+ " "+srcdestId);
 		if (type.equalsIgnoreCase("source")) {
 			
-			srcObj = new Parser("source",srcdestId.toUpperCase(),config.getMongoUrl()).getSrcProp();
-			credentials.setSrcObj(srcObj);
+			credentials.setSrcObj(new Parser("source",srcdestId.toUpperCase(),config.getMongoUrl()).getSrcProp());
 			credentials.setCurrSrcName(srcdestId.toLowerCase());
 			credentials.setCurrSrcValid(false);
 			
 		} else {
-			destObj = new Parser("destination",srcdestId.toUpperCase(),config.getMongoUrl()).getDestProp();
-			credentials.setDestObj(destObj);
+
+			credentials.setDestObj(new Parser("destination",srcdestId.toUpperCase(),config.getMongoUrl()).getDestProp());
 			credentials.setCurrDestName(srcdestId.toLowerCase());
 			credentials.setCurrDestValid(false);
 		}
@@ -104,6 +106,8 @@ public class DataSourceController extends RESTFetch {
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
+			System.out.println("inside validate function");
+			
 			if(Utilities.isSessionValid(session,credentials)) {
 				credentials.setCurrConnId(null);
 				System.out.println(srcdestId);
@@ -173,8 +177,8 @@ public class DataSourceController extends RESTFetch {
 					credentials.setCurrDestValid(false);
 					fetchSrcCred();
 					System.out.println(type+" credentials already exist");
-					System.out.println(srcObj+" "+credentials);
-					out = token(srcObj.getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
+					System.out.println(credentials.getSrcObj()+" "+credentials);
+					out = token(credentials.getSrcObj().getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
 					//System.out.println("OUt:"+out);
 					System.out.println("Out status code :"+out.getStatusCode());
 					if (out.getStatusCode().is2xxSuccessful()) {
@@ -320,15 +324,21 @@ public class DataSourceController extends RESTFetch {
 				System.out.println(type+" "+srcDestId);
 				if(type.equals("source")){
 					if(!credentials.getCurrSrcName().equalsIgnoreCase(srcDestId)) {
-						credentials.setCurrSrcValid(false);
+						isvalid=false;
 					}
-					isvalid=credentials.isCurrSrcValid();
+					else
+						isvalid = new Gson().fromJson(token(credentials.getSrcObj().getValidateCredentials(), credentials.getSrcToken(), "isvalid").getBody(),JsonObject.class).get("code").getAsString().equalsIgnoreCase("200");
+					//isvalid=credentials.isCurrSrcValid();
+					credentials.setCurrSrcValid(isvalid);
 				}
 				else if(type.equals("destination")) {
 					if(!credentials.getCurrDestName().equalsIgnoreCase(srcDestId)) {
-						credentials.setCurrDestValid(false);
+						isvalid=false;
 					}
-					isvalid=credentials.isCurrDestValid();
+					else
+						isvalid=Context.getBean(DataController.class).checkDB(credentials.getDestToken().get("database_name"), credentials.getDestToken(), credentials.getDestObj()).get("code").getAsString().equalsIgnoreCase("200");
+					//isvalid=credentials.isCurrDestValid();
+					credentials.setCurrDestValid(isvalid);
 				}
 				JsonObject jobject = new JsonObject();
 				jobject.addProperty("isvalid",isvalid);
@@ -502,17 +512,20 @@ public class DataSourceController extends RESTFetch {
 					// userCredentials
 					jsonObj = new JsonObject();
 					jsonObj.add("srcdestId", eachArray);
-					JsonObject addToSetObj = new JsonObject();
 					jsonObj.addProperty("_id", credentials.getUserId().toLowerCase());
 					credentials.setUserExist(Utilities.postpatchMetaData(jsonObj, "user", "POST",credentials.getUserId(),config.getMongoUrl()));
 				}
-				applicationEventPublisher.publishEvent(new PushCredentials(srcObj, destObj,credentials.getSrcToken() , credentials.getDestToken(),
+				applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), credentials.getDestObj(),credentials.getSrcToken() , credentials.getDestToken(),
 						credentials.getCurrSrcName(), credentials.getCurrDestName(), credentials.getUserId()));				
 				credentials.setCurrConnId(currobj);
+				
+				
+				//String respBody = Context.getBean(DataController.class).checkConnection("view", credentials.getCurrConnId().getConnectionId(), session).getBody();
+				
 				JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "DataSource created");
 				respBody.addProperty("status", "200");
-				return new ResponseEntity<String>(respBody.toString(), headers, HttpStatus.OK);
+				return new ResponseEntity<String>(respBody.getAsString(), headers, HttpStatus.OK);
 			} else {
 				System.out.println("Session expired!");
     			JsonObject respBody = new JsonObject();
