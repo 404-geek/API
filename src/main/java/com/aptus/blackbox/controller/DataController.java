@@ -53,7 +53,6 @@ import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.Cursor;
 import com.aptus.blackbox.models.DestObject;
 import com.aptus.blackbox.models.Endpoint;
-import com.aptus.blackbox.models.ImplicitDataNode;
 import com.aptus.blackbox.models.SrcObject;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
