@@ -327,7 +327,7 @@ public class DataSourceController extends RESTFetch {
 						isvalid=false;
 					}
 					else
-						isvalid = new Gson().fromJson(token(credentials.getSrcObj().getValidateCredentials(), credentials.getSrcToken(), "isvalid").getBody(),JsonObject.class).get("code").getAsString().equalsIgnoreCase("200");
+						isvalid = token(credentials.getSrcObj().getValidateCredentials(), credentials.getSrcToken(), "isvalid").getStatusCode().is2xxSuccessful();
 					//isvalid=credentials.isCurrSrcValid();
 					credentials.setCurrSrcValid(isvalid);
 				}

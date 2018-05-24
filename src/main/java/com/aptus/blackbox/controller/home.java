@@ -397,7 +397,8 @@ public class home extends RESTFetch{
 				JsonObject temp = new JsonObject();
 				JsonArray endpoints=new JsonArray();
 				for(UrlObject obj:credentials.getSrcObj().getDataEndPoints()) {
-					endpoints.add(obj.getLabel());
+					if(obj.getCatagory().equalsIgnoreCase("others"))
+						endpoints.add(obj.getLabel());
 				}
 				temp.add("value", endpoints);
 				temp.addProperty("name", "others");
