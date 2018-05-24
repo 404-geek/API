@@ -1,5 +1,7 @@
 package com.aptus.blackbox.controller;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -11,22 +13,16 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
-import org.json.CDL;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.json.XML;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -34,7 +30,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -44,15 +39,13 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.aptus.blackbox.event.Metering;
-import com.aptus.blackbox.event.PostExecutorComplete;
-import com.aptus.blackbox.event.PushCredentials;
-import com.aptus.blackbox.event.ScheduleEventData;
-import com.aptus.blackbox.DestinationAuthorisation;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.event.Metering;
+import com.aptus.blackbox.event.PushCredentials;
+import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
@@ -60,18 +53,16 @@ import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.Cursor;
 import com.aptus.blackbox.models.DestObject;
 import com.aptus.blackbox.models.Endpoint;
+import com.aptus.blackbox.models.ImplicitDataNode;
 import com.aptus.blackbox.models.SrcObject;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
 import com.aptus.blackbox.utils.Utilities;
 import com.github.opendevl.JFlat;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 
 
@@ -313,6 +304,56 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 	}
 	
 	
+//	FileWriter sne;
+//	private void infoQuerying(ImplicitDataNode root,List<?> node, Map<String, UrlObject> mp) throws IOException {
+//		
+//
+//		try {
+//			if(node==null)
+//				return;
+//			sne.write(node.getClass()+"\t"+node+"\n");
+//			System.out.println(node.getClass()+ "\t"+node);
+//			if(node.get(0).getClass().isAssignableFrom(ArrayList.class)) {
+//
+//				node.forEach(o->{
+//					try {
+//						infoQuerying(root, (List<?>) o,mp);
+//					} catch (IOException e) {
+//
+//						e.printStackTrace();
+//					}
+//				});
+//
+//			}
+//			else {
+//				node.forEach(o->{
+//					
+//					System.out.print(mp.containsKey(o)+" "+o+"\t");
+//					System.out.println(credentials.getSrcToken());
+//					ResponseEntity<String> res=token(mp.get(o),credentials.getSrcToken(), "tree form");
+//
+//                    List<String> list = new ArrayList<String>();
+//
+//                    JsonElement element = new Gson().fromJson(res.getBody(), JsonElement.class);
+//
+//                    String arr[] = mp.get(o).getData().split("::");
+//
+//                    list = Utilities.checkByPath(arr, 0, element, list);
+//                    for(String id:list) {
+//                    	credentials.setSrcToken(mp.get(o).getLabel(),id);
+//					}
+//                    
+//                    System.out.println(list);
+//				});
+//			}
+//		} catch (Exception e) {
+//			sne.close();
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//
+//	}
+	
 	@RequestMapping(method = RequestMethod.GET, value = "/getInfoEndpoints")
 	private void getInfoEndpoints(){
 		ResponseEntity<String> ret = null;
@@ -325,7 +366,20 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				RestTemplate restTemplate = new RestTemplate();
 				Gson gson = new Gson();
 				List<UrlObject> infoEndpoints = credentials.getSrcObj().getInfoEndpoints();
+//				Context.getBean(DataSourceController.class).srcDestId("source", "zohohelpdesk");
 				HttpMethod method;
+//				Map<String,UrlObject> mp = new HashMap<>();
+//				for(UrlObject end:credentials.getSrcObj().getInfoEndpoints()) {
+//					mp.put(end.getLabel(), end);
+//				}
+//				System.out.println(mp);
+//				sne = new FileWriter("/home/sourav/abc.txt");
+//				
+//				//credentials.getSrcObj().getInfoEndpointOrder();
+//				
+//				ImplicitDataNode root = new ImplicitDataNode();
+//				infoQuerying(root, credentials.getSrcObj().getInfoEndpointOrder(),mp);
+				
 				for(UrlObject infoEndpoint:infoEndpoints) {
 					
 					String url = buildUrl(infoEndpoint, credentials.getSrcToken(),credentials.getUserId()+"getInfoEndpoints");
@@ -366,7 +420,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+			return;
 		
 	}
 

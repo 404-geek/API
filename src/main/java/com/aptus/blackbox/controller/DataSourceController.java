@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.servlet.http.HttpSession;
 
@@ -67,7 +68,7 @@ public class DataSourceController extends RESTFetch {
 	 * Parses its configuration file and stores it in credentials
 	 * output:void
 	 */
-	private void srcDestId(String type, String srcdestId) {
+	public void srcDestId(String type, String srcdestId) {
 		//change return type to void
 		System.out.println(type+ " "+srcdestId);
 		if (type.equalsIgnoreCase("source")) {
@@ -444,6 +445,7 @@ public class DataSourceController extends RESTFetch {
 					"		\"value\": [\n" + 
 					"			\"Accounts\"\n" + 
 					"		]}]}");
+			
 			System.out.println(filteredEndpoints.getClass());
 			System.out.println(filteredEndpoints.get("filteredendpoints") + " " + filteredEndpoints.keySet());
 			HttpHeaders headers = new HttpHeaders();
@@ -462,8 +464,25 @@ public class DataSourceController extends RESTFetch {
 //				String period = filteredEndpoints.get("period");
 				String schedule = "true";
 				String period = "120";
-				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
-						.getAsJsonObject().get("endpoints").getAsJsonArray();
+				JsonArray temp2,endpoints = new JsonArray();
+				JsonObject temp1;
+				JsonElement temp = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
+						.getAsJsonObject().get("endpoints");
+				for(Entry<String, JsonElement> e : temp.getAsJsonObject().entrySet()) {
+					temp1  = new JsonObject();
+					temp2 = new JsonArray();
+					temp1.addProperty("name",e.getKey());
+					temp1.addProperty("key",e.getKey());
+					
+					for(Entry<String, JsonElement> e1 : e.getValue().getAsJsonObject().entrySet()) {
+						if(e1.getValue().getAsString().equalsIgnoreCase("true"))
+							temp2.add(e1.getKey());
+					}
+					temp1.add("value", temp2);
+					endpoints.add(temp1);
+				}
+//				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
+//						.getAsJsonObject().get("endpoints").getAsJsonArray();
 				ConnObj currobj = new ConnObj();
 				Endpoint endpoint = new Endpoint();
 				for (JsonElement obj : endpoints) {
@@ -484,9 +503,9 @@ public class DataSourceController extends RESTFetch {
 				JsonArray endPointsArray = new JsonArray();
 				
 				for(Endpoint end: currobj.getEndPoints()) {
-					JsonObject temp = new JsonObject();
-					temp.addProperty("key",end.getName());
-					temp.add("value", gson.fromJson(gson.toJson(end.getValue()),JsonArray.class));
+					JsonObject temp4 = new JsonObject();
+					temp4.addProperty("key",end.getName());
+					temp4.add("value", gson.fromJson(gson.toJson(end.getValue()),JsonArray.class));
 					endPointsArray.add(temp);
 				}
 				

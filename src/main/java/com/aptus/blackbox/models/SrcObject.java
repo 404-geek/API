@@ -7,6 +7,7 @@ public class SrcObject implements Serializable {
 	private String name,authType,steps,refresh;
 	private UrlObject refreshToken,requestToken,accessCode,accessToken,validateCredentials;
 	private List<UrlObject> DataEndPoints,InfoEndpoints,ImplicitEndpoints;
+	private List<List<List<String>>> infoEndpointOrder;
 	
 	public String getName() {
 		return name;
@@ -79,6 +80,12 @@ public class SrcObject implements Serializable {
 	}
 	public void setImplicitEndpoints(List<UrlObject> implicitEndpoints) {
 		ImplicitEndpoints = implicitEndpoints;
+	}
+	public List<List<List<String>>> getInfoEndpointOrder() {
+		return infoEndpointOrder;
+	}
+	public void setInfoEndpointOrder(List<List<List<String>>> infoEndpointOrder) {
+		this.infoEndpointOrder = infoEndpointOrder;
 	}
 	
 }
