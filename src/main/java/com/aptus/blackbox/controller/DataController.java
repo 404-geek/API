@@ -53,6 +53,7 @@ import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.Cursor;
 import com.aptus.blackbox.models.DestObject;
 import com.aptus.blackbox.models.Endpoint;
+
 import com.aptus.blackbox.models.SrcObject;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
@@ -302,6 +303,34 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		return resbody;
 	}
 	
+
+	private void infoEndpointHelper(List<List<String>> infoEndpointOrder,Map<String,UrlObject> urlObjs,int pos) {
+		try {
+			if(pos == infoEndpointOrder.size())
+				return;
+			List<String> inf=infoEndpointOrder.get(pos) ;
+					for(String key:inf) {
+						ResponseEntity<String> res=token(urlObjs.get(key),credentials.getSrcToken(), "infoEndpointHelper");
+						
+						List<String> list = new ArrayList<String>();
+						JsonElement element = new Gson().fromJson(res.getBody(), JsonElement.class);
+						String arr[] = urlObjs.get(key).getData().split("::");
+						list = Utilities.checkByPath(arr, 0, element, list);
+						System.out.println("Df");
+						System.out.println(urlObjs.get(key).getLabel()+" : "+list);
+						for(String id:list) {
+							credentials.setSrcToken(urlObjs.get(key).getLabel(),id);
+							infoEndpointHelper(infoEndpointOrder,urlObjs,pos+1);
+						}
+					}
+		} catch (JsonSyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+			
+			
+			
+	}
 	
 //	FileWriter sne;
 //	private void infoQuerying(ImplicitDataNode root,List<?> node, Map<String, UrlObject> mp) throws IOException {
@@ -364,54 +393,19 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			try {
 				RestTemplate restTemplate = new RestTemplate();
 				Gson gson = new Gson();
-				List<UrlObject> infoEndpoints = credentials.getSrcObj().getInfoEndpoints();
-//				Context.getBean(DataSourceController.class).srcDestId("source", "zohohelpdesk");
-				HttpMethod method;
-//				Map<String,UrlObject> mp = new HashMap<>();
-//				for(UrlObject end:credentials.getSrcObj().getInfoEndpoints()) {
-//					mp.put(end.getLabel(), end);
-//				}
-//				System.out.println(mp);
-//				sne = new FileWriter("/home/sourav/abc.txt");
-//				
-//				//credentials.getSrcObj().getInfoEndpointOrder();
-//				
-//				ImplicitDataNode root = new ImplicitDataNode();
-//				infoQuerying(root, credentials.getSrcObj().getInfoEndpointOrder(),mp);
-				
-				for(UrlObject infoEndpoint:infoEndpoints) {
-					
-					String url = buildUrl(infoEndpoint, credentials.getSrcToken(),credentials.getUserId()+"getInfoEndpoints");
-					System.out.println(url);
-					URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-					
-					HttpHeaders headers = buildHeader(infoEndpoint, credentials.getSrcToken(),credentials.getUserId()+"getInfoEndpoints");
-					HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-					
-					if (!infoEndpoint.getResponseBody().isEmpty()) {
-						MultiValueMap<String, String> preBody = buildBody(infoEndpoint, credentials.getSrcToken(),"getInfoEndpoints");
-						Object postBody=null;
-						for(objects head:infoEndpoint.getHeader())
-						{
-							if(head.getKey().equalsIgnoreCase("content-type")) {
-								postBody=bodyBuilder(head.getValue(),preBody,"getInfoEndpoints");
-								break;
-							}
-						}
-						httpEntity = new HttpEntity<Object>(postBody, headers);
-					} else {
-						httpEntity = new HttpEntity<Object>(headers);
-					}
-					
-					method = (infoEndpoint.getMethod() == "GET") ? HttpMethod.GET : HttpMethod.POST;
-					ret = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-					List<String> list = new ArrayList<String>();
-					JsonElement element = new Gson().fromJson(ret.getBody(), JsonElement.class);
-					String arr[] = infoEndpoint.getData().split("::");
-					list = Utilities.checkByPath(arr, 0, element, list);
-					System.out.println(infoEndpoint.getLabel()+" : "+list);
-					
+				List<UrlObject> infoEndpoints = credentials.getSrcObj().getInfoEndpoints();	
+
+				List<List<List<String>>> infoEndpointOrder = credentials.getSrcObj().getInfoEndpointOrder();
+				if(infoEndpointOrder == null) {
+					System.out.println("No Implicit Data Available");
+					return;
+
 				}
+				Map<String,UrlObject> urlObjs = new HashMap<>();
+				infoEndpoints.forEach(e -> urlObjs.put(e.getLabel(), e));
+				for(List<List<String>> as:infoEndpointOrder)
+					infoEndpointHelper(as,urlObjs,0);
+			
 			} catch (RestClientException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -422,6 +416,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			return;
 		
 	}
+
 
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
 	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,

@@ -211,7 +211,8 @@ public abstract class RESTFetch extends SourceAuthorization {
 	protected HttpHeaders buildHeader (UrlObject token, Map<String, String> credentials,String message) throws Exception
 	{
 		Map<String, String> oauth; 
-		System.out.println(message+" "+"::HEADERS::");
+		System.out.println(message+" "+"::HEADERS::"+token.getHeader());
+		
 		HttpHeaders headers = new HttpHeaders();
 		for(objects obj:token.getHeader())
 			{
