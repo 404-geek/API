@@ -434,25 +434,26 @@ public class DataSourceController extends RESTFetch {
     }
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/createdatasource")
-	private ResponseEntity<String> createDataSource(@RequestParam(value = "filteredEndpoints", required=false) Map<String, String> filteredEndpoints,
-			HttpSession session) {
+	private ResponseEntity<String> createDataSource(@RequestParam(value = "filteredEndpoints", required=false) String filteredEndpoints,
+			@RequestParam(value="scheduled") String schedule,
+			@RequestParam(value="period",required=false) String period,HttpSession session) {
 		ResponseEntity<String> ret = null;
 		try {
-			filteredEndpoints = new HashMap<>();
-			filteredEndpoints.put("filteredendpoints", "{\"endpoints\": [{\n" + 
-					"		\"name\":\"module_api_name\",\n" + 
-					"		\"key\":\"modules\",\n" +
-					"		\"value\": [\n" + 
-					"			\"Accounts\"\n" + 
-					"		]}]}");
-			
+//			filteredEndpoints = new HashMap<>();
+//			filteredEndpoints.put("filteredendpoints", "{\"endpoints\": [{\n" + 
+//					"		\"name\":\"module_api_name\",\n" + 
+//					"		\"key\":\"modules\",\n" +
+//					"		\"value\": [\n" + 
+//					"			\"Accounts\"\n" + 
+//					"		]}]}");
+			filteredEndpoints = "{ \"others\": { \"module_api_name\": true, \"Sourav1\": true, \"Sourav2\": false, \"Sourav3\": false, \"Sourav4\": true }, \"module_api_name\": { \"Home\": false, \"SalesInbox\": false, \"Feeds\": false, \"Projects\": false, \"Leads\": false, \"Accounts\": false, \"Contacts\": false, \"Deals\": false, \"Activities\": false, \"Tasks\": false, \"Events\": false, \"Calls\": false, \"Reports\": false, \"Dashboards\": false, \"Products\": false, \"Campaigns\": false, \"Google_AdWords\": false, \"Visits\": false, \"Cases\": false, \"Notes\": false, \"Solutions\": false, \"Vendors\": false, \"Price_Books\": false, \"Quotes\": false, \"Sales_Orders\": false, \"Purchase_Orders\": false, \"Invoices\": false, \"Documents\": false, \"Attachments\": false, \"Social\": false, \"Forecasts\": false, \"Actions_Performed\": false } }";
 			System.out.println(filteredEndpoints.getClass());
-			System.out.println(filteredEndpoints.get("filteredendpoints") + " " + filteredEndpoints.keySet());
+			System.out.println(filteredEndpoints + " ");
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
 			headers.add("access-control-allow-origin", config.getRootUrl());
 			headers.add("access-control-allow-credentials", "true");
-			if (Utilities.isSessionValid(session, credentials)) {
+			//if (Utilities.isSessionValid(session, credentials)) {
 				// if(validateCredentials==null||endPoints==null||refreshToken==null) {
 				// init();
 				// }
@@ -462,12 +463,12 @@ public class DataSourceController extends RESTFetch {
 				Gson gson = new Gson();
 //				String schedule = filteredEndpoints.get("scheduled");
 //				String period = filteredEndpoints.get("period");
-				String schedule = "true";
-				String period = "120";
+//				String schedule = "true";
+//				String period = "120";
 				JsonArray temp2,endpoints = new JsonArray();
 				JsonObject temp1;
-				JsonElement temp = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
-						.getAsJsonObject().get("endpoints");
+				JsonElement temp = gson.fromJson(filteredEndpoints, JsonElement.class)
+						.getAsJsonObject();
 				for(Entry<String, JsonElement> e : temp.getAsJsonObject().entrySet()) {
 					temp1  = new JsonObject();
 					temp2 = new JsonArray();
@@ -481,6 +482,7 @@ public class DataSourceController extends RESTFetch {
 					temp1.add("value", temp2);
 					endpoints.add(temp1);
 				}
+				System.out.println(endpoints);
 //				JsonArray endpoints = gson.fromJson(filteredEndpoints.get("filteredendpoints"), JsonElement.class)
 //						.getAsJsonObject().get("endpoints").getAsJsonArray();
 				ConnObj currobj = new ConnObj();
@@ -492,7 +494,7 @@ public class DataSourceController extends RESTFetch {
 				currobj.setConnectionId(conId);
 				currobj.setSourceName(credentials.getCurrSrcName());
 				currobj.setDestName(credentials.getCurrDestName());
-				currobj.setPeriod((Integer.parseInt(period)*1000));
+				currobj.setPeriod(Integer.parseInt(period)*1000);
 				currobj.setScheduled(schedule);
 				
 				credentials.setCurrConnId(currobj);
@@ -545,13 +547,13 @@ public class DataSourceController extends RESTFetch {
     			respBody.addProperty("message", "DataSource created");
 				respBody.addProperty("status", "200");
 				return new ResponseEntity<String>(respBody.getAsString(), headers, HttpStatus.OK);
-			} else {
-				System.out.println("Session expired!");
-    			JsonObject respBody = new JsonObject();
-    			respBody.addProperty("message", "Sorry! Your session has expired");
-				respBody.addProperty("status", "33");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-			}
+//			} else {
+//				System.out.println("Session expired!");
+//    			JsonObject respBody = new JsonObject();
+//    			respBody.addProperty("message", "Sorry! Your session has expired");
+//				respBody.addProperty("status", "33");
+//				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+//			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
