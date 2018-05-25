@@ -508,7 +508,7 @@ public class DataSourceController extends RESTFetch {
 					JsonObject temp4 = new JsonObject();
 					temp4.addProperty("key",end.getName());
 					temp4.add("value", gson.fromJson(gson.toJson(end.getValue()),JsonArray.class));
-					endPointsArray.add(temp);
+					endPointsArray.add(temp4);
 				}
 				
 				JsonArray eachArray = new JsonArray();

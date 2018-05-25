@@ -303,11 +303,12 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		return resbody;
 	}
 	
-
-	private void infoEndpointHelper(List<List<String>> infoEndpointOrder,Map<String,UrlObject> urlObjs,int pos) {
+	private JsonObject infoEndpointHelper(List<List<String>> infoEndpointOrder,Map<String,UrlObject> urlObjs,int pos) {
+		
+		JsonObject jobj = new JsonObject();
 		try {
 			if(pos == infoEndpointOrder.size())
-				return;
+				return jobj;
 			List<String> inf=infoEndpointOrder.get(pos) ;
 					for(String key:inf) {
 						ResponseEntity<String> res=token(urlObjs.get(key),credentials.getSrcToken(), "infoEndpointHelper");
@@ -316,19 +317,28 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 						JsonElement element = new Gson().fromJson(res.getBody(), JsonElement.class);
 						String arr[] = urlObjs.get(key).getData().split("::");
 						list = Utilities.checkByPath(arr, 0, element, list);
-						System.out.println("Df");
+						System.out.println("Datas");
 						System.out.println(urlObjs.get(key).getLabel()+" : "+list);
+						JsonArray jArr = new JsonArray();
+						
 						for(String id:list) {
 							credentials.setSrcToken(urlObjs.get(key).getLabel(),id);
-							infoEndpointHelper(infoEndpointOrder,urlObjs,pos+1);
+							JsonObject obj = new JsonObject();
+							obj.addProperty("id", id);
+							obj.add("data", infoEndpointHelper(infoEndpointOrder,urlObjs,pos+1));
+							jArr.add(obj);
+							
 						}
+						jobj.add(urlObjs.get(key).getLabel(), jArr);
+						
 					}
+					return jobj;
 		} catch (JsonSyntaxException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 			
-			
+		return jobj;	
 			
 	}
 	
@@ -404,7 +414,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				Map<String,UrlObject> urlObjs = new HashMap<>();
 				infoEndpoints.forEach(e -> urlObjs.put(e.getLabel(), e));
 				for(List<List<String>> as:infoEndpointOrder)
-					infoEndpointHelper(as,urlObjs,0);
+					System.out.println("rs = "+infoEndpointHelper(as,urlObjs,0));
 			
 			} catch (RestClientException e) {
 				// TODO Auto-generated catch block
