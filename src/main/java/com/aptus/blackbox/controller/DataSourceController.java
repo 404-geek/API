@@ -546,7 +546,7 @@ public class DataSourceController extends RESTFetch {
 				JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "DataSource created");
 				respBody.addProperty("status", "200");
-				return new ResponseEntity<String>(respBody.getAsString(), headers, HttpStatus.OK);
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 //			} else {
 //				System.out.println("Session expired!");
 //    			JsonObject respBody = new JsonObject();
