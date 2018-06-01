@@ -101,7 +101,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     		applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
         	SrcObject obj = scheduleObjectInfo.getSrcObj();
             if (obj.getRefresh().equals("YES")) {
-                ret = token(obj.getRefreshToken(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
+                ret = Utilities.token(obj.getRefreshToken(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
                 if (!ret.getStatusCode().is2xxSuccessful()) {	
     				setOut(new Status("51","Re-authorize"));
     				return;
@@ -126,7 +126,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
                     return ;
                 }
             } else {
-                ret = token(obj.getValidateCredentials(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
+                ret = Utilities.token(obj.getValidateCredentials(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
                 if (!ret.getStatusCode().is2xxSuccessful()) {                	
                 	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setSrcValid(false);
                 	setOut(new Status("51","Re-authorize"));
@@ -155,7 +155,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
 		header.add("access-control-allow-origin", rootUrl);
         header.add("access-control-allow-credentials", "true");
         try {
-            ret = token(validateUrl,scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER VALIDATEDATA");
+            ret = Utilities.token(validateUrl,scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER VALIDATEDATA");
             if (!ret.getStatusCode().is2xxSuccessful()) {   
 				return  new Status("55","Contact Support");
 				
@@ -218,7 +218,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     							endpnt.setLabel(endpntName);
     							Map<String,String> ne = new HashMap<>();
     							ne.put(catagory.getKey(), endpntName);
-    							endpnt.setUrl(url(endpnt.getUrl(), ne));
+    							endpnt.setUrl(Utilities.url(endpnt.getUrl(), ne));
     							
     							System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor");
 	            				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);

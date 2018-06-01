@@ -388,7 +388,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		try {
 			SrcObject obj = credentials.getSrcObj();
 			if (obj.getRefresh().equals("YES")) {
-				ret = token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
+				ret = Utilities.token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
 						"DataController.validateSourceCred");
 				if (!ret.getStatusCode().is2xxSuccessful()) {
 					JsonObject respBody = new JsonObject();
@@ -417,7 +417,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					return ret;
 				}
 			} else {
-				ret = token(obj.getValidateCredentials(), credentials.getSrcToken(),
+				ret = Utilities.token(obj.getValidateCredentials(), credentials.getSrcToken(),
 						"DataController.validateSourceCred");
 				if (!ret.getStatusCode().is2xxSuccessful()) {
 					credentials.setCurrSrcValid(false);
@@ -459,7 +459,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		header.add("access-control-allow-origin", config.getRootUrl());
 		header.add("access-control-allow-credentials", "true");
 		try {
-			ret = token(valid, credentials.getSrcToken(), "DataController.validateData");
+			ret = Utilities.token(valid, credentials.getSrcToken(), "DataController.validateData");
 			if (!ret.getStatusCode().is2xxSuccessful()) {
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("message", "Contact Support");
@@ -554,7 +554,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 						object.setLabel(endpntLable);
 						Map<String,String> ne = new HashMap<>();
 						ne.put(endpnt.getKey().toLowerCase(), endpntLable);
-						object.setUrl(url(object.getUrl(), ne));
+						object.setUrl(Utilities.url(object.getUrl(), ne));
 						System.out.println("LABEL1" + object.getLabel());
 						boolean value = endpnt.getValue().contains(object.getLabel());
 						System.out.println(value + " " + object.getLabel().toLowerCase());
@@ -765,11 +765,11 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 						JsonArray columns = new JsonArray();
 						int i=0;
 						for(Object[] row:json2csv) {
-							JsonObject ind = new JsonObject();
+							JsonArray ind = new JsonArray();
 							int j=0;
 							for(Object element:row) {
 								if(i!=0) {
-									ind.addProperty(String.valueOf(json2csv.get(0)[j++]), String.valueOf(element));
+									ind.add(String.valueOf(element));
 								}
 								else {
 									columns.add(String.valueOf(element));
@@ -940,19 +940,19 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 			JsonArray mergedData = new JsonArray();
 			JsonObject respBody = new JsonObject();
 			//System.out.println("LABEL2" + endpoint.getLabel() + " " + credentials.getCurrConnId().getEndPoints());
-			String url = buildUrl(endpoint, credentials.getSrcToken(), "DataController.fetchendpoint");
+			String url = Utilities.buildUrl(endpoint, credentials.getSrcToken(), "DataController.fetchendpoint");
 			System.out.println(endpoint.getLabel() + " = " + url);
 			
-			HttpHeaders headers = buildHeader(endpoint, credentials.getSrcToken(),
+			HttpHeaders headers = Utilities.buildHeader(endpoint, credentials.getSrcToken(),
 					"DataController.fetchendpoint");
 			HttpEntity<?> httpEntity;
 			if (!endpoint.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> preBody = buildBody(endpoint, credentials.getSrcToken(),
+				MultiValueMap<String, String> preBody = Utilities.buildBody(endpoint, credentials.getSrcToken(),
 						"DataController.fetchendpoint");
 				Object postBody = null;
 				for (objects head : endpoint.getHeader()) {
 					if (head.getKey().equalsIgnoreCase("content-type")) {
-						postBody = bodyBuilder(head.getValue(), preBody,
+						postBody = Utilities.bodyBuilder(head.getValue(), preBody,
 								"DataController.fetchendpoint");
 						break;
 					}
@@ -979,11 +979,11 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 				JsonArray columns = new JsonArray();
 				int i=0;
 				for(Object[] row:json2csv) {
-					JsonObject ind = new JsonObject();
+					JsonArray ind = new JsonArray();
 					int j=0;
 					for(Object element:row) {
 						if(i!=0) {
-							ind.addProperty(String.valueOf(json2csv.get(0)[j++]), String.valueOf(element));
+							ind.add(String.valueOf(element));
 						}
 						else {
 							columns.add(String.valueOf(element));

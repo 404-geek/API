@@ -182,7 +182,7 @@ public class DataSourceController extends RESTFetch {
 					fetchSrcCred();
 					System.out.println(type+" credentials already exist");
 					System.out.println(credentials.getSrcObj()+" "+credentials);
-					out = token(credentials.getSrcObj().getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
+					out = Utilities.token(credentials.getSrcObj().getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
 					//System.out.println("OUt:"+out);
 					System.out.println("Out status code :"+out.getStatusCode());
 					if (out.getStatusCode().is2xxSuccessful()) {
@@ -330,8 +330,11 @@ public class DataSourceController extends RESTFetch {
 					if(!credentials.getCurrSrcName().equalsIgnoreCase(srcDestId)) {
 						isvalid=false;
 					}
-					else
-						isvalid = token(credentials.getSrcObj().getValidateCredentials(), credentials.getSrcToken(), "isvalid").getStatusCode().is2xxSuccessful();
+					else {
+						ResponseEntity<String> out = Utilities.token(credentials.getSrcObj().getValidateCredentials(), credentials.getSrcToken(), "isvalid");
+						isvalid = out.getStatusCode().is2xxSuccessful();
+						Context.getBean(SourceController.class).saveValues(out);
+					}
 					//isvalid=credentials.isCurrSrcValid();
 					credentials.setCurrSrcValid(isvalid);
 				}
@@ -444,7 +447,7 @@ public class DataSourceController extends RESTFetch {
 			HttpSession session){
 		try {
 			if (Utilities.isSessionValid(session, credentials)) {
-				filteredEndpoints = "{ \"others\": { \"orgId\": true ,\"ticket_id\": true}}";
+				//filteredEndpoints = "{ \"others\": { \"orgId\": true ,\"ticket_id\": true}}";
 				List<String> downloadDest = new ArrayList<String>(){{
 					add("csv");
 					add("xml");
@@ -522,6 +525,7 @@ public class DataSourceController extends RESTFetch {
 			@RequestParam(value="scheduled") String schedule,
 			@RequestParam(value="period",required=false) String period,
 			@RequestParam(value="destination") String destination,
+			@RequestParam(value="choice") String choice,
 			HttpSession session) {
 		ResponseEntity<String> ret = null;
 		try {
@@ -532,7 +536,7 @@ public class DataSourceController extends RESTFetch {
 //					"		\"value\": [\n" + 
 //					"			\"Accounts\"\n" + 
 //					"		]}]}");
-			//filteredEndpoints = "{ \"others\": { \"orgId\": true ,\"ticket_id\": true}}";
+			filteredEndpoints = "{ \"others\": { \"feed\": true ,\"albums\": true}}";
 			System.out.println(filteredEndpoints.getClass());
 			System.out.println(filteredEndpoints + " ");
 			HttpHeaders headers = new HttpHeaders();
@@ -641,9 +645,10 @@ public class DataSourceController extends RESTFetch {
 							credentials.getCurrSrcName(), destination.toLowerCase(), credentials.getUserId()));				
 					credentials.setCurrConnId(currobj);
 					
-					
-					//String respBody = Context.getBean(DataController.class).checkConnection("view", credentials.getCurrConnId().getConnectionId(), session).getBody();
-					
+					if(choice.equalsIgnoreCase("export")) {
+						String out = Context.getBean(DataController.class).checkConnection("export", credentials.getCurrConnId().getConnectionId(), session).getBody();
+						respBody.addProperty("data", out);
+					}					
 					
 	    			respBody.addProperty("message", "DataSource created");
 					respBody.addProperty("status", "200");

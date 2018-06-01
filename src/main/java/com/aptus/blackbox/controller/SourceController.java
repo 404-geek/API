@@ -67,7 +67,7 @@ public class SourceController extends RESTFetch {
 				if (obj.getSteps().compareTo("TWO") == 0) {
 					ret = code(accessCode);
 				} else if (obj.getSteps().compareTo("THREE") == 0) {
-					ret = token(requestToken,credentials.getSrcToken(),credentials.getUserId()+"SourceController.authsource");
+					ret = Utilities.token(requestToken,credentials.getSrcToken(),credentials.getUserId()+"SourceController.authsource");
 					saveValues(ret);
 					ret = code(accessCode);
 				}
@@ -109,11 +109,11 @@ public class SourceController extends RESTFetch {
 		ResponseEntity<String> redirect = null;
 		HttpHeaders headers;
 		try {
-			String url = buildUrl(object, credentials.getSrcToken(),credentials.getUserId()+"SourceController.code");
+			String url = Utilities.buildUrl(object, credentials.getSrcToken(),credentials.getUserId()+"SourceController.code");
 
 			System.out.println(object.getLabel() + " = " + url);
 
-			headers = buildHeader(object, credentials.getSrcToken(),credentials.getUserId()+"SourceController.code");
+			headers = Utilities.buildHeader(object, credentials.getSrcToken(),credentials.getUserId()+"SourceController.code");
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			headers.setLocation(uri);
 			HttpEntity<?> httpEntity;			
@@ -138,20 +138,20 @@ public class SourceController extends RESTFetch {
 			for(Entry<String, String> entry:parameters.entrySet()) {
 				parameters.put(entry.getKey(),URLDecoder.decode(entry.getValue(), "UTF-8"));
 			}
-			String url = buildUrl(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
+			String url = Utilities.buildUrl(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
 			System.out.println(accessToken.getLabel() + " = " + url);
 
 			RestTemplate restTemplate = new RestTemplate();
 
-			HttpHeaders headers = buildHeader(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
+			HttpHeaders headers = Utilities.buildHeader(accessToken, credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
 			HttpEntity<?> httpEntity;
 			if (!accessToken.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> preBody = buildBody(accessToken, credentials.getSrcToken(),"SourceController.handlefooo");
+				MultiValueMap<String, String> preBody = Utilities.buildBody(accessToken, credentials.getSrcToken(),"SourceController.handlefooo");
 				Object postBody=null;
 				for(objects head:accessToken.getHeader())
 				{
 					if(head.getKey().equalsIgnoreCase("content-type")) {
-						postBody=bodyBuilder(head.getValue(),preBody,"SourceController.handlefooo");
+						postBody=Utilities.bodyBuilder(head.getValue(),preBody,"SourceController.handlefooo");
 						break;
 					}
 				}
@@ -171,7 +171,7 @@ public class SourceController extends RESTFetch {
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			out = restTemplate.exchange(uri, method, httpEntity, String.class);
 			saveValues(out);
-			out = token(validateCredentials,credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
+			out = Utilities.token(validateCredentials,credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
 			System.out.println(out.getBody()+" "+out.getStatusCode());
 			System.out.println(out);
 			headers = new HttpHeaders();
@@ -203,7 +203,7 @@ public class SourceController extends RESTFetch {
 		return null;
 	}
 
-	private void saveValues(ResponseEntity<String> out) {
+	public void saveValues(ResponseEntity<String> out) {
 		if (out.getBody() != null) {
 			try {
 				credentials.getSrcToken().putAll(new Gson().fromJson(out.getBody(), HashMap.class));

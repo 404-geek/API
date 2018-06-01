@@ -417,7 +417,7 @@ public class home extends RESTFetch{
 		        Gson gson = new Gson();
 				for(UrlObject obj:credentials.getSrcObj().getImplicitEndpoints()) {
 					temp = new JsonObject();
-					ResponseEntity<String> data = token(obj, credentials.getSrcToken(), "filteredEndpoints");					
+					ResponseEntity<String> data = Utilities.token(obj, credentials.getSrcToken(), "filteredEndpoints");					
 					list = new ArrayList<String>();
 					list = Utilities.checkByPath(obj.getData().split("::"), 0, new Gson().fromJson(data.getBody(),JsonElement.class), list);
 					temp.add("value", gson.fromJson(gson.toJson(list),JsonArray.class));

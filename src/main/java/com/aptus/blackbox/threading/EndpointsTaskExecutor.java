@@ -153,18 +153,18 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
         header.add("access-control-allow-credentials", "true");
         
 		try {
-			String url = buildUrl(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
+			String url = Utilities.buildUrl(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+endpoint.getLabel() + " = " + url);
 
-			HttpHeaders headers = buildHeader(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
+			HttpHeaders headers = Utilities.buildHeader(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");
 			HttpEntity<?> httpEntity;
 			if (!endpoint.getResponseBody().isEmpty()) {
-				MultiValueMap<String, String> preBody = buildBody(endpoint, scheduleObject.getSrcToken(),"THREAD	EXECUTOR RUN");
+				MultiValueMap<String, String> preBody = Utilities.buildBody(endpoint, scheduleObject.getSrcToken(),"THREAD	EXECUTOR RUN");
 				Object postBody=null;
 				for(objects head:endpoint.getHeader())
 				{
 					if(head.getKey().equalsIgnoreCase("content-type")) {
-						postBody=bodyBuilder(head.getValue(),preBody,"THREAD	EXECUTOR RUN");
+						postBody=Utilities.bodyBuilder(head.getValue(),preBody,"THREAD	EXECUTOR RUN");
 						break;
 					}
 				}
