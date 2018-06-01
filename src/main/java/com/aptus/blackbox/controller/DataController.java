@@ -1,7 +1,5 @@
 package com.aptus.blackbox.controller;
 
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -13,8 +11,11 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
@@ -53,7 +54,6 @@ import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.Cursor;
 import com.aptus.blackbox.models.DestObject;
 import com.aptus.blackbox.models.Endpoint;
-
 import com.aptus.blackbox.models.SrcObject;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
@@ -63,6 +63,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 
 
@@ -204,7 +205,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 						for (Object attr : row) {
 							stmt.setString(k++, attr == null ? null : attr.toString());
 						}
-						// System.out.println(instmt);
+						System.out.println(instmt);
 						stmt.execute();
 					}
 					i++;
@@ -282,7 +283,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			con.close();
 
 		} catch (SQLException e) {
-			
+			e.printStackTrace();
 			System.out.println(e.getErrorCode());
 			System.out.println("check clientdatabase");
 			resbody.addProperty("status", false);
@@ -290,147 +291,23 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			resbody.addProperty("code", "0");
 			return resbody;
 			// TODO Auto-generated catch block
-			//e.printStackTrace();
-		} catch (Exception e) {
 			
+		} catch (Exception e) {
+			e.printStackTrace();
 			resbody.addProperty("status", false);
 			resbody.addProperty("message", "conncetion failed");
 			resbody.addProperty("code", "500");
 			return resbody;
 			// TODO Auto-generated catch block
-			//e.printStackTrace();
 		}
 		return resbody;
 	}
 	
-	private JsonObject infoEndpointHelper(List<List<String>> infoEndpointOrder,Map<String,UrlObject> urlObjs,int pos) {
-		
-		JsonObject jobj = new JsonObject();
-		try {
-			if(pos == infoEndpointOrder.size())
-				return jobj;
-			List<String> inf=infoEndpointOrder.get(pos) ;
-					for(String key:inf) {
-						ResponseEntity<String> res=token(urlObjs.get(key),credentials.getSrcToken(), "infoEndpointHelper");
-						
-						List<String> list = new ArrayList<String>();
-						JsonElement element = new Gson().fromJson(res.getBody(), JsonElement.class);
-						String arr[] = urlObjs.get(key).getData().split("::");
-						list = Utilities.checkByPath(arr, 0, element, list);
-						System.out.println("Datas");
-						System.out.println(urlObjs.get(key).getLabel()+" : "+list);
-						JsonArray jArr = new JsonArray();
-						
-						for(String id:list) {
-							credentials.setSrcToken(urlObjs.get(key).getLabel(),id);
-							JsonObject obj = new JsonObject();
-							obj.addProperty("id", id);
-							obj.add("data", infoEndpointHelper(infoEndpointOrder,urlObjs,pos+1));
-							jArr.add(obj);
-							
-						}
-						jobj.add(urlObjs.get(key).getLabel(), jArr);
-						
-					}
-					return jobj;
-		} catch (JsonSyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-			
-		return jobj;	
-			
-	}
 	
-//	FileWriter sne;
-//	private void infoQuerying(ImplicitDataNode root,List<?> node, Map<String, UrlObject> mp) throws IOException {
-//		
-//
-//		try {
-//			if(node==null)
-//				return;
-//			sne.write(node.getClass()+"\t"+node+"\n");
-//			System.out.println(node.getClass()+ "\t"+node);
-//			if(node.get(0).getClass().isAssignableFrom(ArrayList.class)) {
-//
-//				node.forEach(o->{
-//					try {
-//						infoQuerying(root, (List<?>) o,mp);
-//					} catch (IOException e) {
-//
-//						e.printStackTrace();
-//					}
-//				});
-//
-//			}
-//			else {
-//				node.forEach(o->{
-//					
-//					System.out.print(mp.containsKey(o)+" "+o+"\t");
-//					System.out.println(credentials.getSrcToken());
-//					ResponseEntity<String> res=token(mp.get(o),credentials.getSrcToken(), "tree form");
-//
-//                    List<String> list = new ArrayList<String>();
-//
-//                    JsonElement element = new Gson().fromJson(res.getBody(), JsonElement.class);
-//
-//                    String arr[] = mp.get(o).getData().split("::");
-//
-//                    list = Utilities.checkByPath(arr, 0, element, list);
-//                    for(String id:list) {
-//                    	credentials.setSrcToken(mp.get(o).getLabel(),id);
-//					}
-//                    
-//                    System.out.println(list);
-//				});
-//			}
-//		} catch (Exception e) {
-//			sne.close();
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//
-//	}
-	
-	@RequestMapping(method = RequestMethod.GET, value = "/getInfoEndpoints")
-	private void getInfoEndpoints(){
-		ResponseEntity<String> ret = null;
-		HttpHeaders header = new HttpHeaders();
-		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", config.getRootUrl());
-		header.add("access-control-allow-credentials", "true");
-	
-			try {
-				RestTemplate restTemplate = new RestTemplate();
-				Gson gson = new Gson();
-				List<UrlObject> infoEndpoints = credentials.getSrcObj().getInfoEndpoints();	
-
-				List<List<List<String>>> infoEndpointOrder = credentials.getSrcObj().getInfoEndpointOrder();
-				if(infoEndpointOrder == null) {
-					System.out.println("No Implicit Data Available");
-					return;
-
-				}
-				Map<String,UrlObject> urlObjs = new HashMap<>();
-				infoEndpoints.forEach(e -> urlObjs.put(e.getLabel(), e));
-				for(List<List<String>> as:infoEndpointOrder)
-					System.out.println("rs = "+infoEndpointHelper(as,urlObjs,0));
-			
-			} catch (RestClientException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			return;
-		
-	}
 
 
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
-	private ResponseEntity<String> selectAction(@RequestParam("choice") String choice,
-			@RequestParam("connId") String connId, HttpSession httpsession) {
+	public ResponseEntity<String> selectAction(@RequestParam("choice") String choice, HttpSession httpsession) {
 		ResponseEntity<String> ret = null;
 		HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
@@ -439,7 +316,10 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		try {
 			if (Utilities.isSessionValid(httpsession, credentials)) {
 				System.out.println(credentials.getCurrConnId() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
-				if (credentials.getCurrConnId().getScheduled().equalsIgnoreCase("true")
+				if(choice.equalsIgnoreCase("view")) {
+					return validateSourceCred(choice);
+				}
+				else if (credentials.getCurrConnId().getScheduled().equalsIgnoreCase("true")
 						&& choice.equalsIgnoreCase("export")) {
 					SchedulingObjects schObj = new SchedulingObjects();
 					schObj.setDestObj(credentials.getDestObj());
@@ -451,6 +331,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					schObj.setLastPushed(ZonedDateTime.now().toInstant().toEpochMilli());
 					schObj.setDestName(credentials.getCurrDestName());
 					schObj.setSrcName(credentials.getCurrSrcName());
+					
 					for (Endpoint endpoint : credentials.getCurrConnId().getEndPoints()) {
 						Map<String,Status> sat = new HashMap<>();
 						for(String end :endpoint.getValue()) {
@@ -458,17 +339,20 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 						}
 						schObj.setEndPointStatus(endpoint.getName(), sat);
 					}
+					
+					
+					
 					if (applicationCredentials.getApplicationCred().keySet().contains(credentials.getUserId())) {
 						applicationCredentials.getApplicationCred().get(credentials.getUserId())
-								.setSchedulingObjects(schObj, connId);
+								.setSchedulingObjects(schObj, credentials.getCurrConnId().getConnectionId());
 					} else {
 						ScheduleInfo scInfo = new ScheduleInfo();
-						scInfo.setSchedulingObjects(schObj, connId);
+						scInfo.setSchedulingObjects(schObj, credentials.getCurrConnId().getConnectionId());
 						applicationCredentials.setApplicationCred(credentials.getUserId(), scInfo);
 					}
 					System.out.println("Publishing custom event. ");
 					ScheduleEventData scheduleEventData = Context.getBean(ScheduleEventData.class);
-					scheduleEventData.setData(credentials.getUserId(), connId, credentials.getCurrConnId().getPeriod());
+					scheduleEventData.setData(credentials.getUserId(), credentials.getCurrConnId().getConnectionId(), credentials.getCurrConnId().getPeriod());
 					// Context.getAutowireCapableBeanFactory().autowireBean(scheduleEventData);
 					//PostExecutorComplete post = new PostExecutorComplete(credentials.getUserId(), credentials.getCurrConnId().getConnectionId());
 					applicationEventPublisher.publishEvent(scheduleEventData);
@@ -611,8 +495,8 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		ResponseEntity<String> out = null;
 		try {
 			Gson gson = new Gson();
-			JsonObject endPoint = new JsonObject();
 			JsonObject data = new JsonObject();
+			JsonArray endpoint = new JsonArray();
 			boolean success=true;
 			int totalRows=0;
 			Metering metring = new Metering();
@@ -632,83 +516,108 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
     				endp.put(object.getCatagory(), lst);
 				}
 			}
-			
+			Endpoint others = null;
+			System.out.println(endp);
 			for(Endpoint endpnt : credentials.getCurrConnId().getEndPoints()) {
-				if(endpnt.getName().equalsIgnoreCase("others")) {
-					for(UrlObject object:endp.get(endpnt.getName())) {
+				if(endpnt.getKey().equalsIgnoreCase("others")) {
+					others = endpnt;
+					
+					for(UrlObject object:endp.get(endpnt.getKey().toLowerCase())) {
 						
 						System.out.println("LABEL1" + object.getLabel());
 						boolean value = endpnt.getValue().contains(object.getLabel());
 						System.out.println(value + " " + object.getLabel().toLowerCase());
 						
 						if(endpnt.getValue().contains(object.getLabel())){
-								
+
 								Map<JsonElement,Integer> data1 = paginate(choice,object);
 								
 								Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
-								JsonElement datum=entry.getKey();
+								JsonObject datum=entry.getKey().getAsJsonObject();
 								Integer rows=entry.getValue();
-								
-								if(choice.equalsIgnoreCase("view")) {
-									if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
-										success=false;
-									}
+								if(!datum.get("status").toString().equalsIgnoreCase("21")) {
+									success=false;
 								}
-								else {
+								if(!choice.equalsIgnoreCase("view")) {
 									totalRows+=rows;
 									metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
 								}
-								endPoint.add(object.getLabel(),datum);
+								datum.addProperty("endpoint", object.getLabel());
+								endpoint.add(datum);
 							}
 						
 					}
 				}
 				else {
-					UrlObject object = endp.get(endpnt.getName()).get(0);
+					UrlObject object = endp.get(endpnt.getKey().toLowerCase()).get(0);
 					for(String endpntLable:endpnt.getValue()) {
 						object.setLabel(endpntLable);
 						Map<String,String> ne = new HashMap<>();
-						ne.put(endpnt.getName(), endpntLable);
+						ne.put(endpnt.getKey().toLowerCase(), endpntLable);
 						object.setUrl(url(object.getUrl(), ne));
 						System.out.println("LABEL1" + object.getLabel());
 						boolean value = endpnt.getValue().contains(object.getLabel());
 						System.out.println(value + " " + object.getLabel().toLowerCase());
 						
 						if(endpnt.getValue().contains(object.getLabel())){
-								
-								Map<JsonElement,Integer> data1 = paginate(choice,object);
-								
-								Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
-								JsonElement datum=entry.getKey();
-								Integer rows=entry.getValue();
-								
-								if(choice.equalsIgnoreCase("view")) {
-									if(!datum.getAsJsonObject().get("status").toString().equalsIgnoreCase("21")) {
-										success=false;
-									}
-								}
-								else {
-									totalRows+=rows;
-									metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
-								}
-								endPoint.add(object.getLabel(),datum);
+
+							Map<JsonElement,Integer> data1 = paginate(choice,object);
+							
+							Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
+							JsonObject datum=entry.getKey().getAsJsonObject();
+							Integer rows=entry.getValue();
+							if(!datum.get("status").toString().equalsIgnoreCase("21")) {
+								success=false;
 							}
+							
+							if(!choice.equalsIgnoreCase("view")) {
+								totalRows+=rows;
+								metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+							}
+							datum.addProperty("endpoint", object.getLabel());
+							endpoint.add(datum);
 						}
 					}
 				}
-			
-			metring.setTotalRowsFetched(totalRows);
-			if(!choice.equalsIgnoreCase("view")) {
-				applicationEventPublisher.publishEvent(metring);
 			}
 			
-			data.add("data", endPoint);
+			List<String> infoendpnts = new ArrayList<>();
+			for(UrlObject endpnt:credentials.getSrcObj().getInfoEndpoints()) {
+				if(others.getValue().contains(endpnt.getLabel())) {
+					infoendpnts.add(endpnt.getLabel());
+				}
+			}
+			
+			Map<JsonElement,Integer> ret = getInfoEndpoints(infoendpnts,choice);
+			
+			if(ret!=null) {
+				if(choice.equalsIgnoreCase("view")) {
+					JsonObject view = ret.entrySet().iterator().next().getKey().getAsJsonObject();
+					for(Entry<String, JsonElement> end:view.entrySet()) {
+						JsonObject temp = end.getValue().getAsJsonObject();
+						temp.addProperty("endpoint", end.getKey());
+						endpoint.add(temp);
+					}
+				}
+				else {
+					for(Entry<JsonElement, Integer> ent:ret.entrySet()) {
+						totalRows+=ent.getValue();
+						metring.setRowsFetched(ent.getKey().getAsString(),ent.getValue());
+					}
+				}
+				
+				
+				metring.setTotalRowsFetched(totalRows);
+				if(!choice.equalsIgnoreCase("view")) {
+					applicationEventPublisher.publishEvent(metring);
+				}
+			}
+			
+			
+			
+			data.add("data", endpoint);
 			data.addProperty("status", "21");
 			data.addProperty("message", "succesful");
-			if(success==true) {
-				data.addProperty("status", "23");
-				data.addProperty("message", "unsuccesful");
-			}
 			return 	ResponseEntity.status(HttpStatus.OK).headers(header).body(data.toString());	
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -717,6 +626,188 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
 	}
 
+private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpointOrder,Map<String,UrlObject> urlObjs,int pos, Map<String, List<String>> childrens, List<String> endpoins,String choice) {
+		
+		Map<String,JsonElement> ret = new HashMap<String,JsonElement>();
+		try {
+			if(pos == infoEndpointOrder.size())
+				return ret;
+			List<String> inf=infoEndpointOrder.get(pos) ;
+			for(String key:inf) {
+				//ResponseEntity<String> res=token(urlObjs.get(key),credentials.getSrcToken(), "infoEndpointHelper");
+				
+				Map<JsonElement, Integer> data1 = paginate("info", urlObjs.get(key));
+				
+				Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
+				JsonElement element=entry.getKey();
+				
+				if(endpoins.contains(key)){
+					if(ret.containsKey(key)) {
+						JsonArray elem = ret.get(key).getAsJsonArray();elem.add(element);
+						ret.put(key, elem);
+					}
+					else {
+						ret.put(key, element);
+					}
+				}
+				
+				List<String> list = new ArrayList<String>();
+				String arr[] = urlObjs.get(key).getData().split("::");
+				list = Utilities.checkByPath(arr, 0, element, list);
+				System.out.println("Datas");
+				System.out.println(urlObjs.get(key).getLabel()+" : "+list);
+				
+				for(String id:list) {
+					credentials.setSrcToken(urlObjs.get(key).getLabel(),id);
+					ret.putAll(infoEndpointHelper(infoEndpointOrder,urlObjs,pos+1,childrens, endpoins,choice));					
+					
+				}
+				
+			}
+			return ret;
+		} catch (JsonSyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+			
+		return null;	
+			
+	}
+	
+	
+	private Map<JsonElement,Integer> getInfoEndpoints(List<String> endpoints,String choice){
+		
+		HttpHeaders header = new HttpHeaders();
+		header.add("Cache-Control", "no-cache");
+		header.add("access-control-allow-origin", config.getRootUrl());
+		header.add("access-control-allow-credentials", "true");
+	
+			try {
+				List<String> endpoins = new ArrayList<>(endpoints);
+				List<UrlObject> infoEndpoints = credentials.getSrcObj().getInfoEndpoints();	
+				
+				Map<String,List<String>> childrens = new HashMap<>();
+				
+				List<List<List<String>>> infoEndpointOrder = credentials.getSrcObj().getInfoEndpointOrder();
+				
+				if(infoEndpointOrder == null) {
+					System.out.println("No Implicit Data Available");
+					return null;
+
+				}
+				
+				for(List<List<String>> lst:infoEndpointOrder) {
+					List<String> ends = new ArrayList<>();
+					for(int i = lst.size()-1;i>=0;i--) {
+						for(String o:lst.get(i))
+							childrens.put(o, ends);
+						ends = new ArrayList<>(ends);
+						ends.addAll(lst.get(i));
+					}
+				}
+				
+				System.out.println("childres:"+childrens);
+				
+				System.out.println("endpoins:"+endpoins);
+				
+				System.out.println("infoEndpointOrder:"+infoEndpointOrder);
+				
+				Map<String,UrlObject> urlObjs = new HashMap<>();
+				infoEndpoints.forEach(e -> urlObjs.put(e.getLabel(), e));
+				
+				Map<String,JsonElement> elem = new HashMap<String,JsonElement>();
+				
+				for(List<List<String>> as:infoEndpointOrder) {
+					System.out.println(childrens.get(as.get(0).get(0)));
+					childrens.get(as.get(0).get(0)).forEach(o->{
+						if(endpoins.contains(o)||endpoins.contains(as.get(0).get(0))) {
+							System.out.println("inside");
+							elem.putAll(infoEndpointHelper(as,urlObjs,0,childrens,endpoins,choice));
+						}
+					});					
+				}
+				
+				System.out.println(elem);
+				
+				Map<JsonElement,Integer> ret = new HashMap<JsonElement,Integer>();
+				
+				
+				
+				JsonObject view = new JsonObject();
+				for(Entry<String, JsonElement> ent:elem.entrySet()) {
+					
+					String outputData = ent.getValue().getAsJsonArray().toString();
+					JFlat x = new JFlat(outputData);
+					List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
+					int rows=json2csv.size()-1;
+					
+					String tableName = credentials.getCurrConnId().getConnectionId() + "_" + ent.getKey();
+						
+					System.out.println("Export Data without schedule");						
+
+					
+
+					if(choice.equalsIgnoreCase("export")) {
+						System.out.println("SourceController-driver: " + credentials.getDestObj().getDrivers());
+						if (pushDB(outputData, tableName, credentials.getDestObj(),credentials.getDestToken())) {						
+							ret.put(new JsonPrimitive(ent.getKey()), rows);
+						} else {
+							ret.put(new JsonPrimitive(ent.getKey()), -1);
+						}
+					}
+					else if(choice.equalsIgnoreCase("download")) {
+						ret.put(ent.getValue().getAsJsonArray(), rows);
+					}
+					else if(choice.equalsIgnoreCase("view")) {
+						JsonObject respBody = new JsonObject();
+						respBody.addProperty("status", "21");
+						JsonArray array = new JsonArray();
+						JsonArray columns = new JsonArray();
+						int i=0;
+						for(Object[] row:json2csv) {
+							JsonObject ind = new JsonObject();
+							int j=0;
+							for(Object element:row) {
+								if(i!=0) {
+									ind.addProperty(String.valueOf(json2csv.get(0)[j++]), String.valueOf(element));
+								}
+								else {
+									columns.add(String.valueOf(element));
+								}								
+							}
+							if(i!=0)
+								array.add(ind);
+							i++;
+							
+							if(json2csv.indexOf(row)>20)
+								break;
+						}
+						JsonObject ind = new JsonObject();
+						ind.add("columns", columns);
+						ind.add("data", array); 
+						respBody.add("data", ind);
+						System.out.println(respBody.toString().substring(0, 20));
+						view.add(ent.getKey(), respBody);
+					}
+					
+				}
+				if(choice.equalsIgnoreCase("view")) {
+					ret.put(view, 0);
+				}
+				
+				System.out.println(ret);
+				return ret;
+								
+			} catch (RestClientException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return null;
+		
+	}
 	
 	@RequestMapping("/downloadData")
 	public ResponseEntity<byte[]> downloadData(@RequestParam("choice") String choice,
@@ -730,7 +821,8 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			if (Utilities.isSessionValid(session, credentials)) {
 				ResponseEntity<String> out = validateSourceCred(choice);
 				System.out.println(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").getAsString());
-				if(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").toString().equalsIgnoreCase("\"200\"")) {
+				if(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").getAsString().equalsIgnoreCase("200")) {
+					System.out.println("inside If block");
 					List<UrlObject> endpoints = credentials.getSrcObj().getDataEndPoints();
 					int totalRows=0;
 					Metering metring = new Metering();
@@ -738,61 +830,87 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					metring.setTime(new Date()+"");
 					metring.setType(choice);
 					metring.setUserId(credentials.getUserId());
+					Map<String,UrlObject> dataPoints = new HashMap<>();
+					Map<String,UrlObject> infoData = new HashMap<>();
 					for (UrlObject object : endpoints) {
-						System.out.println("LABEL1" + object.getLabel());
-						if (object.getLabel().trim().equalsIgnoreCase(endpoint.toLowerCase())) {
-							Map<JsonElement,Integer> data1 = paginate(choice,object);
-							
-							Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
-							JsonElement data=entry.getKey();
-							Integer rows=entry.getValue();
-							totalRows=rows;
-							metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
-							metring.setTotalRowsFetched(totalRows);
-							applicationEventPublisher.publishEvent(metring);
-							
-							String sheet="";
-							switch(choice) {
-								case "xml":{
-									headers.setContentType(MediaType.APPLICATION_XML);
-									JSONArray jobj = new JSONArray(data.toString());
-									System.out.println(jobj.toString());
-									sheet = XML.toString(jobj,"data");
-									break;
-								}
-								case "json":{
-									headers.setContentType(MediaType.APPLICATION_JSON);
-									sheet = data.toString();
-									break;
-								}
-								case "csv":{
-									headers.setContentType(MediaType.TEXT_PLAIN);
-									JFlat x = new JFlat(data.toString());
-									List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
-									sheet ="";
-									for(Object[] row:json2csv) {
-										for(Object element:row) {
-											sheet+=String.valueOf(element)+",";
-										}
-										sheet = sheet.substring(0, sheet.length()-1);
-										sheet+="\r\n";
+						dataPoints.put(object.getLabel().toLowerCase(), object);
+					}
+					for(UrlObject object:credentials.getSrcObj().getInfoEndpoints()) {
+						infoData.put(object.getLabel().toLowerCase(), object);
+					}
+					
+					UrlObject object=null;
+					Map<JsonElement,Integer> data1=null;
+					System.out.println("dataPoints"+dataPoints);
+					System.out.println("infoData"+infoData);
+					System.out.println("endpoint"+endpoint);
+					if(dataPoints.containsKey(endpoint.toLowerCase())) {
+						object=dataPoints.get(endpoint.toLowerCase());
+						data1 = paginate(choice,object);
+					}
+					else if(infoData.containsKey(endpoint.toLowerCase())) {
+						object=infoData.get(endpoint.toLowerCase());
+						List<String> end = new ArrayList<>();
+						end.add(endpoint);
+						data1=getInfoEndpoints(end, "download");
+					}
+					System.out.println(object);
+					if(object!=null) {				
+						
+						Map.Entry<JsonElement, Integer> entry=data1.entrySet().iterator().next();
+						JsonElement data=entry.getKey();
+						Integer rows=entry.getValue();
+						totalRows=rows;
+						metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+						metring.setTotalRowsFetched(totalRows);
+						applicationEventPublisher.publishEvent(metring);
+						
+						String sheet="";
+						switch(choice) {
+							case "xml":{
+								headers.setContentType(MediaType.APPLICATION_XML);
+								JSONArray jobj = new JSONArray(data.toString());
+								System.out.println(jobj.toString());
+								sheet = XML.toString(jobj,"data");
+								break;
+							}
+							case "json":{
+								headers.setContentType(MediaType.APPLICATION_JSON);
+								sheet = data.toString();
+								break;
+							}
+							case "csv":{
+								headers.setContentType(MediaType.TEXT_PLAIN);
+								JFlat x = new JFlat(data.toString());
+								List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
+								sheet ="";
+								for(Object[] row:json2csv) {
+									for(Object element:row) {
+										sheet+=String.valueOf(element)+",";
 									}
-									break;
+									sheet = sheet.substring(0, sheet.length()-1);
+									sheet+="\r\n";
 								}
-							}					
-							check1 = sheet.getBytes();					
-							headers.add("Cache-Control", "no-cache");
-							headers.add("access-control-allow-origin", config.getRootUrl());
-							headers.add("access-control-allow-credentials", "true");
-							headers.add("charset", "utf-8");
-							headers.add("content-disposition", "attachment; filename=" +
-									credentials.getCurrSrcName()+"_"+object.getLabel() +"."+choice);
-							headers.add("Content-length",check1.length+"");
-							System.out.println(headers);
-							// return new ResponseEntity<byte[]>(output, responseHeaders, HttpStatus.OK)
-							return new ResponseEntity<byte[]>(check1, headers, HttpStatus.OK);
-						}
-				}			
+								break;
+							}
+						}					
+						check1 = sheet.getBytes();					
+						headers.add("Cache-Control", "no-cache");
+						headers.add("access-control-allow-origin", config.getRootUrl());
+						headers.add("access-control-allow-credentials", "true");
+						headers.add("charset", "utf-8");
+						headers.add("content-disposition", "attachment; filename=" +
+								credentials.getCurrSrcName()+"_"+object.getLabel() +"."+choice);
+						headers.add("Content-length",check1.length+"");
+						System.out.println(headers);
+						// return new ResponseEntity<byte[]>(output, responseHeaders, HttpStatus.OK)
+						return new ResponseEntity<byte[]>(check1, headers, HttpStatus.OK);
+
+					}
+					else {
+						return ResponseEntity.status(HttpStatus.OK).headers(headers).body("object is null".getBytes());
+					}
+											
 				}
 				else {
 					return ResponseEntity.status(HttpStatus.OK).headers(out.getHeaders()).body(out.getBody().getBytes());
@@ -857,17 +975,31 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				respBody.addProperty("status", "21");
 				JFlat x = new JFlat(out.getBody());
 				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
-				String sheet ="";
+				JsonArray array = new JsonArray();
+				JsonArray columns = new JsonArray();
+				int i=0;
 				for(Object[] row:json2csv) {
+					JsonObject ind = new JsonObject();
+					int j=0;
 					for(Object element:row) {
-						sheet+=String.valueOf(element)+",";
+						if(i!=0) {
+							ind.addProperty(String.valueOf(json2csv.get(0)[j++]), String.valueOf(element));
+						}
+						else {
+							columns.add(String.valueOf(element));
+						}
 					}
-					sheet = sheet.substring(0, sheet.length()-1);
-					sheet+="\r\n";
+					if(i!=0)
+						array.add(ind);
+					i++;
+					
 					if(json2csv.indexOf(row)>20)
 						break;
 				}
-				respBody.addProperty("data", sheet);
+				JsonObject ind = new JsonObject();
+				ind.add("columns", columns);
+				ind.add("data", array); 
+				respBody.add("data", ind);
 				System.out.println(respBody.toString().substring(0, 20));
 				response.put(respBody, rows);
 				return response;
@@ -943,31 +1075,37 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				System.out.println("\n--------------------------------------------------------------\n");
 				// System.out.println(out.getBody());
 
-				String outputData = mergedData.toString();
-				JFlat x = new JFlat(outputData);
-				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
-				rows=json2csv.size()-1;
-				String tableName = credentials.getCurrConnId().getConnectionId() + "_" + endpoint.getLabel();
-				if (choice.equalsIgnoreCase("export") && truncateAndPush(tableName)) {
-					
-					System.out.println("Export Data without schedule");
-					
+				if(!choice.equalsIgnoreCase("info")) {
+					String outputData = mergedData.toString();
+					JFlat x = new JFlat(outputData);
+					List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
+					rows=json2csv.size()-1;
+					String tableName = credentials.getCurrConnId().getConnectionId() + "_" + endpoint.getLabel();
+					if (choice.equalsIgnoreCase("export") && truncateAndPush(tableName)) {
+						
+						System.out.println("Export Data without schedule");
+						
 
-					System.out.println("SourceController-driver: " + credentials.getDestObj().getDrivers());
+						System.out.println("SourceController-driver: " + credentials.getDestObj().getDrivers());
 
-					if (pushDB(outputData, tableName, credentials.getDestObj(),credentials.getDestToken())) {						
-						respBody.addProperty("status", "22");
-						respBody.addProperty("data", "Successfullypushed");
-					} else {
-						respBody = new JsonObject();
-						respBody.addProperty("status", "23");
-						respBody.addProperty("data", "Unsuccessful");
+						if (pushDB(outputData, tableName, credentials.getDestObj(),credentials.getDestToken())) {						
+							respBody.addProperty("status", "22");
+							respBody.addProperty("data", "Successfullypushed");
+						} else {
+							respBody = new JsonObject();
+							respBody.addProperty("status", "23");
+							respBody.addProperty("data", "Unsuccessful");
+						}
+						response.put(respBody, rows);
+						return response;
 					}
-					response.put(respBody, rows);
-					return response;
+					else {
+						response.put(mergedData, rows);
+						return response;
+					}
 				}
 				else {
-					response.put(mergedData, rows);
+					response.put(mergedData,0);
 					return response;
 				}
 			}
@@ -1042,7 +1180,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 				} else if (credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {
 					
-					out = selectAction(choice, connId, httpsession);
+					out = selectAction(choice,  httpsession);
 					respBody = gson.fromJson(out.getBody(), JsonElement.class);
 					selectAction=true;
 				} else {
@@ -1050,7 +1188,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 							.equalsIgnoreCase(credentials.getCurrConnId().getSourceName())
 							&& credentials.getConnectionIds(connId).getDestName()
 									.equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
-						out = selectAction(choice, connId, httpsession);
+						out = selectAction(choice,  httpsession);
 						respBody = gson.fromJson(out.getBody(), JsonElement.class);
 						selectAction=true;
 					} else if (credentials.getConnectionIds(connId).getSourceName()

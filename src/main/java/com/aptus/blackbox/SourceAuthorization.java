@@ -45,6 +45,7 @@ public abstract class SourceAuthorization {
 					if(x.getKey().indexOf("signature")!=-1) {
 						
 						credentials.put(x.getKey(),signature(token,credentials,message));
+						System.out.println(credentials.get(x.getKey()).toString());
 					}
 					if(x.getValue().equals("codeValue"))
 						s+= x.getKey() + "=" + encode(credentials.get(x.getKey()))+",";
@@ -99,8 +100,11 @@ public abstract class SourceAuthorization {
 		for(String key:params.keySet()) {
 			parameter+=key+"="+params.get(key)+"&";
 		}
-		parameter = parameter.substring(0, parameter.length()-1);
-		parameter = baseSignature+encode(parameter);
+		if(parameter.length()!=0) {
+			parameter = parameter.substring(0, parameter.length()-1);
+			parameter = baseSignature+encode(parameter);
+		}
+		
 		consumerSecret=encode(consumerSecret)+"&";
 		if((object.getLabel().toLowerCase().indexOf("token")!=-1)&&(values.containsKey("oauth_token")))
 			consumerSecret+=values.get("oauth_token");

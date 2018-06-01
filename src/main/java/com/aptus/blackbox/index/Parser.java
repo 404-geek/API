@@ -8,6 +8,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
@@ -17,7 +18,7 @@ import com.aptus.blackbox.models.SrcObject;
 import com.aptus.blackbox.security.ExceptionHandling;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-
+@Component
 public class Parser implements Serializable {
 	Parser() {
 	}
@@ -25,26 +26,7 @@ public class Parser implements Serializable {
 	private SrcObject srcProp;
 	private DestObject destProp;
 
-	public Parser(String type, String Id, String mongoUrl) {
-
-		try {
-
-			ResponseEntity<String> ret = null;
-			ret = parsingJson(type, Id, mongoUrl);
-
-			if (new Gson().fromJson(ret.getBody(), JsonObject.class).getAsJsonObject().get("code").getAsString()
-					.equals("200")) {
-				System.out.println("successful");
-			}
-			
-			System.out.println("unsuccessful connection");
-		}
-
-		catch (Exception e) {
-			System.out.println("inside parser exception");
-			System.out.println(e);
-		}
-	}
+	
 
 	public ResponseEntity<String> parsingJson(String type, String Id, String mongoUrl) {
 
@@ -80,15 +62,15 @@ public class Parser implements Serializable {
 		catch (HttpStatusCodeException e) {
 
 			System.out.println("Inside token catch");
-			e.getStatusCode();
-
-			ExceptionHandling exceptionhandling = new ExceptionHandling();
-			out = exceptionhandling.clientException(e);
-			return out;
+			e.printStackTrace();
+			
+//			ExceptionHandling exceptionhandling = new ExceptionHandling();
+//			out = exceptionhandling.clientException(e);
 		}
 
 		catch (Exception e) {
 			System.out.println(e);
+			e.printStackTrace();
 		}
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respBody.toString());
 	}

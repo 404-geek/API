@@ -9,9 +9,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +28,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -47,6 +53,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 
 @Component
@@ -61,6 +68,8 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	@Autowired
 	private ApplicationEventPublisher applicationEventPublisher;
 
+	private boolean bool;
+	private List<String> endpoints;
 	private UrlObject endpoint;
 	private String connectionId,userId,catagory;
 	private Status result;
@@ -68,11 +77,13 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	private Connection con = null;
 	private static final Logger LOGGER = LoggerFactory.getLogger(EndpointsTaskExecutor.class);
 	
-	public void setEndpointsTaskExecutor(UrlObject endpoint, String connectionId,String user,Thread parent,String catagory) {
+	public void setEndpointsTaskExecutor(List<String> endpoints,UrlObject endpoint, String connectionId,String user,Thread parent,String catagory,boolean bool) {
+		this.endpoints = endpoints;
 		this.catagory = catagory;
 		this.endpoint=endpoint;
 		this.connectionId=connectionId;
 		this.userId = user;
+		this.bool=bool;
 		this.scheduleObject = applicationCredentials.getApplicationCred().get(user).getSchedulingObjects().get(connectionId);
 	}
 	
@@ -120,6 +131,18 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	
 	@Override
 	public void run() {
+		
+		if(bool) {
+			paginate(endpoint);
+		}
+		else {
+			getInfoEndpoints();
+		}
+		
+		return;
+	}
+	
+	private JsonElement paginate(UrlObject endpoint) {
 		System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN"+endpoint.getLabel());
 		RestTemplate restTemplate =new RestTemplate();
 		Gson gson=new Gson();
@@ -231,33 +254,39 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 			System.out.println("\n--------------------------------------------------------------\n");
 	        	
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN\n--------------------------------------------------------------\n");
-			
-			String tableName=connectionId+"_"+endpoint.getLabel();
-			String outputData = mergedData.toString();
-			JFlat x = new JFlat(outputData);
-			List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
-			
-			int rows=json2csv.size()-1;
-			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(endpoint.getLabel().toLowerCase(), rows);
-			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
-			.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
-			
-			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN table "+tableName);	
-			if(truncate(tableName)) {				
-
-			    System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN SourceController-driver: "+scheduleObject.getDestObj().getDrivers());
-
-			    if(pushDB(outputData, tableName)) {
-			    	Status respBody = new Status("22","successfully pushed");
-					setResult(respBody);
-					
-					return;
-			    }        	            
+			if(!bool) {
+				return mergedData;
 			}
 			else {
-				Status respBody = new Status("23","unsuccessful");
-				setResult(respBody);
-					return;
+				String tableName=connectionId+"_"+endpoint.getLabel();
+				String outputData = mergedData.toString();
+				
+				JFlat x = new JFlat(outputData);
+				List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
+				
+				int rows=json2csv.size()-1;
+							
+				System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN table "+tableName);	
+				if(truncate(tableName)) {				
+	
+				    System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN SourceController-driver: "+scheduleObject.getDestObj().getDrivers());
+	
+				    if(pushDB(outputData, tableName)) {
+				    	Status respBody = new Status("22","successfully pushed");
+				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(endpoint.getLabel().toLowerCase(), rows);
+						applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+						.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
+	
+						setResult(respBody);
+						
+						return null;
+				    }        	            
+				} 
+				else {
+					Status respBody = new Status("23","unsuccessful");
+					setResult(respBody);
+						return null;
+				}
 			}
 		}
 		catch(HttpClientErrorException e) {
@@ -288,9 +317,155 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 		
 		Status respBody = new Status("32","error");
 		setResult(respBody);
+		return null;
+	}
+	
+	private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpointOrder,Map<String,UrlObject> urlObjs,int pos, Map<String, List<String>> childrens) {
 		
-		//out = ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(header).body(null);
-		return;
+		Map<String,JsonElement> ret = new HashMap<String,JsonElement>();
+		try {
+			if(pos == infoEndpointOrder.size())
+				return ret;
+			List<String> inf=infoEndpointOrder.get(pos) ;
+			for(String key:inf) {
+				//ResponseEntity<String> res=token(urlObjs.get(key),credentials.getSrcToken(), "infoEndpointHelper");
+				
+				JsonElement element = paginate(urlObjs.get(key));
+				
+				if(endpoints.contains(key)){
+					if(ret.containsKey(key)) {
+						JsonArray elem = ret.get(key).getAsJsonArray();elem.add(element);
+						ret.put(key, elem);
+					}
+					else {
+						ret.put(key, element);
+					}
+				}
+				
+				List<String> list = new ArrayList<String>();
+				String arr[] = urlObjs.get(key).getData().split("::");
+				list = Utilities.checkByPath(arr, 0, element, list);
+				System.out.println("Datas");
+				System.out.println(urlObjs.get(key).getLabel()+" : "+list);
+				
+				for(String id:list) {
+					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setSrcToken(urlObjs.get(key).getLabel(),id);
+					ret.putAll(infoEndpointHelper(infoEndpointOrder,urlObjs,pos+1,childrens));					
+					
+				}
+				
+			}
+			return ret;
+		} catch (JsonSyntaxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+			
+		return null;	
+			
+	}
+	
+	
+	private Map<JsonElement,Integer> getInfoEndpoints(){
+	
+			try {
+				
+				List<UrlObject> infoEndpoints = scheduleObject.getSrcObj().getInfoEndpoints();	
+				
+				Map<String,List<String>> childrens = new HashMap<>();
+				
+				List<List<List<String>>> infoEndpointOrder = scheduleObject.getSrcObj().getInfoEndpointOrder();
+				
+				if(infoEndpointOrder == null) {
+					System.out.println("No Implicit Data Available");
+					return null;
+
+				}
+				
+				for(List<List<String>> lst:infoEndpointOrder) {
+					List<String> ends = new ArrayList<>();
+					for(int i = lst.size()-1;i>=0;i--) {
+						for(String o:lst.get(i))
+							childrens.put(o, ends);
+						ends = new ArrayList<>(ends);
+						ends.addAll(lst.get(i));
+					}
+				}
+				
+				System.out.println("childres:"+childrens);
+				
+				System.out.println("endpoins:"+endpoints);
+				
+				System.out.println("infoEndpointOrder:"+infoEndpointOrder);
+				
+				Map<String,UrlObject> urlObjs = new HashMap<>();
+				infoEndpoints.forEach(e -> urlObjs.put(e.getLabel(), e));
+				
+				Map<String,JsonElement> elem = new HashMap<String,JsonElement>();
+				
+				for(List<List<String>> as:infoEndpointOrder) {
+					System.out.println(childrens.get(as.get(0).get(0)));
+					childrens.get(as.get(0).get(0)).forEach(o->{
+						if(endpoints.contains(o)||endpoints.contains(as.get(0).get(0))) {
+							System.out.println("inside");
+							elem.putAll(infoEndpointHelper(as,urlObjs,0,childrens));
+						}
+					});					
+				}
+				
+				System.out.println(elem);
+				
+				
+				
+				
+				for(Entry<String, JsonElement> ent:elem.entrySet()) {
+					
+					String outputData = ent.getValue().getAsJsonArray().toString();
+					JFlat x = new JFlat(outputData);
+					List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
+					
+					int rows=json2csv.size()-1;
+					
+					String tableName=connectionId+"_"+ent.getKey();
+					
+					System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN table "+tableName);	
+					if(truncate(tableName)) {				
+		
+					    System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN SourceController-driver: "+scheduleObject.getDestObj().getDrivers());
+		
+					    if(pushDB(outputData, tableName)) {
+					    	Status respBody = new Status("22","successfully pushed");
+					    	this.endpoint = urlObjs.get(ent.getKey());
+					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(ent.getKey().toLowerCase(), rows);
+							applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+							.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
+		
+							setResult(respBody);
+							
+							return null;
+					    }        	            
+					} 
+					else {
+						Status respBody = new Status("23","unsuccessful");
+						setResult(respBody);
+							return null;
+					}
+										
+					
+				}
+				
+								
+			} catch (RestClientException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			Status respBody = new Status("32","error");
+			setResult(respBody);
+			return null;
+		
 	}
 	
 	public boolean pushDB(String  jsonString, String tableName) throws SQLException {

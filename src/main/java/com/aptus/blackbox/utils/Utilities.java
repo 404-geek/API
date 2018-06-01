@@ -30,30 +30,7 @@ public class Utilities {
 	{
 		System.out.println("*****************Invalid***************");
 	}
-	public static List<String> check(String key, JsonElement jsonElement,List<String> list) {
-        if (jsonElement.isJsonArray()) {
-            for (JsonElement jsonElement1 : jsonElement.getAsJsonArray()) {
-                list=check(key, jsonElement1,list);
-            }
-        } else {
-            if (jsonElement.isJsonObject()) {
-                Set<Map.Entry<String, JsonElement>> entrySet = jsonElement
-                        .getAsJsonObject().entrySet();
-                for (Map.Entry<String, JsonElement> entry : entrySet) {
-                    String key1 = entry.getKey();
-                    if (key1.equals(key)) {
-                        list.add(entry.getValue().getAsString());
-                    }
-                    list=check(key, entry.getValue(),list);
-                }
-            } else {
-                if (jsonElement.toString().equals(key)) {
-                    list.add(jsonElement.getAsString());
-                }
-            }
-        }
-        return list;
-    }	
+	
 	public static List<String> checkByPath(String path[],final int pos, JsonElement jsonElement, List<String> list) {
 
 		if (jsonElement.isJsonObject()) {

@@ -396,21 +396,30 @@ public class home extends RESTFetch{
 				JsonArray catagory = new JsonArray();
 				JsonObject temp = new JsonObject();
 				JsonArray endpoints=new JsonArray();
+				boolean flag1 = false;
 				for(UrlObject obj:credentials.getSrcObj().getDataEndPoints()) {
-					if(obj.getCatagory().equalsIgnoreCase("others"))
+					if(obj.getCatagory().equalsIgnoreCase("others")) {
 						endpoints.add(obj.getLabel());
+						flag1=true;
+					}
 				}
-				temp.add("value", endpoints);
-				temp.addProperty("name", "others");
-				temp.addProperty("key", "Others");
-				catagory.add(temp);
+				for(UrlObject obj:credentials.getSrcObj().getInfoEndpoints()) {
+					endpoints.add(obj.getLabel());
+					flag1=true;
+				}
+				if(flag1==true) {
+					temp.add("value", endpoints);
+					temp.addProperty("name", "others");
+					temp.addProperty("key", "Others");
+					catagory.add(temp);
+				}				
 		        List<String> list;
 		        Gson gson = new Gson();
 				for(UrlObject obj:credentials.getSrcObj().getImplicitEndpoints()) {
 					temp = new JsonObject();
 					ResponseEntity<String> data = token(obj, credentials.getSrcToken(), "filteredEndpoints");					
 					list = new ArrayList<String>();
-					list = Utilities.check(obj.getData(), gson.fromJson(data.getBody(),JsonElement.class), list);
+					list = Utilities.checkByPath(obj.getData().split("::"), 0, new Gson().fromJson(data.getBody(),JsonElement.class), list);
 					temp.add("value", gson.fromJson(gson.toJson(list),JsonArray.class));
 					temp.addProperty("name", obj.getCatagory());
 					temp.addProperty("key", obj.getLabel());
@@ -467,11 +476,11 @@ public class home extends RESTFetch{
 				ConnObj conObj = new ConnObj();
 				JsonElement data = gson.fromJson(out.getBody(), JsonElement.class);
 				JsonArray srcdestId = data.getAsJsonObject().get("srcdestId").getAsJsonArray();
-				/*for(JsonElement ele:srcdestId) {
+				for(JsonElement ele:srcdestId) {
 					conObj = gson.fromJson(ele, ConnObj.class);
 					credentials.setConnectionIds(conObj.getConnectionId(), conObj);
 				}
-				*/
+				
 			    url = config.getMongoUrl()+"/credentials/SrcDstlist/srcdestlist";
 			    uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				out  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);

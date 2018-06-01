@@ -40,6 +40,9 @@ public class SchedulingObjects implements Serializable{
 	public void setSrcToken(Map<String, String> srcToken) {
 		SrcToken = srcToken;
 	}
+	public void setSrcToken(String key, String srcToken) {
+		SrcToken.put(key, srcToken);
+	}
 	public Map<String, String> getDestToken() {
 		return DestToken;
 	}

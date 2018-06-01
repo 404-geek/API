@@ -1,6 +1,8 @@
 package com.aptus.blackbox;
 
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -55,13 +57,14 @@ public abstract class RESTFetch extends SourceAuthorization {
 			System.out.println(message + " " + "Method : " + method);
 			System.out.println("url :" + url.toString());
 			System.out.println("******1**");
-			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-			System.out.println(message + " " + "----------------------------" + uri);
-			out = restTemplate.exchange(uri, method, httpEntity, String.class);
+			//URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+			System.out.println(message + " " + "----------------------------" + URI.create(url));
+			out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 			System.out.println("token status code  : " + out.getStatusCode());
 		}
 
 		catch (HttpClientErrorException e) {
+			e.printStackTrace();
 			System.out.println("inside token catch, client error");
 			System.out.println(e.getMessage());
 			System.out.println(e.getStatusCode());
@@ -94,7 +97,7 @@ public abstract class RESTFetch extends SourceAuthorization {
 		 * 
 		 */
 		catch (ResourceAccessException e) {
-
+			e.printStackTrace();
 			System.out.println("No internet or Timeout error");
 			JsonObject respBody = new JsonObject();
 			respBody.addProperty("code", "502");
@@ -105,8 +108,7 @@ public abstract class RESTFetch extends SourceAuthorization {
 		catch (HttpStatusCodeException e) {
 
 			System.out.println("Inside token catch");
-			e.getStatusCode();
-
+			e.printStackTrace();
 			ExceptionHandling exceptionhandling = new ExceptionHandling();
 			out = exceptionhandling.clientException(e);
 			return out;
@@ -185,7 +187,7 @@ public abstract class RESTFetch extends SourceAuthorization {
 		return null;
 	}
 
-	protected String buildUrl(UrlObject token, Map<String, String> values, String message) {
+	protected String buildUrl(UrlObject token, Map<String, String> values, String message) throws UnsupportedEncodingException {
 		String params = "?";
 		System.out.println(message + " " + "parameters = " + token.getParams());
 		for (objects obj : token.getParams()) {
