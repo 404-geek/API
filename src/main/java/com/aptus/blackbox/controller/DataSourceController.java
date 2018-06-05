@@ -8,6 +8,8 @@ import java.util.Map.Entry;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -27,6 +29,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
@@ -55,6 +58,8 @@ public class DataSourceController extends RESTFetch {
 	private Config config;
 	@Autowired
 	private ApplicationContext Context;
+	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
+
 	
 //	private SrcObject srcObj;
 //	private DestObject destObj;
@@ -207,34 +212,41 @@ public class DataSourceController extends RESTFetch {
 					}
 				}
 				else {
+					logger.info("pos 1");
 					credentials.setCurrDestValid(false);
-					String url =  "/authdestination?"+
-							"database_name="+database_name+
-							"&db_username="+db_username+
-							"&db_password="+db_password+
-							"&server_host="+server_host+
-							"&server_port="+server_port;
-					System.out.println(url);	
-					URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-					headers.setLocation(uri);
-					out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);					
+					out = Context.getBean(DataController.class).destination( database_name, db_username, db_password, server_host, server_port);
+//					String url =  "/authdestination?"+
+//							"database_name="+database_name+
+//							"&db_username="+db_username+
+//							"&db_password="+db_password+
+//							"&server_host="+server_host+
+//							"&server_port="+server_port;
+//					System.out.println(url);	
+//					URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+//					headers.setLocation(uri);
+//					out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);					
 				}				
 			} 
 			else {
 				String url;
-				if (type.equalsIgnoreCase("source"))
+				if (type.equalsIgnoreCase("source")) {
 					url = "/authsource";
-				else
-					url =  "/authdestination?"+
-							"database_name="+database_name+
-							"&db_username="+db_username+
-							"&db_password="+db_password+
-							"&server_host="+server_host+
-							"&server_port="+server_port;
-				System.out.println(url);
-				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				headers.setLocation(uri);
-				out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
+					System.out.println(url);
+					URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+					headers.setLocation(uri);
+					out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
+				}					
+				else {
+					logger.info("pos 2");
+					out = Context.getBean(DataController.class).destination( database_name, db_username, db_password, server_host, server_port);
+				}
+//					url =  "/authdestination?"+
+//							"database_name="+database_name+
+//							"&db_username="+db_username+
+//							"&db_password="+db_password+
+//							"&server_host="+server_host+
+//							"&server_port="+server_port;
+				
 			}
 			return out;
 			
@@ -362,7 +374,9 @@ public class DataSourceController extends RESTFetch {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+		JsonObject jobject = new JsonObject();
+		jobject.addProperty("isvalid",false);
+		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobject.toString());
 	}
 	@RequestMapping(method = RequestMethod.GET, value = "/deletedatasource")
     private ResponseEntity<String> deleteDataSource(HttpSession session, @RequestParam("connId") String connId) {
@@ -536,7 +550,7 @@ public class DataSourceController extends RESTFetch {
 //					"		\"value\": [\n" + 
 //					"			\"Accounts\"\n" + 
 //					"		]}]}");
-			filteredEndpoints = "{ \"others\": { \"feed\": true ,\"albums\": true}}";
+			//filteredEndpoints = "{ \"others\": { \"feed\": true ,\"albums\": true}}";
 			System.out.println(filteredEndpoints.getClass());
 			System.out.println(filteredEndpoints + " ");
 			HttpHeaders headers = new HttpHeaders();
@@ -554,6 +568,9 @@ public class DataSourceController extends RESTFetch {
 				}};
 				String conId;
 				JsonObject respBody = new JsonObject();
+				if(downloadDest.contains(destination)) {
+					credentials.setCurrDestName(destination);
+				}
 				if((credentials.getCurrDestName()!=null)&&(!credentials.getCurrDestName().equalsIgnoreCase(destination))) {
 					respBody.addProperty("message", "not matching dest name");
 					respBody.addProperty("status", "401");
@@ -648,7 +665,12 @@ public class DataSourceController extends RESTFetch {
 					if(choice.equalsIgnoreCase("export")) {
 						String out = Context.getBean(DataController.class).checkConnection("export", credentials.getCurrConnId().getConnectionId(), session).getBody();
 						respBody.addProperty("data", out);
-					}					
+					}
+					else if(choice.equalsIgnoreCase("download")) {
+						JsonObject out = Context.getBean(DataController.class).fordownload(gson.fromJson(filteredEndpoints, JsonElement.class)
+								.getAsJsonObject(), session).getBody();
+						respBody.add("data", out);
+					}
 					
 	    			respBody.addProperty("message", "DataSource created");
 					respBody.addProperty("status", "200");

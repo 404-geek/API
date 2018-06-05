@@ -340,7 +340,7 @@ public class home extends RESTFetch{
 			if(Utilities.isSessionValid(session,credentials)) {
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
-				String url = config.getMongoUrl()+"/credentials/SrcDstlist/srcdestlist";
+				String url = config.getMongoUrl()+"/copy_credentials/SrcDstlist/srcdestlist";
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				HttpHeaders header = new HttpHeaders();
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
@@ -481,7 +481,7 @@ public class home extends RESTFetch{
 					credentials.setConnectionIds(conObj.getConnectionId(), conObj);
 				}
 				
-			    url = config.getMongoUrl()+"/credentials/SrcDstlist/srcdestlist";
+			    url = config.getMongoUrl()+"/copy_credentials/SrcDstlist/srcdestlist";
 			    uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				out  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
 				respBody.add("images",gson.fromJson(out.getBody(), JsonElement.class));				

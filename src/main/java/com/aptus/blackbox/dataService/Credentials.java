@@ -118,6 +118,9 @@ public class Credentials implements Serializable {
 	public ConnObj getConnectionIds(String connId) {
 		return connectionIds.get(connId);
 	}
+	public Map<String, ConnObj> getConnectionIds() {
+		return this.connectionIds;
+	}
 	public void setConnectionIds(String connectionId,ConnObj obj) {
 		this.connectionIds.put(connectionId, obj);
 	}
