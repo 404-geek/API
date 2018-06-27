@@ -695,6 +695,8 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				}
 			}
 			
+			
+			
 			Map<JsonElement,Integer> ret = getInfoEndpoints(infoendpnts,choice);
 			
 			if(ret!=null) {

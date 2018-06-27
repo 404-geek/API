@@ -202,9 +202,11 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     				Map<String,Status> end = catagory.getValue();
     					if(catagory.getKey().equalsIgnoreCase("others")) {  
     						others = scheduleObjectInfo.getEndPointStatus().get("others".toLowerCase()).keySet();
+    						System.out.println("\t"+others);
+    						System.out.println("\t"+endp.get(catagory.getKey()));
     						for(UrlObject endpnt:endp.get(catagory.getKey())) {
     							if(end.containsKey(endpnt.getLabel())) {
-    								System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor");
+    								System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor1");
     	            				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
     	            				endpointsTaskExecutor.setEndpointsTaskExecutor(null,endpnt, connectionId, userId,Thread.currentThread(),catagory.getKey(),true);
     	            				//Context.getAutowireCapableBeanFactory().autowireBean(endpointsTaskExecutor);
@@ -220,7 +222,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     							ne.put(catagory.getKey(), endpntName);
     							endpnt.setUrl(Utilities.url(endpnt.getUrl(), ne));
     							
-    							System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor");
+    							System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor2");
 	            				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
 	            				endpointsTaskExecutor.setEndpointsTaskExecutor(null,endpnt, connectionId, userId,Thread.currentThread(),catagory.getKey(),true);
 	            				//Context.getAutowireCapableBeanFactory().autowireBean(endpointsTaskExecutor);
@@ -237,13 +239,16 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     				}
     			}
     			
-    			System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor");
+    			if(!infoendpnts.isEmpty()) {
+    				System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor3");
+        			System.out.println(Thread.currentThread().getName()+"\t"+infoendpnts);
+    				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
+    				
+    				endpointsTaskExecutor.setEndpointsTaskExecutor(infoendpnts,null, connectionId, userId,Thread.currentThread(),"others",false);
+    				
+    				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
+    			}   			
     			
-				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
-				
-				endpointsTaskExecutor.setEndpointsTaskExecutor(infoendpnts,null, connectionId, userId,Thread.currentThread(),"others",false);
-				
-				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
 
     			
     			

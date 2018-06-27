@@ -89,7 +89,10 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	
 	public void setResult(Status result) {
 		this.result = result;
-		
+		System.out.println(Thread.currentThread().getName()+"SET RESULT \t"+applicationCredentials.getApplicationCred());
+						System.out.println(Thread.currentThread().getName()+"SET RESULT \t"+applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects()
+								.get(connectionId).getEndPointStatus());
+								System.out.println(Thread.currentThread().getName()+"SET RESULT \t"+endpoint);
 		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects()
 		.get(connectionId).getEndPointStatus().get(catagory).put(endpoint.getLabel(),result);
 		
@@ -392,11 +395,11 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 					}
 				}
 				
-				System.out.println("childres:"+childrens);
+				System.out.println(Thread.currentThread().getName()+"childres:"+childrens);
 				
-				System.out.println("endpoins:"+endpoints);
+				System.out.println(Thread.currentThread().getName()+"endpoins:"+endpoints);
 				
-				System.out.println("infoEndpointOrder:"+infoEndpointOrder);
+				System.out.println(Thread.currentThread().getName()+"infoEndpointOrder:"+infoEndpointOrder);
 				
 				Map<String,UrlObject> urlObjs = new HashMap<>();
 				infoEndpoints.forEach(e -> urlObjs.put(e.getLabel(), e));
@@ -423,7 +426,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 					String outputData = ent.getValue().getAsJsonArray().toString();
 					JFlat x = new JFlat(outputData);
 					List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
-					
+					this.endpoint = urlObjs.get(ent.getKey());
 					int rows=json2csv.size()-1;
 					
 					String tableName=connectionId+"_"+ent.getKey();
@@ -435,7 +438,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 		
 					    if(pushDB(outputData, tableName)) {
 					    	Status respBody = new Status("22","successfully pushed");
-					    	this.endpoint = urlObjs.get(ent.getKey());
+					    	
 					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(ent.getKey().toLowerCase(), rows);
 							applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
 							.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
@@ -597,10 +600,13 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_name =" 
 					+ scheduleObject.getDestObj().getValue_quote_open()+ tableName
 					+scheduleObject.getDestObj().getValue_quote_close()+";");
+			System.out.println(stmt);
 			ResultSet res = stmt.executeQuery();
 			res.first();
+			System.out.println(res.getInt("COUNT"));
 			if(res.getInt("COUNT")!=0) {
 				stmt = con.prepareStatement("DROP TABLE "+tableName+";");
+				System.out.println(stmt);
 				stmt.execute();
 			}			
 			return true;
