@@ -21,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -53,6 +54,77 @@ public class DataListeners {
 	@Autowired
 	private ApplicationContext Context;
 
+	private SimpMessagingTemplate template;
+	@Autowired
+	public DataListeners(SimpMessagingTemplate template) {
+		this.template = template;
+	}
+	
+	@EventListener
+	public void changeSocket(Socket socket) {
+		
+		String user = socket.getUser();
+		Gson gson = new Gson();
+    	
+    	RestTemplate restTemplate = new RestTemplate();
+		HttpHeaders header = new HttpHeaders();
+		HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
+		
+		String url = config.getMongoUrl()+"/credentials/userCredentials?filter={\"_id\":\""+user.toLowerCase()+"\"}";
+		URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+
+		JsonObject UserCred  = gson.fromJson((restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class).getBody()),JsonObject.class);
+		
+		url = config.getMongoUrl()+"/credentials/metering/"+user.toLowerCase();
+		uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+
+		JsonObject MeteringCred  = gson.fromJson((restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class).getBody()),JsonObject.class);
+		
+		int numDataSources=0,
+		scheduledDataSources=0,
+		numDownloaded=0,
+		numRows=0;
+		
+		if(UserCred.get("_returned").getAsInt()==0) {
+			numDataSources=0;
+			scheduledDataSources=0;
+			numDownloaded=0;
+			numRows=0;
+		}
+		else {
+			JsonObject embed = UserCred.get("_embedded").getAsJsonArray().get(0).getAsJsonObject();
+			for(JsonElement srcdest:embed.get("srcdestId").getAsJsonArray()) {
+				if(srcdest.isJsonObject()) {
+					JsonObject temp = srcdest.getAsJsonObject();
+					numDataSources++;
+					if(temp.get("scheduled").getAsString().equalsIgnoreCase("true")) {
+						scheduledDataSources++;
+					}					
+				}
+			}
+			numRows = MeteringCred.get("Total rows").getAsInt();
+			for(Entry<String, JsonElement> conn:MeteringCred.entrySet()) {
+				if(conn.getValue().isJsonObject() && conn.getValue().getAsJsonObject().keySet().contains("MeteringInfo")) {					
+					for(JsonElement temp :conn.getValue().getAsJsonObject().get("MeteringInfo").getAsJsonArray()) {
+						if(temp.isJsonObject()) {
+							if(!temp.getAsJsonObject().get("Type").getAsString().equalsIgnoreCase("export")) {
+								for(JsonElement e:temp.getAsJsonObject().get("Endpoints").getAsJsonArray())
+									numDownloaded++;
+							}
+						}
+					}
+				}
+			}
+		}
+		JsonObject ret = new JsonObject();
+		ret.addProperty("numDataSources", numDataSources);
+		ret.addProperty("scheduledDataSources", scheduledDataSources);
+		ret.addProperty("numDownloaded", numDownloaded);
+		ret.addProperty("numRows", numRows);
+		
+		
+    	this.template.convertAndSend("/client/message",ret.toString());
+	}
 
 	@EventListener
 	public void scheduleListner(ScheduleEventData scheduleEventData) {		
@@ -318,6 +390,7 @@ public class DataListeners {
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();	
 				out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity,String.class);
 			}
+			applicationEventPublisher.publishEvent(new Socket(metering.getUserId()));
 		} catch (RestClientException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

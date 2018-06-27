@@ -1,4 +1,4 @@
-package com.aptus.blackbox.security;
+	package com.aptus.blackbox.security;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -13,10 +13,13 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 @ComponentScan(basePackages = "com.aptus.blackbox")
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+ 
     @Override
-    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-    
+    protected void configure(
+      AuthenticationManagerBuilder auth) throws Exception {
+  
     }
+ 
     
     @Override
     protected void configure(HttpSecurity http) throws Exception {

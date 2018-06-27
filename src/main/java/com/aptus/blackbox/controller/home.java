@@ -88,7 +88,7 @@ public class home extends RESTFetch{
 				RestTemplate restTemplate = new RestTemplate();
 				ResponseEntity<String> out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
 				JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
-				credentials.setSessionId(user,session.getId());
+				applicationCredentials.setSessionId(user,session.getId());
 //				if(!obj.get("password").toString().equals(pass)) {
 //					respBody.addProperty("id", user);
 //					respBody.addProperty("status", "404");
@@ -99,7 +99,9 @@ public class home extends RESTFetch{
 
 				if(new Gson().fromJson((existUser(user, "userCredentials").getBody()),JsonObject.class).getAsJsonObject().get("code").getAsString().equals("200"))
 					getConnectionIds(session);
-								System.out.println(session.getId());
+				
+				System.out.println(session.getId());
+				
 				respBody.addProperty("id", user);
 				respBody.addProperty("status", "200");
 				System.out.println("inside if");
@@ -216,7 +218,7 @@ public class home extends RESTFetch{
         headers.add("access-control-allow-credentials", "true");
         headers.add("Content-Type", "application/json");
 		try {
-			if(Utilities.isSessionValid(session,credentials)) {
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 			System.out.println("updating" + params);			
 			JsonObject respBody = new JsonObject();
 			String userId=params.get("_id").toString();
@@ -240,6 +242,7 @@ public class home extends RESTFetch{
 			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}
 			else{
+				session.invalidate();
 				System.out.println("Session expired!");
 				JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Sorry! Your session has expired");
@@ -337,7 +340,7 @@ public class home extends RESTFetch{
 		try {
 			
 			System.out.println(session.getId());			
-			if(Utilities.isSessionValid(session,credentials)) {
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
 				String url = config.getMongoUrl()+"/copy_credentials/SrcDstlist/srcdestlist";
@@ -349,6 +352,7 @@ public class home extends RESTFetch{
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(s.getBody().toString());
 			}
 			else {
+				session.invalidate();
 				System.out.println("Session expired!");
     			JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Sorry! Your session has expired");
@@ -390,7 +394,7 @@ public class home extends RESTFetch{
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {			
-			if(Utilities.isSessionValid(session,credentials)) {
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
 				JsonObject jobj = new JsonObject();
 				JsonArray catagory = new JsonArray();
@@ -432,6 +436,7 @@ public class home extends RESTFetch{
 			}
 			else
 			{
+				session.invalidate();
 				System.out.println("Session expired!");
     			JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Sorry! Your session has expired");
@@ -456,7 +461,7 @@ public class home extends RESTFetch{
 		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
 		try {
-			if(Utilities.isSessionValid(session,credentials)) {
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 				ResponseEntity<String> out = null;
 				RestTemplate restTemplate = new RestTemplate();
 				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
@@ -489,6 +494,7 @@ public class home extends RESTFetch{
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}
 			else {
+				session.invalidate();
    				System.out.println("Session expired!");
     			JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Sorry! Your session has expired");

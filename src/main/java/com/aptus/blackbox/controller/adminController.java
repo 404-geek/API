@@ -33,7 +33,8 @@ public class adminController {
 	@Autowired
 	private Config config;
 	
-	@RequestMapping(method = RequestMethod.GET, value = "/mongoPath")
+	
+	@RequestMapping("/mongoPath")
 	private ResponseEntity<String> modifyMongoPath(@RequestParam("mongoPath") String mongoPath) {
 		config.setMongoUrl(mongoPath);
 		JsonObject obj=new JsonObject();

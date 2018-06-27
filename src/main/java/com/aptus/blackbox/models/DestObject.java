@@ -3,9 +3,63 @@ package com.aptus.blackbox.models;
 import java.io.Serializable;
 
 public class DestObject implements Serializable {
-	private String _id, drivers, urlprefix, dbnameseparator, type_varchar, type_text, type_integer, type_real,
-			type_time, type_date, type_dateTime, identifier_quote_open, identifier_quote_close, value_quote_open,
-			value_quote_close;
+	private String _id,dbnameseparator,drivers,identifier_quote_close,identifier_quote_open,type_date,type_dateTime,type_integer,type_real,type_text,type_time,type_varchar,select_statement,insert_statement,create_statement,drop_statement,information_table,database_schema,table_schema,urlprefix,value_quote_close,value_quote_open;
+
+	public String getSelect_statement() {
+		return select_statement;
+	}
+
+	public void setSelect_statement(String select_statement) {
+		this.select_statement = select_statement;
+	}
+
+	public String getInsert_statement() {
+		return insert_statement;
+	}
+
+	public void setInsert_statement(String insert_statement) {
+		this.insert_statement = insert_statement;
+	}
+
+	public String getCreate_statement() {
+		return create_statement;
+	}
+
+	public void setCreate_statement(String create_statement) {
+		this.create_statement = create_statement;
+	}
+
+	public String getDrop_statement() {
+		return drop_statement;
+	}
+
+	public void setDrop_statement(String drop_statement) {
+		this.drop_statement = drop_statement;
+	}
+
+	public String getInformation_table() {
+		return information_table;
+	}
+
+	public void setInformation_table(String information_table) {
+		this.information_table = information_table;
+	}
+
+	public String getDatabase_schema() {
+		return database_schema;
+	}
+
+	public void setDatabase_schema(String database_schema) {
+		this.database_schema = database_schema;
+	}
+
+	public String getTable_schema() {
+		return table_schema;
+	}
+
+	public void setTable_schema(String table_schema) {
+		this.table_schema = table_schema;
+	}
 
 	public String get_id() {
 		return _id;

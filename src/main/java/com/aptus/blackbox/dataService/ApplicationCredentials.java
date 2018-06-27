@@ -11,6 +11,14 @@ import com.aptus.blackbox.index.ScheduleInfo;
 @Service
 public class ApplicationCredentials implements Serializable {
 	private Map<String,ScheduleInfo> applicationCred = new HashMap<String,ScheduleInfo>();
+	private Map<String,String> sessionId=new HashMap<>();
+	public Map<String, String> getSessionId() {
+		return sessionId;
+	}
+	public void setSessionId(String userId,String sessionId) {
+		this.sessionId.clear();
+		this.sessionId.put(userId, sessionId);
+	}
 
 	public Map<String,ScheduleInfo> getApplicationCred() {
 		return applicationCred;

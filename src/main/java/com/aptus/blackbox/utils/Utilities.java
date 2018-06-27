@@ -27,6 +27,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
@@ -35,9 +36,18 @@ import com.google.gson.JsonObject;
 
 import sun.misc.BASE64Encoder;
 
-public class Utilities {public static boolean isSessionValid(HttpSession session,Credentials credentials)
+public class Utilities {public static boolean isSessionValid(HttpSession session,ApplicationCredentials credentials,String UserID)
 {
-	return session.getId().equals(credentials.getSessionId().get(credentials.getUserId()));		
+	
+	System.out.println("SESSION");
+	System.out.println("SESSION\t"+session.getId().equals(credentials.getSessionId().get(UserID)));
+	System.out.println("SESSION ID\t"+session.getId());
+	System.out.println("SESSION USER\t"+UserID);
+	System.out.println("SESSION CRED SESSION ID\t"+credentials.getSessionId().get(UserID));
+	System.out.println("SESSION" + credentials.getSessionId());
+	System.out.println("SESSION");
+
+	return session.getId().equals(credentials.getSessionId().get(UserID));		
 }	
 private static String timestamp() {
 	String time = String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());

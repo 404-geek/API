@@ -7,8 +7,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -195,8 +199,18 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					if (i == 0) {
 						statement = "CREATE TABLE " + destObj.getIdentifier_quote_open() + tableName
 								+ destObj.getIdentifier_quote_close() + "(";
-						for (Object t : row)
-							statement += t.toString().replace("_", "") +" "+"TEXT"+ ",";
+						int j=0;
+						for (Object t : row) {
+							String type;
+							JsonPrimitive test = (JsonPrimitive) json2csv.get(1)[j];
+							if(test.isNumber()) {
+								type=destObj.getType_real();
+							}
+							else {
+								type=destObj.getType_text();
+							}
+							statement += t.toString().replace("_", "") +" "+type+ ",";
+						}
 
 						statement = statement.substring(0, statement.length() - 1) + ");";
 						System.out.println("-----" + statement);
@@ -244,7 +258,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 			Class.forName(destObj.getDrivers());
 			String url = destObj.getUrlprefix() + destToken.get("server_host") + ":" + destToken.get("server_port")
 					+ destObj.getDbnameseparator() + destToken.get("database_name");
-			System.out.println(url);
+			System.out.println(url+" "+destToken.get("db_username")+" "+destToken.get("db_password"));
 			con = DriverManager.getConnection(url, destToken.get("db_username"), destToken.get("db_password"));
 		} 
 		
@@ -317,8 +331,87 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		return resbody;
 	}
 	
-	
-
+	@RequestMapping(value="/graph")
+	public ResponseEntity<String> graph(@RequestParam("user") String user,HttpSession httpsession){
+		HttpHeaders header = new HttpHeaders();
+		header.add("Cache-Control", "no-cache");
+		header.add("access-control-allow-origin", config.getRootUrl());
+		header.add("access-control-allow-credentials", "true");
+		try {
+			if (Utilities.isSessionValid(httpsession, applicationCredentials,credentials.getUserId())) {
+				RestTemplate restTemplate = new RestTemplate();
+				String url = config.getMongoUrl()+"/credentials/metering/"+user.toLowerCase();
+				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+				HttpHeaders headers = new HttpHeaders();
+				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
+				JsonObject MeteringCred  = new Gson().fromJson((restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class).getBody()),JsonObject.class);
+				
+				Map<String,Integer> dateRows = new HashMap<String,Integer>();
+				
+				Calendar cad = Calendar.getInstance();
+				cad.setTime(new Date());
+				
+				ArrayList<String> viewDate = new ArrayList<>();
+				ArrayList<Integer> data = new ArrayList<>();
+				ArrayList<String> label = new ArrayList<>();
+				
+				for(int i=0;i<7;i++) {
+					viewDate.add(new SimpleDateFormat("yyyy-MM-dd").format(cad.getTime()));
+					cad.roll(Calendar.DATE, false);
+				}
+				
+				
+				for(Entry<String, JsonElement> conn:MeteringCred.entrySet()) {
+					if(conn.getValue().isJsonObject() && conn.getValue().getAsJsonObject().keySet().contains("MeteringInfo")) {					
+						for(JsonElement temp :conn.getValue().getAsJsonObject().get("MeteringInfo").getAsJsonArray()) {
+							if(temp.isJsonObject()) {
+								JsonObject temp1 = temp.getAsJsonObject();
+								Date date = new SimpleDateFormat("EEE MMM dd kk:mm:ss z yyyy").parse(temp1.get("Time").getAsString());
+								cad.setTime(date);
+								
+								String time = new SimpleDateFormat("yyyy-MM-dd").format(date);
+								int totalRows = temp1.get("Total Rows").getAsInt();
+								
+								if(dateRows.containsKey(time)) {
+									dateRows.put(time, dateRows.get(time)+totalRows);
+								}
+								else {
+									dateRows.put(time, totalRows);		
+								}
+								
+							}
+						}
+					}
+				}
+				
+				Collections.sort(viewDate);
+				
+				for(String s:viewDate) {
+					if(dateRows.containsKey(s)) {
+						data.add(dateRows.get(s));
+					}
+					else {
+						data.add(0);
+					}
+					label.add(new SimpleDateFormat("MMM dd").format(new SimpleDateFormat("yyyy-MM-dd").parse(s)));
+				}
+				
+				label.set(label.size()-1, "Today");
+								
+				
+				System.out.println("\n"+dateRows+"\n"+data+"\n"+label);
+				
+				JsonObject ret = new JsonObject();
+				ret.add("label", new Gson().toJsonTree(label));
+				ret.addProperty("data", new Gson().toJson(data));
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(ret.toString());
+			}
+		}
+		catch(Exception e) {
+			
+		}
+		return null;
+	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/selectaction")
 	public ResponseEntity<String> selectAction(@RequestParam("choice") String choice, HttpSession httpsession) {
@@ -328,7 +421,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		header.add("access-control-allow-origin", config.getRootUrl());
 		header.add("access-control-allow-credentials", "true");
 		try {
-			if (Utilities.isSessionValid(httpsession, credentials)) {
+			if (Utilities.isSessionValid(httpsession, applicationCredentials,credentials.getUserId())) {
 				System.out.println(credentials.getCurrConnId() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
 				if(choice.equalsIgnoreCase("view")) {
 					return validateSourceCred(choice);
@@ -865,7 +958,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 		headers.add("access-control-allow-credentials", "true");
 		byte[] check1;
 		try {
-			if (Utilities.isSessionValid(session, credentials)) {
+			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				ResponseEntity<String> out = validateSourceCred(choice);
 				System.out.println(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").getAsString());
 				if(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").getAsString().equalsIgnoreCase("200")) {
@@ -874,6 +967,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 					int totalRows=0;
 					Metering metring = new Metering();
 					metring.setConnId(credentials.getCurrConnId().getConnectionId());
+					
 					metring.setTime(new Date()+"");
 					metring.setType(choice);
 					metring.setUserId(credentials.getUserId());
@@ -1216,7 +1310,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 			boolean selectAction = false;
 			JsonElement respBody = new JsonObject();
 			System.out.println(credentials.getCurrConnId() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
-			if (Utilities.isSessionValid(httpsession, credentials)) {
+			if (Utilities.isSessionValid(httpsession, applicationCredentials,credentials.getUserId())) {
 				applicationCredentials.getApplicationCred().get(credentials.getUserId())
 						.setLastAccessTime(httpsession.getLastAccessedTime());
 				if (credentials.getCurrConnId() == null) {
@@ -1297,7 +1391,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
-			if (Utilities.isSessionValid(session, credentials)) {
+			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				applicationCredentials.getApplicationCred().get(credentials.getUserId())
 						.setLastAccessTime(session.getLastAccessedTime());
 				String name = destId;

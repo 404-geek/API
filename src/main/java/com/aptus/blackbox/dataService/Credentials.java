@@ -22,7 +22,7 @@ public class Credentials implements Serializable {
 	private String userId,currSrcName,currDestName;
 	private ConnObj currConnId;
 	private Map<String,ConnObj>connectionIds=new HashMap<>();
-	private Map<String,String> sessionId=new HashMap<>();
+	
 	private boolean userExist,usrSrcExist,usrDestExist;
 	private boolean currSrcValid,currDestValid;
 	private Map<String,String> SrcToken=new HashMap<>();
@@ -30,13 +30,7 @@ public class Credentials implements Serializable {
 	private SrcObject SrcObj;
 	private DestObject DestObj;
 	
-	public Map<String, String> getSessionId() {
-		return sessionId;
-	}
-	public void setSessionId(String userId,String sessionId) {
-		this.sessionId.clear();
-		this.sessionId.put(userId, sessionId);
-	}
+	
 	public boolean isUserExist() {
 		return userExist;
 	}

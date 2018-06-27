@@ -62,7 +62,7 @@ public class SourceController extends RESTFetch {
 		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
 		try {			
-			if(Utilities.isSessionValid(session,credentials)) {
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 				SrcObject obj = init();
 				if (obj.getSteps().compareTo("TWO") == 0) {
 					ret = code(accessCode);

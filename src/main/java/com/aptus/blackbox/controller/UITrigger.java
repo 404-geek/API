@@ -32,6 +32,7 @@ import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.ScheduleEventData;
+import com.aptus.blackbox.event.Socket;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.models.ConnObj;
@@ -66,7 +67,7 @@ public class UITrigger {
         headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
         try {         
-        	if(Utilities.isSessionValid(session, credentials)) {
+        	if(Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
         	String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
 			String url = config.getMongoUrl() + "/credentials/scheduledStatus?filter=" + filter;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
@@ -121,7 +122,7 @@ public class UITrigger {
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
-			if (Utilities.isSessionValid(session, credentials)) {
+			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				
 				String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
 				String url = config.getMongoUrl() + "/credentials/scheduledStatus?filter=" + filter;
@@ -170,7 +171,7 @@ public class UITrigger {
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
-		if (Utilities.isSessionValid(session, credentials)) {
+		if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 			if(credentials.getConnectionIds(connId).getSourceName().
 						equalsIgnoreCase(credentials.getCurrConnId().getSourceName()) &&
 				   credentials.getConnectionIds(connId).getDestName().
@@ -263,7 +264,8 @@ public class UITrigger {
             		}            		
             	}
 				}
-				}
+				applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));	
+			}
 				else if(credentials.getConnectionIds(connId).getSourceName().
 						equalsIgnoreCase(credentials.getCurrConnId().getSourceName())) {
 					credentials.setCurrDestValid(false);

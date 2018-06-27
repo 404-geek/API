@@ -36,6 +36,7 @@ import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PushCredentials;
+import com.aptus.blackbox.event.Socket;
 import com.aptus.blackbox.index.Parser;
 import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.Endpoint;
@@ -117,7 +118,7 @@ public class DataSourceController extends RESTFetch {
 		try {
 			System.out.println("inside validate function");
 			
-			if(Utilities.isSessionValid(session,credentials)) {
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 				credentials.setCurrConnId(null);
 				System.out.println(srcdestId);
 				srcDestId(type,srcdestId);
@@ -335,7 +336,7 @@ public class DataSourceController extends RESTFetch {
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
-			if(Utilities.isSessionValid(session,credentials)) {
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 				boolean isvalid = false;
 				System.out.println(type+" "+srcDestId);
 				if(type.equals("source")){
@@ -387,7 +388,7 @@ public class DataSourceController extends RESTFetch {
         headers.add("access-control-allow-credentials", "true");
         try {         
             HttpEntity<?> httpEntity;
-            if (Utilities.isSessionValid(session, credentials)) {
+            if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
                 String url = config.getMongoUrl() + "/credentials/userCredentials/" + credentials.getUserId();
                 System.out.println("DeleteDataSource");
                 System.out.println(url);
@@ -403,7 +404,10 @@ public class DataSourceController extends RESTFetch {
                 RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
                 URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
                 out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity, String.class);
-                if (out.getStatusCode().is2xxSuccessful()) {  
+                if (out.getStatusCode().is2xxSuccessful()) { 
+                	
+                	applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
+                	
                 	if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
                 		if(applicationCredentials.getApplicationCred().get(credentials
                 				.getUserId()).getSchedulingObjects().get(connId)!=null) {
@@ -460,7 +464,7 @@ public class DataSourceController extends RESTFetch {
 			@RequestParam(value="destination") String destination,
 			HttpSession session){
 		try {
-			if (Utilities.isSessionValid(session, credentials)) {
+			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				//filteredEndpoints = "{ \"others\": { \"orgId\": true ,\"ticket_id\": true}}";
 				List<String> downloadDest = new ArrayList<String>(){{
 					add("csv");
@@ -557,7 +561,7 @@ public class DataSourceController extends RESTFetch {
 			headers.add("Cache-Control", "no-cache");
 			headers.add("access-control-allow-origin", config.getRootUrl());
 			headers.add("access-control-allow-credentials", "true");
-			if (Utilities.isSessionValid(session, credentials)) {
+			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				// if(validateCredentials==null||endPoints==null||refreshToken==null) {
 				// init();
 				// }
@@ -658,6 +662,8 @@ public class DataSourceController extends RESTFetch {
 						jsonObj.addProperty("_id", credentials.getUserId().toLowerCase());
 						credentials.setUserExist(Utilities.postpatchMetaData(jsonObj, "user", "POST",credentials.getUserId(),config.getMongoUrl()));
 					}
+					applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
+					
 					applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), credentials.getDestObj(),credentials.getSrcToken() , credentials.getDestToken(),
 							credentials.getCurrSrcName(), destination.toLowerCase(), credentials.getUserId()));				
 					credentials.setCurrConnId(currobj);
