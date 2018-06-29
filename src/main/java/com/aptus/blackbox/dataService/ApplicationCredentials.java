@@ -16,7 +16,6 @@ public class ApplicationCredentials implements Serializable {
 		return sessionId;
 	}
 	public void setSessionId(String userId,String sessionId) {
-		this.sessionId.clear();
 		this.sessionId.put(userId, sessionId);
 	}
 

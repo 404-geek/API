@@ -38,6 +38,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PostExecutorComplete;
+import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.DestinationAuthorisation;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
@@ -114,11 +115,14 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("Completed Successfully");
 					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
 					.setNextPush(time+scheduleObject.getPeriod());
+					ScheduleEventData scheduleEventData = new ScheduleEventData();
+					scheduleEventData.setData(userId, connectionId, scheduleObject.getPeriod(),false);
+					applicationEventPublisher.publishEvent(scheduleEventData);
 				}				
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
 				.setLastPushed(time);
 				applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
-				System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));
+				System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));				
 				applicationEventPublisher.publishEvent(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering());
 			}
 			else {

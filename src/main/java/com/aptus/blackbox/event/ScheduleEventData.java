@@ -9,15 +9,17 @@ public class ScheduleEventData {
 
 	private String userId,connId;
 	private long period;	
+	private boolean first;
 
 	public String getUserId() {
 		return userId;
 	}
 
-	public void setData(String userId,String connId,long period) {
+	public void setData(String userId,String connId,long period,boolean first) {
 		this.userId = userId;
 		this.connId=connId;
 		this.period=period;
+		this.first = first;
 	}
 
 	public String getConnId() {
@@ -30,6 +32,14 @@ public class ScheduleEventData {
 
 	public void setPeriod(long period) {
 		this.period = period;
+	}
+
+	public boolean isFirst() {
+		return first;
+	}
+
+	public void setFirst(boolean first) {
+		this.first = first;
 	}
 
 }

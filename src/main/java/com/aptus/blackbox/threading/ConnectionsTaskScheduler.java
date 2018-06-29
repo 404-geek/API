@@ -80,10 +80,6 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
 	@Override
 	public void run() {
         ResponseEntity<String> ret = null;
-        HttpHeaders header = new HttpHeaders();
-		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", rootUrl);
-        header.add("access-control-allow-credentials", "true");
         try {        	
         	applicationCredentials.getApplicationCred().get(userId).
     		getSchedulingObjects().get(connectionId).setMessage("Running");    		
@@ -150,10 +146,6 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
 
     private Status validateData(UrlObject validateUrl, List<UrlObject> endPoints) {
         ResponseEntity<String> ret = null;
-        HttpHeaders header = new HttpHeaders();
-		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", rootUrl);
-        header.add("access-control-allow-credentials", "true");
         try {
             ret = Utilities.token(validateUrl,scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER VALIDATEDATA");
             if (!ret.getStatusCode().is2xxSuccessful()) {   
@@ -172,12 +164,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
 
     private Status fetchEndpointsData(List<UrlObject> endpoints)
     {
-    	HttpHeaders header = new HttpHeaders();
-		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", rootUrl);
-        header.add("access-control-allow-credentials", "true");
-    		try {
-    			
+    		try {    			
     			Metering metring = new Metering();
     			metring.setConnId(connectionId);
     			metring.setTime(new Date()+"");
@@ -247,12 +234,8 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     				endpointsTaskExecutor.setEndpointsTaskExecutor(infoendpnts,null, connectionId, userId,Thread.currentThread(),"others",false);
     				
     				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
-    			}   			
-    			
-
-    			
-    			
-    			
+    			}   
+    			//scheduleObjectInfo.getThread().cancel(false);
     			return new Status("31","Success");
     		} catch (Exception e) {
     			System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA");

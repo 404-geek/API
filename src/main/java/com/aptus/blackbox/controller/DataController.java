@@ -459,7 +459,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					}
 					System.out.println("Publishing custom event. ");
 					ScheduleEventData scheduleEventData = Context.getBean(ScheduleEventData.class);
-					scheduleEventData.setData(credentials.getUserId(), credentials.getCurrConnId().getConnectionId(), credentials.getCurrConnId().getPeriod());
+					scheduleEventData.setData(credentials.getUserId(), credentials.getCurrConnId().getConnectionId(), credentials.getCurrConnId().getPeriod(),true);
 					// Context.getAutowireCapableBeanFactory().autowireBean(scheduleEventData);
 					//PostExecutorComplete post = new PostExecutorComplete(credentials.getUserId(), credentials.getCurrConnId().getConnectionId());
 					applicationEventPublisher.publishEvent(scheduleEventData);

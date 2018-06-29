@@ -2,6 +2,7 @@ package com.aptus.blackbox.event;
 
 import java.net.URI;
 import java.sql.Timestamp;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,6 +23,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -135,7 +137,13 @@ public class DataListeners {
 			ConnectionsTaskScheduler connectionsTaskScheduler=Context.getBean(ConnectionsTaskScheduler.class);
 			connectionsTaskScheduler.setConnectionsTaskScheduler(connId,userId);
 			long period = scheduleEventData.getPeriod();
-			ScheduledFuture<?> future = threadPoolTaskScheduler.scheduleAtFixedRate(connectionsTaskScheduler,period);
+			ScheduledFuture<?> future;
+			if(!scheduleEventData.isFirst()) {
+				future = threadPoolTaskScheduler.schedule(connectionsTaskScheduler, new Date(ZonedDateTime.now().toInstant().toEpochMilli()+period));
+			}
+			else {
+				 future = threadPoolTaskScheduler.scheduleAtFixedRate(connectionsTaskScheduler,period);
+			}
 			applicationCredentials.getApplicationCred().get(userId).
 			getSchedulingObjects().get(connId).setThread(future);
 		} catch (BeansException e) {

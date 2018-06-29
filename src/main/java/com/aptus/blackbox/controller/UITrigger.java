@@ -231,7 +231,7 @@ public class UITrigger {
 							applicationCredentials.getApplicationCred().get(credentials.getUserId())
 							.setSchedulingObjects(schObj, connId);
 							ScheduleEventData scheduleEventData=Context.getBean(ScheduleEventData.class);
-		        			 scheduleEventData.setData(credentials.getUserId(), connId,Integer.parseInt(period)*1000);
+		        			 scheduleEventData.setData(credentials.getUserId(), connId,Integer.parseInt(period)*1000,true);
 		        			 System.out.println(applicationCredentials.getApplicationCred().get(credentials.getUserId()).getSchedulingObjects().get(connId));
 		        			 applicationEventPublisher.publishEvent(scheduleEventData);
 						}
@@ -257,7 +257,7 @@ public class UITrigger {
 	            			applicationCredentials.getApplicationCred().get(credentials.getUserId())
 	            			.getSchedulingObjects().get(connId).setPeriod(Integer.parseInt(period)*1000);
 	            			ScheduleEventData scheduleEventData=Context.getBean(ScheduleEventData.class);
-		        			 scheduleEventData.setData(credentials.getUserId(), connId,Integer.parseInt(period)*1000);
+		        			 scheduleEventData.setData(credentials.getUserId(), connId,Integer.parseInt(period)*1000,true);
 		        			 System.out.println(applicationCredentials.getApplicationCred().get(credentials.getUserId()).getSchedulingObjects().get(connId));
 		        			 applicationEventPublisher.publishEvent(scheduleEventData);
 		        			 credentials.getConnectionIds(connId).setPeriod(Integer.parseInt(period)*1000);
