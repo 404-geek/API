@@ -9,8 +9,6 @@ import java.util.Map;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -18,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,6 +29,8 @@ import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.dataServices.UserInfoService;
+import com.aptus.blackbox.datamodels.UserInfo;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.UrlObject;
@@ -61,6 +62,10 @@ public class home extends RESTFetch{
 	
 	@Autowired
 	private Config config;
+	
+	@Autowired
+	private UserInfoService userInfoService;
+
 
 	@RequestMapping(value="/login")
 	private ResponseEntity<String> login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
@@ -151,7 +156,27 @@ public class home extends RESTFetch{
 	}
 	
 
-	
+	@RequestMapping(value="/signup1")
+	private ResponseEntity<String> signup1()
+	{
+		UserInfo user = new UserInfo();
+		user.setEmail("mail123");
+		user.setUserName("uname");
+	  JsonObject respBody = new JsonObject();
+	  if(userInfoService.userExist(user.getEmail())) {
+		  System.out.println("User ID Exists");
+		  respBody.addProperty("id", "fgggg11g");
+		  respBody.addProperty("status", "61");
+	  }
+	  else {
+		  System.out.println("User ID Not Exists"+user);
+		  System.out.println(user);
+		  userInfoService.createUser(user);
+		  respBody.addProperty("id", "hg1");
+		  respBody.addProperty("status", "61");
+	  }
+	  return ResponseEntity.status(HttpStatus.OK).headers(null).body(respBody.toString());
+	}
 	
 	@RequestMapping(value="/signup")
 	private ResponseEntity<String> signup(@RequestParam HashMap<String,String> params)

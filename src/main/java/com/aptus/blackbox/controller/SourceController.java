@@ -67,7 +67,8 @@ public class SourceController extends RESTFetch {
 				if (obj.getSteps().compareTo("TWO") == 0) {
 					ret = code(accessCode);
 				} else if (obj.getSteps().compareTo("THREE") == 0) {
-					ret = Utilities.token(requestToken,credentials.getSrcToken(),credentials.getUserId()+"SourceController.authsource");
+					ret = Utilities
+							.token(requestToken,credentials.getSrcToken(),credentials.getUserId()+"SourceController.authsource");
 					saveValues(ret);
 					ret = code(accessCode);
 				}
