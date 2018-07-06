@@ -33,8 +33,10 @@ import com.aptus.blackbox.dataServices.UserInfoService;
 import com.aptus.blackbox.datamodels.UserInfo;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.models.ConnObj;
+import com.aptus.blackbox.models.ResponseObject;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.security.ExceptionHandling;
+import com.aptus.blackbox.utils.Constants;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -67,6 +69,23 @@ public class home extends RESTFetch{
 	private UserInfoService userInfoService;
 
 
+	@RequestMapping(value="/login1")
+	private ResponseEntity<String> login1(@RequestParam("userId") String _id,@RequestParam("password") String password,HttpSession session )
+	{
+		JsonObject response = new JsonObject();
+		
+		if(!userInfoService.userExist(_id))
+			response = new ResponseObject().Response(Constants.USER_NOT_FOUND_CODE, Constants.USER_NOT_FOUND_MSG, _id);
+		
+		else if(!userInfoService.userValid(_id,password)) 
+			response = new ResponseObject().Response(Constants.INVALID_CREDENTIALS_CODE, Constants.INVALID_CREDENTIALS_MSG, _id);
+		
+		else 
+			response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
+		
+		return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
+	}
+	
 	@RequestMapping(value="/login")
 	private ResponseEntity<String> login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
 	{
@@ -156,27 +175,32 @@ public class home extends RESTFetch{
 	}
 	
 
-	@RequestMapping(value="/signup1")
-	private ResponseEntity<String> signup1()
+	@RequestMapping(value="/signup1",method = RequestMethod.POST)
+	private ResponseEntity<String> signup1(@RequestBody UserInfo user)
 	{
-		UserInfo user = new UserInfo();
-		user.setEmail("mail123");
-		user.setUserName("uname");
-	  JsonObject respBody = new JsonObject();
-	  if(userInfoService.userExist(user.getEmail())) {
-		  System.out.println("User ID Exists");
-		  respBody.addProperty("id", "fgggg11g");
-		  respBody.addProperty("status", "61");
-	  }
-	  else {
-		  System.out.println("User ID Not Exists"+user);
-		  System.out.println(user);
-		  userInfoService.createUser(user);
-		  respBody.addProperty("id", "hg1");
-		  respBody.addProperty("status", "61");
-	  }
-	  return ResponseEntity.status(HttpStatus.OK).headers(null).body(respBody.toString());
+	  System.out.println(user);
+	  
+	  JsonObject response = null ;
+	  try {
+		if(userInfoService.userExist(user.getUserId())) {
+			  System.out.println("User ID Exists "+user.getUserId());
+			  response = new ResponseObject()
+					  .Response( Constants.USER_EXIST_CODE, Constants.USER_EXIST_MSG, user.getUserId());
+		  }
+		  else {
+			  applicationCredentials.setApplicationCred(user.getUserId(), new ScheduleInfo());
+			  System.out.println("User ID Not Exists "+user.getUserId());
+			  userInfoService.createUser(user);
+			  response = new ResponseObject()
+					  .Response( Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, user.getUserId());
+		  }
+	} catch (Exception e) {
+		e.printStackTrace();
 	}
+	  return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
+	}
+	
+	
 	
 	@RequestMapping(value="/signup")
 	private ResponseEntity<String> signup(@RequestParam HashMap<String,String> params)
@@ -232,7 +256,24 @@ public class home extends RESTFetch{
 		//store in credentials
 	}
 	
-	
+	@RequestMapping(value="/update1")
+	private ResponseEntity<String> update1(@RequestBody UserInfo user)
+	{
+		JsonObject response = null ;
+		if(userInfoService.userExist(user.getUserId())) {
+			  System.out.println("User ID Exists "+user.getUserId());
+			  response = new ResponseObject()
+					  .Response( Constants.USER_EXIST_CODE, Constants.USER_EXIST_MSG, user.getUserId());
+		  }
+		  else {
+			 
+			  System.out.println("User ID Not Exists "+user.getUserId());
+			//  userInfoService.updateUser(user);
+			  response = new ResponseObject()
+					  .Response( Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, user.getUserId());
+		  }
+		return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
+	}
 	
 	@RequestMapping(value="/update")
 	private ResponseEntity<String> update(@RequestParam HashMap<String,String> params,HttpSession session)

@@ -24,13 +24,19 @@ public class UserInfoService {
 		return userInfoImpl.getAllUsers();
 	}
 
-	public boolean userExist(String email) {
-		return userInfoImpl.getUserByEmail(email)!=null;
+	public boolean userExist(String _id) {
+		return userInfoImpl.getUserById(_id)!=null;
 	}
 	
-	public UserInfo getUserByEmail(String email) {
-		return userInfoImpl.getUserByEmail(email);
+	public boolean userValid(String _id,String password) {
+		return userInfoImpl.matchSingleField(_id, "userPassword", password);
 	}
+	
+	public UserInfo getUserByEmail(String _id) {
+		return userInfoImpl.getUserById(_id);
+	}
+	
+	//public boolean isValidUser
 	
 	public UserInfo createUser(UserInfo userInfo) {
 		return userInfoImpl.createUser(userInfo);
@@ -42,10 +48,10 @@ public class UserInfoService {
 	}
 
 	
-	public UserInfo updateUser(String email, String key, String value) {
-		if(userInfoImpl.getUserByEmail(email)==null)
+	public UserInfo updateUser(String _id, String key, String value) {
+		if(userInfoImpl.getUserById(_id)==null)
 			return null;
-	    return userInfoImpl.updateUser(email, key, value);
+	    return userInfoImpl.updateUser(_id, key, value);
 	}
 
 }
