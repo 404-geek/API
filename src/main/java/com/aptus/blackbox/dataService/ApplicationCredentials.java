@@ -12,6 +12,8 @@ import com.aptus.blackbox.index.ScheduleInfo;
 public class ApplicationCredentials implements Serializable {
 	private Map<String,ScheduleInfo> applicationCred = new HashMap<String,ScheduleInfo>();
 	private Map<String,String> sessionId=new HashMap<>();
+	
+	
 	public Map<String, String> getSessionId() {
 		return sessionId;
 	}
@@ -19,6 +21,9 @@ public class ApplicationCredentials implements Serializable {
 		this.sessionId.put(userId, sessionId);
 	}
 
+	public String getSessionId(String userId) {
+		return this.sessionId.get(userId);
+	}
 	public Map<String,ScheduleInfo> getApplicationCred() {
 		return applicationCred;
 	}

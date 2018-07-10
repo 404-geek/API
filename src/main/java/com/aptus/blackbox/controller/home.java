@@ -29,6 +29,7 @@ import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserInfoService;
 import com.aptus.blackbox.datamodels.UserInfo;
 import com.aptus.blackbox.index.ScheduleInfo;
@@ -67,22 +68,28 @@ public class home extends RESTFetch{
 	
 	@Autowired
 	private UserInfoService userInfoService;
-
+	
+	@Autowired
+	private UserConnectorService userConnectorService;
 
 	@RequestMapping(value="/login1")
 	private ResponseEntity<String> login1(@RequestParam("userId") String _id,@RequestParam("password") String password,HttpSession session )
 	{
 		JsonObject response = new JsonObject();
 		
-		if(!userInfoService.userExist(_id))
+		if(!userInfoService.userExist(_id)) {
 			response = new ResponseObject().Response(Constants.USER_NOT_FOUND_CODE, Constants.USER_NOT_FOUND_MSG, _id);
+		}
 		
-		else if(!userInfoService.userValid(_id,password)) 
+		else if(!userInfoService.userValid(_id,password)) {
 			response = new ResponseObject().Response(Constants.INVALID_CREDENTIALS_CODE, Constants.INVALID_CREDENTIALS_MSG, _id);
+		}
 		
-		else 
+		else { 
 			response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
-		
+			credentials.setUserId(_id);
+			applicationCredentials.setSessionId(_id, session.getId());
+		}
 		return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
 	}
 	
@@ -184,13 +191,19 @@ public class home extends RESTFetch{
 	  try {
 		if(userInfoService.userExist(user.getUserId())) {
 			  System.out.println("User ID Exists "+user.getUserId());
+			  
 			  response = new ResponseObject()
 					  .Response( Constants.USER_EXIST_CODE, Constants.USER_EXIST_MSG, user.getUserId());
 		  }
 		  else {
 			  applicationCredentials.setApplicationCred(user.getUserId(), new ScheduleInfo());
 			  System.out.println("User ID Not Exists "+user.getUserId());
+			  
 			  userInfoService.createUser(user);
+			  userConnectorService.createUser(user.getUserId());
+			  
+			  
+			  
 			  response = new ResponseObject()
 					  .Response( Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, user.getUserId());
 		  }
@@ -406,7 +419,7 @@ public class home extends RESTFetch{
 		try {
 			
 			System.out.println(session.getId());			
-			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
+			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
 				String url = config.getMongoUrl()+"/copy_credentials/SrcDstlist/srcdestlist";
@@ -527,7 +540,7 @@ public class home extends RESTFetch{
 		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
 		try {
-			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
+			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
 				ResponseEntity<String> out = null;
 				RestTemplate restTemplate = new RestTemplate();
 				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
