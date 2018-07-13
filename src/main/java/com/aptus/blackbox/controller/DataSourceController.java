@@ -65,7 +65,11 @@ public class DataSourceController extends RESTFetch {
 //	private SrcObject srcObj;
 //	private DestObject destObj;
 	/*
-	 * input:  type(source/destination) and its name
+	 * input:  type(source/destination) and its na
+					credentials.setDestObj(parse.getDestProp());
+					credentials.setCurrDestName(srcdestId.toLowerCase());
+					credentials.setCurrDestValid(false);
+				me
 	 * Parses its configuration file and stores it in credentials
 	 * output:void
 	 */
@@ -94,79 +98,7 @@ public class DataSourceController extends RESTFetch {
 		}
 		return;
 	}
-	
-	@RequestMapping(method = RequestMethod.GET, value = "/validate1")
-	private ResponseEntity<String> verifyUser1(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session,
-			@RequestParam(value ="database_name",required=false) String database_name,
-			@RequestParam(value ="db_username",required=false) String db_username,
-			@RequestParam(value ="db_password",required=false) String db_password,
-			@RequestParam(value ="server_host",required=false) String server_host,
-			@RequestParam(value ="server_port",required=false) String server_port){
-		
-		
-		ResponseEntity<String> out = null;
-		System.out.println("inside validate");
-		int res = 0;
-		HttpHeaders headers = new HttpHeaders();
-		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
-		try {
-			System.out.println("inside validate function");
-			
-			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
-				credentials.setCurrConnId(null);///check here
-				System.out.println(srcdestId);
-				srcDestId(type,srcdestId);
-				String name;
-				RestTemplate restTemplate = new RestTemplate();
-				String filter;
-				String url;
-				if (type.equalsIgnoreCase("source")) {
-					name = credentials.getCurrSrcName();
-					filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase()+"_"+name.toLowerCase() + "\"}";
-				}					
-				else {
-					name = credentials.getCurrDestName();
-					filter = "{\"_id\":{\"$regex\":\".*"+name.toLowerCase() + ".*\"}}";
-				}						
-				url = config.getMongoUrl()+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
-				System.out.println("************************url********");
-				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();				
-				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-				System.out.println(out.getBody());
-				JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
-				JsonObject jobj = jelem.getAsJsonObject();
-				System.out.println("datasourceontroller /validate"+jobj.get("_returned").getAsInt());
-				if (type.equalsIgnoreCase("source")) {
-					credentials.setUsrSrcExist(jobj.get("_returned").getAsInt() == 0 ? false : true);
-					System.out.println(url+" : "+credentials.isUsrSrcExist());
-				}
-				else {
-					credentials.setUsrDestExist(jobj.get("_returned").getAsInt() == 0 ? false : true);
-					System.out.println(url+" : "+credentials.isUsrDestExist());
-				}
-				return initialiser(type,database_name,db_username,db_password,server_host,server_port);
-			}
-			else {
-				System.out.println("Session expired!");
-    			JsonObject respBody = new JsonObject();
-    			respBody.addProperty("message", "Sorry! Your session has expired");
-				respBody.addProperty("status", "33");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-			}
-		
-		}		
-		
-		catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("home.verifyuser");
-		}
-		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-	}
-	
+
 
 	/*
 	 * 
@@ -182,6 +114,7 @@ public class DataSourceController extends RESTFetch {
 		
 		ResponseEntity<String> out = null;
 		System.out.println("inside validate");
+		
 		int res = 0;
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -192,6 +125,7 @@ public class DataSourceController extends RESTFetch {
 			System.out.println("inside validate function");
 			
 			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
+				
 				credentials.setCurrConnId(null);///check here
 				System.out.println(srcdestId);
 				srcDestId(type,srcdestId);
@@ -202,13 +136,15 @@ public class DataSourceController extends RESTFetch {
 				if (type.equalsIgnoreCase("source")) {
 					name = credentials.getCurrSrcName();
 					filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase()+"_"+name.toLowerCase() + "\"}";
+					
 				}					
 				else {
 					name = credentials.getCurrDestName();
 					filter = "{\"_id\":{\"$regex\":\".*"+name.toLowerCase() + ".*\"}}";
 				}						
 				url = config.getMongoUrl()+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
-				System.out.println("************************url********");
+				System.out.println("************************url********"+ url);
+				
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();				
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
@@ -219,6 +155,7 @@ public class DataSourceController extends RESTFetch {
 				if (type.equalsIgnoreCase("source")) {
 					credentials.setUsrSrcExist(jobj.get("_returned").getAsInt() == 0 ? false : true);
 					System.out.println(url+" : "+credentials.isUsrSrcExist());
+					
 				}
 				else {
 					credentials.setUsrDestExist(jobj.get("_returned").getAsInt() == 0 ? false : true);

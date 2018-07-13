@@ -31,7 +31,6 @@ public class UserConnectorImpl implements UserConnectorDAO{
 		Query query = new Query();
 		query.addCriteria(Criteria.where("_id").is(_id));
 		query.fields().include("srcdestId");
-		System.out.println("sdfasdfsadfsadfsdfsdf");
 		System.out.println(mongoTemplate.findOne(query, UserConnector.class));
 		return null;
 		

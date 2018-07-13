@@ -3,17 +3,17 @@ package com.aptus.blackbox.event;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ScheduledFuture;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.ldap.embedded.EmbeddedLdapProperties.Credential;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -23,7 +23,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -32,9 +31,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
+import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
+import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.threading.ConnectionsTaskScheduler;
+import com.aptus.blackbox.utils.Constants;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -180,20 +182,47 @@ public class DataListeners {
 			e.printStackTrace();
 		}
 	}
+	
+	@Autowired
+	private SrcDestCredentialsService srcDestCredentialsService;
+	
+	
 	@EventListener
 	public void updateCredentials(PushCredentials pushCredentials) {			
 			JsonObject jsonObj = new JsonObject();
+			
+		
 			try {
+				
+				List<Map<String,String>> mSrcDestCred;
+				SrcDestCredentials srcDestCredentials;
+				
 				// sourceCredentials
 				if((pushCredentials.getSrcName()!=null)&&(pushCredentials.getSrcToken()!=null)&&(pushCredentials.getSrcObj()!=null))
 				{
 					JsonArray sourceBody = new JsonArray();
+					mSrcDestCred =  new ArrayList<Map<String,String>>();
+					
 					for (Map.Entry<String, String> mp : pushCredentials.getSrcToken().entrySet()) {
 						JsonObject tmp = new JsonObject();
+						
+
+						Map<String, String > map = new HashMap<String,String>();
+						map.put("key", String.valueOf(mp.getKey()));
+						map.put("value", String.valueOf(mp.getValue()));
+						mSrcDestCred.add(map);
+						
+						
 						tmp.addProperty("key", String.valueOf(mp.getKey()));
 						tmp.addProperty("value", String.valueOf(mp.getValue()));
 						sourceBody.add(tmp);
-					}				
+					}
+					srcDestCredentials  = new SrcDestCredentials();
+					srcDestCredentials.setCredentialId(pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getSrcName().toLowerCase());
+					srcDestCredentials.setCredentials(mSrcDestCred);
+					System.out.println(srcDestCredentials);
+					srcDestCredentialsService.insertCredentials(srcDestCredentials, Constants.COLLECTION_SOURCECREDENTIALS);
+					
 					jsonObj.addProperty("_id",
 							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getSrcName().toLowerCase());
 					jsonObj.add("credentials", sourceBody);
@@ -203,13 +232,31 @@ public class DataListeners {
 				// destCredentials
 				if((pushCredentials.getDestName()!=null)&&(pushCredentials.getDestToken()!=null)&&(pushCredentials.getDestObj()!=null)) {
 					JsonArray destBody =  new JsonArray();
+					mSrcDestCred =  new ArrayList<Map<String,String>>();
+					
 					for (Map.Entry<String, String> mp : pushCredentials.getDestToken().entrySet()) {
 						JsonObject tmp = new JsonObject();
+						
+						
+						
+						Map<String, String > map = new HashMap<String,String>();
+						map.put("key", String.valueOf(mp.getKey()));
+						map.put("value", String.valueOf(mp.getValue()));
+						mSrcDestCred.add(map);
+						
 						tmp.addProperty("key", String.valueOf(mp.getKey()));
 						tmp.addProperty("value", String.valueOf(mp.getValue()));
 						destBody.add(tmp);
 					}
 					jsonObj = new JsonObject();				
+					
+					
+					srcDestCredentials  = new SrcDestCredentials();
+					srcDestCredentials.setCredentialId(pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase());
+					srcDestCredentials.setCredentials(mSrcDestCred);
+					System.out.println(srcDestCredentials);
+					srcDestCredentialsService.insertCredentials(srcDestCredentials, Constants.COLLECTION_DESTINATIONCREDENTIALS);
+					
 					jsonObj.addProperty("_id",
 							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase() + "_"
 									+ pushCredentials.getDestToken().get("database_name"));

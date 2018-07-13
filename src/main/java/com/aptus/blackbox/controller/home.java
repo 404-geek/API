@@ -29,8 +29,10 @@ import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserInfoService;
+import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.datamodels.UserInfo;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.models.ConnObj;
@@ -72,6 +74,35 @@ public class home extends RESTFetch{
 	@Autowired
 	private UserConnectorService userConnectorService;
 
+
+	@Autowired
+	SrcDestCredentialsService srcDestCredentialsService;
+	
+	@RequestMapping("/log")
+	private ResponseEntity<String> dfs() {
+		System.out.println(credentials.getSrcObj()+" TOKEN == "+credentials.getSrcToken());
+		List<Map<String,String>> mcred = new ArrayList<Map<String,String>>();
+		
+		for (Map.Entry<String, String> mp : credentials.getSrcToken().entrySet()) {
+			
+			
+			Map<String, String > map = new HashMap<String,String>();
+			map.put("key", String.valueOf(mp.getKey()));
+			map.put("value", String.valueOf(mp.getValue()));
+			mcred.add(map);
+			
+			
+		}
+		SrcDestCredentials srcCredentials  = new SrcDestCredentials();
+		srcCredentials.setCredentialId(credentials.getUserId().toLowerCase() + "_" + credentials.getCurrSrcName().toLowerCase());
+		srcCredentials.setCredentials(mcred);
+		System.out.println(srcCredentials);
+		srcDestCredentialsService.insertCredentials(srcCredentials, "sourceCredentials");
+		System.out.println("Data : "+srcDestCredentialsService.readCredentials("bla_zohocrm", "sourceCredentials"));
+		
+		return null;
+	}
+	
 	@RequestMapping(value="/login1")
 	private ResponseEntity<String> login1(@RequestParam("userId") String _id,@RequestParam("password") String password,HttpSession session )
 	{

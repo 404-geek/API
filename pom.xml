@@ -6,7 +6,6 @@
 	<groupId>com.aptus</groupId>
 	<artifactId>blackbox</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
 
 	<name>BlackBoxReloaded</name>
 	<description></description>
@@ -143,9 +142,13 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				 <configuration>
+        			<executable>true</executable>
+    			 </configuration>
 			</plugin>
 		</plugins>
 	</build>
 
 
+	<packaging>war</packaging>
 </project>
