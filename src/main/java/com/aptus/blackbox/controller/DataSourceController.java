@@ -20,6 +20,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,9 +32,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
+import com.aptus.blackbox.dataInterfaces.DestinationConfigDAO;
+import com.aptus.blackbox.dataInterfaces.SourceConfigDAO;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.datamodels.DestinationConfig;
+import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.Socket;
@@ -58,6 +63,10 @@ public class DataSourceController extends RESTFetch {
 	@Autowired
 	private Config config;
 	@Autowired
+	private SourceConfigDAO sourceConfigDAO;
+	@Autowired
+	private DestinationConfigDAO destinationConfigDAO;
+	@Autowired
 	private ApplicationContext Context;
 	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
 
@@ -73,17 +82,28 @@ public class DataSourceController extends RESTFetch {
 	 * Parses its configuration file and stores it in credentials
 	 * output:void
 	 */
+	@RequestMapping(value ="/src",method= RequestMethod.POST)
+	public void dd(@RequestBody SourceConfig conf) {
+		sourceConfigDAO.createSourceConfig(conf);
+	}
+	
+	@RequestMapping(value ="/dest",method= RequestMethod.POST)
+	public void dds(@RequestBody DestinationConfig conf) {
+		destinationConfigDAO.createDestinationConfig(conf);
+	}
+	
 	public void srcDestId(String type, String srcdestId) {
 		//change return type to void
 		try {
 			System.out.println(type+ " "+srcdestId);
 			Parser parse = Context.getBean(Parser.class);
-			if (type.equalsIgnoreCase("source")) {			
-				if(parse.parsingJson("source",srcdestId.toUpperCase(),config.getMongoUrl()).getStatusCode().is2xxSuccessful());{
+			if (type.equalsIgnoreCase("source")) {	
+				    System.out.println("sssssssssssssss :"+sourceConfigDAO.getSourceConfig(srcdestId));
+//				if(parse.parsingJson("source",srcdestId.toUpperCase(),config.getMongoUrl()).getStatusCode().is2xxSuccessful());{
 					credentials.setSrcObj(parse.getSrcProp());
 					credentials.setCurrSrcName(srcdestId.toLowerCase());
 					credentials.setCurrSrcValid(false);
-				}
+//				}
 				
 			} else {			
 				if(parse.parsingJson("destination",srcdestId.toUpperCase(),config.getMongoUrl()).getStatusCode().is2xxSuccessful());{

@@ -26,7 +26,6 @@ public class Parser implements Serializable {
 	private SrcObject srcProp;
 	private DestObject destProp;
 
-	
 
 	public ResponseEntity<String> parsingJson(String type, String Id, String mongoUrl) {
 
