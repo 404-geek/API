@@ -3,16 +3,16 @@ package com.aptus.blackbox.event;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.aptus.blackbox.models.DestObject;
-import com.aptus.blackbox.models.SrcObject;
+import com.aptus.blackbox.datamodels.DestinationConfig;
+import com.aptus.blackbox.datamodels.SourceConfig;
 
 public class PushCredentials {
-	private SrcObject srcObj;
-	private DestObject destObj;
+	private SourceConfig srcObj;
+	private DestinationConfig destObj;
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
 	private String srcName,destName,userId;
-	public PushCredentials(SrcObject srcObj, DestObject destObj,Map<String,String> SrcToken
+	public PushCredentials(SourceConfig srcObj, DestinationConfig destObj,Map<String,String> SrcToken
 			,Map<String,String> DestToken, String srcName,String destName,String userId) {
 		this.srcName = srcName;
 		this.srcObj = srcObj;
@@ -22,16 +22,16 @@ public class PushCredentials {
 		this.DestToken = DestToken;
 		this.SrcToken=SrcToken;
 	}
-	public SrcObject getSrcObj() {
+	public SourceConfig getSrcObj() {
 		return srcObj;
 	}
-	public void setSrcObj(SrcObject srcObj) {
+	public void setSrcObj(SourceConfig srcObj) {
 		this.srcObj = srcObj;
 	}
-	public DestObject getDestObj() {
+	public DestinationConfig getDestObj() {
 		return destObj;
 	}
-	public void setDestObj(DestObject destObj) {
+	public void setDestObj(DestinationConfig destObj) {
 		this.destObj = destObj;
 	}
 	public String getSrcName() {

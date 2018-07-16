@@ -29,7 +29,7 @@ import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
-import com.aptus.blackbox.models.SrcObject;
+import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
 import com.aptus.blackbox.utils.Utilities;
@@ -63,7 +63,7 @@ public class SourceController extends RESTFetch {
         headers.add("access-control-allow-credentials", "true");
 		try {			
 			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
-				SrcObject obj = init();
+				SourceConfig obj = init();
 				if (obj.getSteps().compareTo("TWO") == 0) {
 					ret = code(accessCode);
 				} else if (obj.getSteps().compareTo("THREE") == 0) {
@@ -87,8 +87,8 @@ public class SourceController extends RESTFetch {
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
-	private SrcObject init() {			
-		SrcObject obj = credentials.getSrcObj();
+	private SourceConfig init() {			
+		SourceConfig obj = credentials.getSrcObj();
 		System.out.println(obj.getName());
 		refresh = obj.getRefresh();
 		accessCode = obj.getAccessCode();

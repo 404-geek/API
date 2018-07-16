@@ -13,8 +13,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
-import com.aptus.blackbox.models.DestObject;
-import com.aptus.blackbox.models.SrcObject;
+import com.aptus.blackbox.datamodels.DestinationConfig;
+import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.security.ExceptionHandling;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -23,8 +23,8 @@ public class Parser implements Serializable {
 	Parser() {
 	}
 
-	private SrcObject srcProp;
-	private DestObject destProp;
+	private SourceConfig srcProp;
+	private DestinationConfig destProp;
 
 
 	public ResponseEntity<String> parsingJson(String type, String Id, String mongoUrl) {
@@ -47,11 +47,11 @@ public class Parser implements Serializable {
 			System.out.println(out.getBody());
 
 			if (type.equalsIgnoreCase("source")) {
-				srcProp = gson.fromJson(out.getBody(), SrcObject.class);
+				srcProp = gson.fromJson(out.getBody(), SourceConfig.class);
 				return ResponseEntity.status(HttpStatus.OK).body(respBody.toString());
 
 			} else if (type.equalsIgnoreCase("destination")) {
-				destProp = gson.fromJson(out.getBody(), DestObject.class);
+				destProp = gson.fromJson(out.getBody(), DestinationConfig.class);
 				return ResponseEntity.status(HttpStatus.OK).body(respBody.toString());
 			}
 
@@ -74,11 +74,11 @@ public class Parser implements Serializable {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(respBody.toString());
 	}
 
-	public SrcObject getSrcProp() {
+	public SourceConfig getSrcProp() {
 		return this.srcProp;
 	}
 
-	public DestObject getDestProp() {
+	public DestinationConfig getDestProp() {
 		return this.destProp;
 	}
 }

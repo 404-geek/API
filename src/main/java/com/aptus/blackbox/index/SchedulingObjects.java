@@ -7,9 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
+import com.aptus.blackbox.datamodels.DestinationConfig;
+import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.event.Metering;
-import com.aptus.blackbox.models.DestObject;
-import com.aptus.blackbox.models.SrcObject;
 
 public class SchedulingObjects implements Serializable{
 	private boolean SrcValid,DestValid;
@@ -19,8 +19,8 @@ public class SchedulingObjects implements Serializable{
 	private Metering metering = new Metering();
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
-	private SrcObject SrcObj;
-	private DestObject DestObj;
+	private SourceConfig SrcObj;
+	private DestinationConfig DestObj;
 	private ScheduledFuture<?> thread;
 	public boolean isSrcValid() {
 		return SrcValid;
@@ -49,16 +49,16 @@ public class SchedulingObjects implements Serializable{
 	public void setDestToken(Map<String, String> destToken) {
 		DestToken = destToken;
 	}
-	public SrcObject getSrcObj() {
+	public SourceConfig getSrcObj() {
 		return SrcObj;
 	}
-	public void setSrcObj(SrcObject srcObj) {
+	public void setSrcObj(SourceConfig srcObj) {
 		SrcObj = srcObj;
 	}
-	public DestObject getDestObj() {
+	public DestinationConfig getDestObj() {
 		return DestObj;
 	}
-	public void setDestObj(DestObject destObj) {
+	public void setDestObj(DestinationConfig destObj) {
 		DestObj = destObj;
 	}
 	public String getStatus() {

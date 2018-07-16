@@ -94,5 +94,9 @@ public class UrlObject implements Serializable {
 	public void setCatagory(String catagory) {
 		this.catagory = catagory;
 	}
-	
+	@Override
+	public String toString() {
+	 return  "\nlabel:"+label+"\ntype:"+type+"\nurl:"+url+"\nmethod:"+method+
+			 "\nresponseString:"+responseString;	
+	}
 }

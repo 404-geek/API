@@ -1,5 +1,6 @@
 package com.aptus.blackbox.datamodels;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
@@ -8,7 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import com.aptus.blackbox.models.UrlObject;
 
 @Document
-public class SourceConfig {
+public class SourceConfig implements Serializable{
 	@Id
 	private String _id;
 	private String authType,steps,refresh;
@@ -94,5 +95,12 @@ public class SourceConfig {
 	public void setInfoEndpointOrder(List<List<List<String>>> infoEndpointOrder) {
 		this.infoEndpointOrder = infoEndpointOrder;
 	}
-	
+//	@Override
+//	public String toString() {
+//		return "_id:"+_id+" \nauthType:"+authType+"\nsteps:"+steps+"\nrefreshtoken:"+refreshToken+
+//				"\nrequesttoken:"+requestToken+"\naccessCode:"+accessCode+"\naccessToken:"+accessToken
+//				+"validateCredentiuals:"+validateCredentials+"dataendpoints\n"+DataEndPoints
+//				+"\nInfoendpoints:"+InfoEndpoints+"\nImplicitendpoints:"+ImplicitEndpoints+
+//				"\ninfoEndPointOrder:"+infoEndpointOrder;
+//	}
 }

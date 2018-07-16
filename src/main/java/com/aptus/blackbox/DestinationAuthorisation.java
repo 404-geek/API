@@ -14,7 +14,7 @@ import org.springframework.context.ApplicationContext;
 
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Credentials;
-import com.aptus.blackbox.models.DestObject;
+import com.aptus.blackbox.datamodels.DestinationConfig;
 
 abstract public class DestinationAuthorisation {
 	
@@ -38,7 +38,7 @@ abstract public class DestinationAuthorisation {
 	private ApplicationContext Context;
 	
 	
-	protected void connection(Map<String, String> destToken, DestObject destObj) throws SQLException {
+	protected void connection(Map<String, String> destToken, DestinationConfig destObj) throws SQLException {
 		try {
 
 			System.out.println("DataController-driver: " + destObj.getDrivers());
@@ -56,7 +56,7 @@ abstract public class DestinationAuthorisation {
 		}
 	}
 
-	protected boolean checkDB(String dbase, Map<String, String> destToken, DestObject destObj) throws SQLException {
+	protected boolean checkDB(String dbase, Map<String, String> destToken, DestinationConfig destObj) throws SQLException {
 
 		try {
 			if (con == null || con.isClosed())
@@ -82,7 +82,7 @@ abstract public class DestinationAuthorisation {
 		return false;
 	}
 	
-	protected boolean truncateAndPush(DestObject destObj,Map<String, String> destToken) {
+	protected boolean truncateAndPush(DestinationConfig destObj,Map<String, String> destToken) {
 		try {
 			if (con == null || con.isClosed())
 				connection(destToken, destObj);

@@ -51,6 +51,8 @@ import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.datamodels.DestinationConfig;
+import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.ScheduleEventData;
@@ -59,9 +61,7 @@ import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.Cursor;
-import com.aptus.blackbox.models.DestObject;
 import com.aptus.blackbox.models.Endpoint;
-import com.aptus.blackbox.models.SrcObject;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
 import com.aptus.blackbox.utils.Utilities;
@@ -122,7 +122,7 @@ public class DataController extends RESTFetch {
 				// tableName = "user";
 				credentials.setDestToken(destCred);
 				logger.info("dest cred"+destCred);
-				DestObject destObj = credentials.getDestObj();
+				DestinationConfig destObj = credentials.getDestObj();
 				Map<String, String> destToken = credentials.getDestToken();
 				
 				System.out.println(checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("message").toString());
@@ -176,7 +176,7 @@ public class DataController extends RESTFetch {
 		jobject.addProperty("isvalid",false);
 		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobject.toString());
 	}
-public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map<String, String> destToken) throws SQLException {
+public boolean pushDB(String jsonString, String tableName,DestinationConfig destObj,Map<String, String> destToken) throws SQLException {
 		System.out.println("pushDBController-driver: " + destObj.getDrivers());
 		try {
 			System.out.println("TABLENAME: " + tableName);
@@ -251,7 +251,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		return false;
 	}
 
-	public ResponseEntity<String> connection(Map<String, String> destToken, DestObject destObj) throws SQLException {
+	public ResponseEntity<String> connection(Map<String, String> destToken, DestinationConfig destObj) throws SQLException {
 		try {
 
 			System.out.println("DataController-driver: " + destObj.getDrivers());
@@ -289,7 +289,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 	}
 
 
-	public JsonObject checkDB(String dbase, Map<String, String> destToken, DestObject destObj) throws SQLException {
+	public JsonObject checkDB(String dbase, Map<String, String> destToken, DestinationConfig destObj) throws SQLException {
 		JsonObject resbody = new JsonObject();
 		try {
 			
@@ -493,7 +493,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 		header.add("access-control-allow-origin", config.getRootUrl());
 		header.add("access-control-allow-credentials", "true");
 		try {
-			SrcObject obj = credentials.getSrcObj();
+			SourceConfig obj = credentials.getSrcObj();
 			if (obj.getRefresh().equals("YES")) {
 				ret = Utilities.token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
 						"DataController.validateSourceCred");

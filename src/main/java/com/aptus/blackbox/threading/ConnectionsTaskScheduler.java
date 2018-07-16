@@ -28,13 +28,13 @@ import org.springframework.web.client.RestClientException;
 
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PostExecutorComplete;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
-import com.aptus.blackbox.models.SrcObject;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.utils.Utilities;
 import com.github.opendevl.JFlat;
@@ -95,7 +95,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     			}    			
     		}
     		applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
-        	SrcObject obj = scheduleObjectInfo.getSrcObj();
+        	SourceConfig obj = scheduleObjectInfo.getSrcObj();
             if (obj.getRefresh().equals("YES")) {
                 ret = Utilities.token(obj.getRefreshToken(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
                 if (!ret.getStatusCode().is2xxSuccessful()) {	

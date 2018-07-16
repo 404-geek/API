@@ -83,27 +83,30 @@ public class DataSourceController extends RESTFetch {
 	 * output:void
 	 */
 	@RequestMapping(value ="/src",method= RequestMethod.POST)
-	public void dd(@RequestBody SourceConfig conf) {
-		sourceConfigDAO.createSourceConfig(conf);
+	public void addSourceConfig(@RequestBody String conf) {
+		SourceConfig conf1 = new Gson().fromJson(conf, SourceConfig.class);
+		sourceConfigDAO.createSourceConfig(conf1);
 	}
 	
 	@RequestMapping(value ="/dest",method= RequestMethod.POST)
-	public void dds(@RequestBody DestinationConfig conf) {
-		destinationConfigDAO.createDestinationConfig(conf);
+	public void addDestinationConfig(@RequestBody String conf) {
+		DestinationConfig conf1 = new Gson().fromJson(conf, DestinationConfig.class);
+		destinationConfigDAO.createDestinationConfig(conf1);
 	}
 	
 	public void srcDestId(String type, String srcdestId) {
 		//change return type to void
 		try {
+			srcdestId = srcdestId.toUpperCase();
 			System.out.println(type+ " "+srcdestId);
 			Parser parse = Context.getBean(Parser.class);
 			if (type.equalsIgnoreCase("source")) {	
 				    System.out.println("sssssssssssssss :"+sourceConfigDAO.getSourceConfig(srcdestId));
-//				if(parse.parsingJson("source",srcdestId.toUpperCase(),config.getMongoUrl()).getStatusCode().is2xxSuccessful());{
+				if(parse.parsingJson("source",srcdestId.toUpperCase(),config.getMongoUrl()).getStatusCode().is2xxSuccessful());{
 					credentials.setSrcObj(parse.getSrcProp());
 					credentials.setCurrSrcName(srcdestId.toLowerCase());
 					credentials.setCurrSrcValid(false);
-//				}
+				}
 				
 			} else {			
 				if(parse.parsingJson("destination",srcdestId.toUpperCase(),config.getMongoUrl()).getStatusCode().is2xxSuccessful());{
@@ -118,7 +121,37 @@ public class DataSourceController extends RESTFetch {
 		}
 		return;
 	}
+	
+	public void srcDestId1(String type, String srcdestId) {
+		//change return type to void
+		
+			try {
+				srcdestId = srcdestId.toUpperCase();
+				System.out.println(type+ " "+srcdestId);
+				
+				if (type.equalsIgnoreCase("source")) {	
+					    SourceConfig srcobj=  sourceConfigDAO.getSourceConfig(srcdestId);
+					    //TODO check if srcObj is null
+						credentials.setSrcObj(srcobj);
+						credentials.setCurrSrcName(srcdestId.toLowerCase());
+						credentials.setCurrSrcValid(false);
 
+				} else {			
+						DestinationConfig destObj = destinationConfigDAO.getDestinationConfig(srcdestId);
+						//TODO check if destObj is null
+						credentials.setDestObj(destObj);
+						credentials.setCurrDestName(srcdestId.toLowerCase());
+						credentials.setCurrDestValid(false);
+					
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
+		
+		return;
+	}
 
 	/*
 	 * 
@@ -148,7 +181,8 @@ public class DataSourceController extends RESTFetch {
 				
 				credentials.setCurrConnId(null);///check here
 				System.out.println(srcdestId);
-				srcDestId(type,srcdestId);
+				srcDestId1(type,srcdestId);
+				
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
 				String filter;
@@ -161,10 +195,12 @@ public class DataSourceController extends RESTFetch {
 				else {
 					name = credentials.getCurrDestName();
 					filter = "{\"_id\":{\"$regex\":\".*"+name.toLowerCase() + ".*\"}}";
-				}						
+				}
+				
 				url = config.getMongoUrl()+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
 				System.out.println("************************url********"+ url);
-				
+				System.out.println(type+" : "+url);
+				if(1==1)return null;
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();				
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);

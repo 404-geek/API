@@ -10,10 +10,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 
+import com.aptus.blackbox.datamodels.DestinationConfig;
+import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.models.ConnObj;
-import com.aptus.blackbox.models.DestObject;
-import com.aptus.blackbox.models.SrcObject;
 
 @Service
 @Scope(proxyMode = ScopedProxyMode.TARGET_CLASS,value="session")
@@ -27,8 +27,8 @@ public class Credentials implements Serializable {
 	private boolean currSrcValid,currDestValid;
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
-	private SrcObject SrcObj;
-	private DestObject DestObj;
+	private SourceConfig SrcObj;
+	private DestinationConfig DestObj;
 	
 	
 	public boolean isUserExist() {
@@ -85,16 +85,16 @@ public class Credentials implements Serializable {
 	public void setUserId(String userId) {
 		this.userId = userId;
 	}
-	public SrcObject getSrcObj() {
+	public SourceConfig getSrcObj() {
 		return SrcObj;
 	}
-	public void setSrcObj(SrcObject srcObj) {
+	public void setSrcObj(SourceConfig srcObj) {
 		this.SrcObj = srcObj;
 	}
-	public DestObject getDestObj() {
+	public DestinationConfig getDestObj() {
 		return DestObj;
 	}
-	public void setDestObj(DestObject destObj) {
+	public void setDestObj(DestinationConfig destObj) {
 		this.DestObj = destObj;
 	}
 	public boolean isCurrSrcValid() {

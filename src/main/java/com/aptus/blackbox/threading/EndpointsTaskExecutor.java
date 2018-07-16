@@ -42,10 +42,10 @@ import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.DestinationAuthorisation;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.models.Cursor;
-import com.aptus.blackbox.models.DestObject;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
 import com.aptus.blackbox.utils.Utilities;
@@ -543,7 +543,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	}
 
 	
-	public void connection(Map<String,String> destToken,DestObject destObj) throws SQLException {
+	public void connection(Map<String,String> destToken,DestinationConfig destObj) throws SQLException {
 		try {
 			
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR CONNECTION DataController-driver: "+destObj.getDrivers());
@@ -565,7 +565,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 		}
 	}
 
-	public boolean checkDB(String dbase,Map<String,String> destToken,DestObject destObj) throws SQLException {
+	public boolean checkDB(String dbase,Map<String,String> destToken,DestinationConfig destObj) throws SQLException {
 
 		try {
 			if (con == null || con.isClosed())
