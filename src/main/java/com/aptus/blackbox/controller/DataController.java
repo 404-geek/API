@@ -140,7 +140,7 @@ public class DataController extends RESTFetch {
 					// invalid
 				}
 				
-				else if(checkDB(destToken.get("database_name"), destToken, destObj).getAsJsonObject().get("status").getAsBoolean())
+				else
 				{
 					
 					logger.info("dest valid"+true);
@@ -767,7 +767,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 				System.out.println(urlObjs.get(key).getLabel()+" : "+list);
 				
 				for(String id:list) {
-					credentials.setSrcToken(urlObjs.get(key).getLabel(),id);
+					credentials.addSrcToken(urlObjs.get(key).getLabel(),id);
 					ret.putAll(infoEndpointHelper(infoEndpointOrder,urlObjs,pos+1,childrens, endpoins,choice));					
 					
 				}

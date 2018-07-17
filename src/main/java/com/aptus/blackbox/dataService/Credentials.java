@@ -76,7 +76,7 @@ public class Credentials implements Serializable {
 	public void setSrcToken(Map<String,String> srcToken) {
 		this.SrcToken.putAll(srcToken);
 	}
-	public void setSrcToken(String key,String value) {
+	public void addSrcToken(String key,String value) {
 		this.SrcToken.put(key, value);
 	}
 	public String getUserId() {

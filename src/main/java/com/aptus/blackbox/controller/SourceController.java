@@ -207,7 +207,9 @@ public class SourceController extends RESTFetch {
 	public void saveValues(ResponseEntity<String> out) {
 		if (out.getBody() != null) {
 			try {
-				credentials.getSrcToken().putAll(new Gson().fromJson(out.getBody(), HashMap.class));
+				credentials.getSrcToken().putAll(new Gson().fromJson(out.getBody().replace("\\", ""), HashMap.class));
+				System.out.println("SRC TOKEN==::"+credentials.getSrcToken());
+				
 			} catch (Exception e) {
 				for (String s : out.getBody().toString().split("&")) {
 					System.out.println(s);

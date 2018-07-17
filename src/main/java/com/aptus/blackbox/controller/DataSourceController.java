@@ -4,6 +4,7 @@ import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.servlet.http.HttpSession;
@@ -34,11 +35,13 @@ import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataInterfaces.DestinationConfigDAO;
 import com.aptus.blackbox.dataInterfaces.SourceConfigDAO;
+import com.aptus.blackbox.dataInterfaces.SrcDestCredentialsDAO;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.datamodels.SourceConfig;
+import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.Socket;
@@ -46,6 +49,7 @@ import com.aptus.blackbox.index.Parser;
 import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.Endpoint;
 import com.aptus.blackbox.security.ExceptionHandling;
+import com.aptus.blackbox.utils.Constants;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -66,6 +70,8 @@ public class DataSourceController extends RESTFetch {
 	private SourceConfigDAO sourceConfigDAO;
 	@Autowired
 	private DestinationConfigDAO destinationConfigDAO;
+	@Autowired
+	private SrcDestCredentialsDAO srcDestCredentialsDAO;
 	@Autowired
 	private ApplicationContext Context;
 	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
@@ -153,6 +159,69 @@ public class DataSourceController extends RESTFetch {
 		return;
 	}
 
+	@RequestMapping(method = RequestMethod.GET, value = "/validate1")
+	private ResponseEntity<String> verifyUser1(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session,
+			@RequestParam(value ="database_name",required=false) String database_name,
+			@RequestParam(value ="db_username",required=false) String db_username,
+			@RequestParam(value ="db_password",required=false) String db_password,
+			@RequestParam(value ="server_host",required=false) String server_host,
+			@RequestParam(value ="server_port",required=false) String server_port){
+		
+		
+		ResponseEntity<String> out = null;
+		System.out.println("inside validate");
+		
+		int res = 0;
+		HttpHeaders headers = new HttpHeaders();
+		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", config.getRootUrl());
+		headers.add("access-control-allow-credentials", "true");
+		try {
+			System.out.println("inside validate function");
+			
+			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
+				
+				credentials.setCurrConnId(null);///check here
+				System.out.println(srcdestId);
+				srcDestId1(type,srcdestId);
+				String credentialId = credentials.getUserId()+"_";
+				/*
+				 * 	Check and sets if user src/dest exist						
+				 */
+				if (type.equalsIgnoreCase("source")) {
+					credentialId += credentials.getCurrSrcName();
+					boolean usrSrcExist = srcDestCredentialsDAO.srcDestCredentialsExist(credentialId.toLowerCase(), Constants.COLLECTION_SOURCECREDENTIALS);
+					credentials.setUsrSrcExist(usrSrcExist);
+					System.out.println("User Source Exist : "+credentials.isUsrSrcExist());
+				}
+				else {
+					credentialId += credentials.getCurrDestName();
+					boolean usrDestExist = srcDestCredentialsDAO.srcDestCredentialsExist(credentialId.toLowerCase(), Constants.COLLECTION_DESTINATIONCREDENTIALS);
+					credentials.setUsrDestExist(usrDestExist);
+					System.out.println("User Destination Exist : "+credentials.isUsrDestExist());
+				}
+				return initialiser(type,database_name,db_username,db_password,server_host,server_port);
+			}
+			else {
+				System.out.println("Ses"
+						+ "sion expired!");
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			}
+		
+		}		
+		
+		catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("home.verifyuser");
+		}
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+	}
+
+	
 	/*
 	 * 
 	 */
@@ -181,12 +250,13 @@ public class DataSourceController extends RESTFetch {
 				
 				credentials.setCurrConnId(null);///check here
 				System.out.println(srcdestId);
-				srcDestId1(type,srcdestId);
+				srcDestId(type,srcdestId);
 				
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
 				String filter;
 				String url;
+				
 				if (type.equalsIgnoreCase("source")) {
 					name = credentials.getCurrSrcName();
 					filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase()+"_"+name.toLowerCase() + "\"}";
@@ -194,13 +264,12 @@ public class DataSourceController extends RESTFetch {
 				}					
 				else {
 					name = credentials.getCurrDestName();
-					filter = "{\"_id\":{\"$regex\":\".*"+name.toLowerCase() + ".*\"}}";
+					filter = "{\"_id\":{\"$regex\":\".*"+credentials.getUserId().toLowerCase()+"_"+name.toLowerCase() + ".*\"}}";
 				}
 				
 				url = config.getMongoUrl()+"/credentials/" + type.toLowerCase() + "Credentials?filter=" + filter;
 				System.out.println("************************url********"+ url);
 				System.out.println(type+" : "+url);
-				if(1==1)return null;
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();				
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
@@ -214,9 +283,12 @@ public class DataSourceController extends RESTFetch {
 					
 				}
 				else {
+					
 					credentials.setUsrDestExist(jobj.get("_returned").getAsInt() == 0 ? false : true);
 					System.out.println(url+" : "+credentials.isUsrDestExist());
+					
 				}
+				
 				return initialiser(type,database_name,db_username,db_password,server_host,server_port);
 			}
 			else {
@@ -235,23 +307,26 @@ public class DataSourceController extends RESTFetch {
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
-
-	private ResponseEntity<String> initialiser(String type,String database_name,String db_username,String db_password,String server_host,String server_port) {
+	private ResponseEntity<String> initialiser1(String type,String database_name,String db_username,String db_password,String server_host,String server_port) {
 		//add destination fetch and validation
 		System.out.println("inside initialiser function");
 		ResponseEntity<String> out = null;
 		HttpHeaders headers = new HttpHeaders();
 		
-		//System.out.println("inside initialiser");
+
 		headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
+		System.out.println("srcExist:"+credentials.isUsrSrcExist() +"\ndestExist:"+ credentials.isUsrDestExist()+" type:"+type);
+
 		try {			
 			if (credentials.isUsrSrcExist() || credentials.isUsrDestExist()) {				
 				if(type.equalsIgnoreCase("source")) {
-					credentials.setCurrDestValid(false);
-					fetchSrcCred();
+					credentials.setCurrSrcValid(false);
+					fetchSrcCred1();
+					
+					
 					System.out.println(type+" credentials already exist");
 					System.out.println(credentials.getSrcObj()+" "+credentials);
 					out = Utilities.token(credentials.getSrcObj().getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
@@ -295,6 +370,120 @@ public class DataSourceController extends RESTFetch {
 				}				
 			} 
 			else {
+				System.out.println("New credentials fetch");
+				
+				String url;
+				if (type.equalsIgnoreCase("source")) {
+					url = "/authsource";
+					System.out.println(url);
+					URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+					headers.setLocation(uri);
+					out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
+				}					
+				else {
+					logger.info("pos 2");
+					out = Context.getBean(DataController.class).destination( database_name, db_username, db_password, server_host, server_port);
+				}
+//					url =  "/authdestination?"+
+//							"database_name="+database_name+
+//							"&db_username="+db_username+
+//							"&db_password="+db_password+
+//							"&server_host="+server_host+
+//							"&server_port="+server_port;
+				
+			}
+			return out;
+			
+		} 
+		
+
+		catch (HttpStatusCodeException e) {
+			
+			System.out.println("Inside initialiser catch");
+			e.getStatusCode();
+			
+			ExceptionHandling exceptionhandling=new ExceptionHandling();
+			out = exceptionhandling.clientException(e);
+			//System.out.println(out.getBody());
+			//System.out.println(out.getStatusCode().toString());
+			return out;//ResponseEntity.status(HttpStatus.OK).body(null);
+			
+		}
+		
+		
+		
+		
+		catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("home.init");
+		}
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+	}
+	private ResponseEntity<String> initialiser(String type,String database_name,String db_username,String db_password,String server_host,String server_port) {
+		//add destination fetch and validation
+		System.out.println("inside initialiser function");
+		ResponseEntity<String> out = null;
+		HttpHeaders headers = new HttpHeaders();
+		
+
+		headers = new HttpHeaders();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", config.getRootUrl());
+		headers.add("access-control-allow-credentials", "true");
+		System.out.println("srcExist:"+credentials.isUsrSrcExist() +"\ndestExist:"+ credentials.isUsrDestExist()+" type:"+type);
+
+		try {			
+			if (credentials.isUsrSrcExist() || credentials.isUsrDestExist()) {				
+				if(type.equalsIgnoreCase("source")) {
+					credentials.setCurrSrcValid(false);
+					fetchSrcCred();
+					
+					
+					System.out.println(type+" credentials already exist");
+					System.out.println(credentials.getSrcObj()+" "+credentials);
+					out = Utilities.token(credentials.getSrcObj().getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
+					//System.out.println("OUt:"+out);
+					System.out.println("Out status code :"+out.getStatusCode());
+					if (out.getStatusCode().is2xxSuccessful()) {
+						System.out.println(type + "tick");
+						Utilities.valid();
+						credentials.setCurrSrcValid(true);
+						String url="/close.html";
+						URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+						headers.setLocation(uri);
+						//return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).headers(headers).body(null);
+						return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
+						//return  new ResponseEntity<String>("valid", null, HttpStatus.CREATED);
+						// tick
+					}
+					else {
+						String url =  "/authsource";
+						System.out.println("/authsource called");	
+						System.out.println(url);	
+						URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+						headers.setLocation(uri);
+						out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);
+					}
+				}
+				else {
+					logger.info("pos 1");
+					credentials.setCurrDestValid(false);
+					out = Context.getBean(DataController.class).destination( database_name, db_username, db_password, server_host, server_port);
+//					String url =  "/authdestination?"+
+//							"database_name="+database_name+
+//							"&db_username="+db_username+
+//							"&db_password="+db_password+
+//							"&server_host="+server_host+
+//							"&server_port="+server_port;
+//					System.out.println(url);	
+//					URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+//					headers.setLocation(uri);
+//					out = new ResponseEntity<String>(headers, HttpStatus.MOVED_PERMANENTLY);					
+				}				
+			} 
+			else {
+				System.out.println("New credentials fetch");
+				
 				String url;
 				if (type.equalsIgnoreCase("source")) {
 					url = "/authsource";
@@ -343,6 +532,42 @@ public class DataSourceController extends RESTFetch {
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 
+	private void fetchSrcCred1() {
+		ResponseEntity<String> out = null;
+		int res = 0;
+		System.out.println("inside fetchSrcCred");
+		String userid = credentials.getUserId(), appId;
+		try {		
+			String credentialId = userid.toLowerCase()+"_"+credentials.getCurrSrcName().toLowerCase();
+		
+			SrcDestCredentials srcDestCredential = srcDestCredentialsDAO.
+					readCredentials(credentialId, Constants.COLLECTION_SOURCECREDENTIALS);
+			for(Map<String,String> hm:srcDestCredential.getCredentials()) {
+				for(Map.Entry<String, String> map : hm.entrySet())
+					credentials.addSrcToken(map.getKey(), map.getValue());
+			}
+			System.out.println("Keys: "+credentials.getSrcToken().keySet()+" \nValues: "+credentials.getSrcToken().values());
+		} 
+		
+		catch (HttpStatusCodeException e) {
+			
+			System.out.println("Inside fetchSrcCred catch");
+			e.getStatusCode();
+			ExceptionHandling exceptionhandling=new ExceptionHandling();
+			out = exceptionhandling.clientException(e);
+			System.out.println(out.getBody());
+			//System.out.println(out.getStatusCode().toString());
+			//ResponseEntity.status(HttpStatus.OK).body(null);
+			
+		}
+		
+		
+		
+		catch (Exception e) {
+			e.printStackTrace();
+			System.out.println("home.fetch");
+		}
+	}
 	private void fetchSrcCred() {
 		ResponseEntity<String> out = null;
 		int res = 0;
@@ -367,9 +592,9 @@ public class DataSourceController extends RESTFetch {
 						value=ob.getAsJsonObject().get("value").toString();
 				key=key.substring(1, key.length()-1);
 				value=value.substring(1, value.length()-1);
-				credentials.setSrcToken(key,value);
+				credentials.addSrcToken(key,value);
 			}
-			System.out.println(credentials.getSrcToken().keySet()+" : "+credentials.getSrcToken().values());
+			System.out.println("Keys: "+credentials.getSrcToken().keySet()+" \nValues: "+credentials.getSrcToken().values());
 		} 
 		
 		catch (HttpStatusCodeException e) {

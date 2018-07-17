@@ -27,8 +27,12 @@ public final class Constants {
 	public final static String RESPONSE_DATA = "data";
 
 	
+	//Collection Names
 	public final static String COLLECTION_USERINFO = "userInfo";
 	public final static String COLLECTION_SOURCECREDENTIALS = "sourceCredentials";
 	public final static String COLLECTION_DESTINATIONCREDENTIALS = "destinationCredentials";
+	
+	//Collection Primary Key
+	public final static String SRCDESTCRED_ID="credentialId";
 	
 }

@@ -8,7 +8,7 @@ import com.aptus.blackbox.datamodels.SrcDestCredentials;
 
 public interface SrcDestCredentialsDAO {
 	public void insertCredentials(SrcDestCredentials credential,String collection);
-	
+	public boolean srcDestCredentialsExist(String credentialId,String collection);
 	public SrcDestCredentials readCredentials(String credentialId,String collection);
 	boolean updateCredentials(String credentialId, List<Map<String, String>> credentials, String collection);
 }
