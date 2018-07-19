@@ -541,7 +541,7 @@ public class DataSourceController extends RESTFetch {
 			String credentialId = userid.toLowerCase()+"_"+credentials.getCurrSrcName().toLowerCase();
 		
 			SrcDestCredentials srcDestCredential = srcDestCredentialsDAO.
-					readCredentials(credentialId, Constants.COLLECTION_SOURCECREDENTIALS);
+					getCredentials(credentialId, Constants.COLLECTION_SOURCECREDENTIALS);
 			for(Map<String,String> hm:srcDestCredential.getCredentials()) {
 				for(Map.Entry<String, String> map : hm.entrySet())
 					credentials.addSrcToken(map.getKey(), map.getValue());

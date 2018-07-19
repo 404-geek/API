@@ -252,7 +252,8 @@ public class DataListeners {
 					
 					
 					srcDestCredentials  = new SrcDestCredentials();
-					srcDestCredentials.setCredentialId(pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase());
+					srcDestCredentials.setCredentialId(pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase()+"_"+
+							pushCredentials.getDestToken().get("database_name"));
 					srcDestCredentials.setCredentials(mSrcDestCred);
 					System.out.println(srcDestCredentials);
 					srcDestCredentialsService.insertCredentials(srcDestCredentials, Constants.COLLECTION_DESTINATIONCREDENTIALS);

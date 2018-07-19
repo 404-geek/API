@@ -24,6 +24,6 @@ public class SrcDestCredentialsService {
 	}
 	
 	public SrcDestCredentials readCredentials(String credentialId,String collection) {
-		return srcDestCredentialDAO.readCredentials(credentialId, collection);
+		return srcDestCredentialDAO.getCredentials(credentialId, collection);
 	}
 }

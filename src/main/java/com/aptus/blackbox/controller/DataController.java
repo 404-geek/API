@@ -10,16 +10,13 @@ import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
@@ -48,11 +45,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
+import com.aptus.blackbox.dataInterfaces.SrcDestCredentialsDAO;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.datamodels.SourceConfig;
+import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.ScheduleEventData;
@@ -64,6 +63,7 @@ import com.aptus.blackbox.models.Cursor;
 import com.aptus.blackbox.models.Endpoint;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
+import com.aptus.blackbox.utils.Constants;
 import com.aptus.blackbox.utils.Utilities;
 import com.github.opendevl.JFlat;
 import com.google.gson.Gson;
@@ -88,6 +88,10 @@ public class DataController extends RESTFetch {
 	private ApplicationContext Context;
 	@Autowired
 	private ApplicationEventPublisher applicationEventPublisher;
+	
+	@Autowired
+	private SrcDestCredentialsDAO srcDestCredentialsDAO;
+	
 	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
 	 
 	
@@ -1383,6 +1387,48 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}	
+	
+	@RequestMapping("/fetchdbs1")
+	private ResponseEntity<String> fetchDBs1(@RequestParam("destId") String destId, HttpSession session) {
+		ResponseEntity<String> out = null;
+		HttpHeaders headers = new HttpHeaders();
+		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", config.getRootUrl());
+		headers.add("access-control-allow-credentials", "true");
+		try {
+			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
+				applicationCredentials.getApplicationCred().get(credentials.getUserId())
+						.setLastAccessTime(session.getLastAccessedTime());
+				
+				String credentialId =credentials.getUserId()+"_"+destId; 
+				List<SrcDestCredentials> destList =srcDestCredentialsDAO.getAllCredentialsByRegex(credentialId, Constants.COLLECTION_DESTINATIONCREDENTIALS);
+				
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("status", "200");
+				respBody.add("data", new Gson().fromJson(new Gson().toJson(destList),JsonElement.class));
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			} else {
+				System.out.println("Session expired!");
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			}
+		} catch (HttpClientErrorException e) {
+			JsonObject respBody = new JsonObject();
+			respBody.addProperty("data", "Error");
+			respBody.addProperty("status", "404");
+			System.out.println(e.getMessage());
+			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+	}
+	
+	
 
 	@RequestMapping("/fetchdbs")
 	private ResponseEntity<String> fetchDBs(@RequestParam("destId") String destId, HttpSession session) {
