@@ -426,24 +426,24 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 		header.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(httpsession, applicationCredentials,credentials.getUserId())) {
-				System.out.println(credentials.getCurrConnId() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
+				System.out.println(credentials.getCurrConnObj() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
 				if(choice.equalsIgnoreCase("view")) {
 					return validateSourceCred(choice);
 				}
-				else if (credentials.getCurrConnId().getScheduled().equalsIgnoreCase("true")
+				else if (credentials.getCurrConnObj().getScheduled().equalsIgnoreCase("true")
 						&& choice.equalsIgnoreCase("export")) {
 					SchedulingObjects schObj = new SchedulingObjects();
 					schObj.setDestObj(credentials.getDestObj());
 					schObj.setDestToken(credentials.getDestToken());
 					schObj.setSrcObj(credentials.getSrcObj());
 					schObj.setSrcToken(credentials.getSrcToken());
-					schObj.setPeriod(credentials.getCurrConnId().getPeriod());
+					schObj.setPeriod(credentials.getCurrConnObj().getPeriod());
 					schObj.setNextPush(ZonedDateTime.now().toInstant().toEpochMilli());
 					schObj.setLastPushed(ZonedDateTime.now().toInstant().toEpochMilli());
 					schObj.setDestName(credentials.getCurrDestName());
 					schObj.setSrcName(credentials.getCurrSrcName());
 					
-					for (Endpoint endpoint : credentials.getCurrConnId().getEndPoints()) {
+					for (Endpoint endpoint : credentials.getCurrConnObj().getEndPoints()) {
 						Map<String,Status> sat = new HashMap<>();
 						for(String end :endpoint.getValue()) {
 							sat.put(end, null);
@@ -455,15 +455,15 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 					
 					if (applicationCredentials.getApplicationCred().keySet().contains(credentials.getUserId())) {
 						applicationCredentials.getApplicationCred().get(credentials.getUserId())
-								.setSchedulingObjects(schObj, credentials.getCurrConnId().getConnectionId());
+								.setSchedulingObjects(schObj, credentials.getCurrConnObj().getConnectionId());
 					} else {
 						ScheduleInfo scInfo = new ScheduleInfo();
-						scInfo.setSchedulingObjects(schObj, credentials.getCurrConnId().getConnectionId());
+						scInfo.setSchedulingObjects(schObj, credentials.getCurrConnObj().getConnectionId());
 						applicationCredentials.setApplicationCred(credentials.getUserId(), scInfo);
 					}
 					System.out.println("Publishing custom event. ");
 					ScheduleEventData scheduleEventData = Context.getBean(ScheduleEventData.class);
-					scheduleEventData.setData(credentials.getUserId(), credentials.getCurrConnId().getConnectionId(), credentials.getCurrConnId().getPeriod(),true);
+					scheduleEventData.setData(credentials.getUserId(), credentials.getCurrConnObj().getConnectionId(), credentials.getCurrConnObj().getPeriod(),true);
 					// Context.getAutowireCapableBeanFactory().autowireBean(scheduleEventData);
 					//PostExecutorComplete post = new PostExecutorComplete(credentials.getUserId(), credentials.getCurrConnId().getConnectionId());
 					applicationEventPublisher.publishEvent(scheduleEventData);
@@ -611,7 +611,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 			boolean success=true;
 			int totalRows=0;
 			Metering metring = new Metering();
-			metring.setConnId(credentials.getCurrConnId().getConnectionId());
+			metring.setConnId(credentials.getCurrConnObj().getConnectionId());
 			metring.setTime(new Date()+"");
 			metring.setType(choice);
 			metring.setUserId(credentials.getUserId());
@@ -629,7 +629,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 			}
 			Endpoint others = null;
 			System.out.println(endp);
-			for(Endpoint endpnt : credentials.getCurrConnId().getEndPoints()) {
+			for(Endpoint endpnt : credentials.getCurrConnObj().getEndPoints()) {
 				if(endpnt.getKey().equalsIgnoreCase("others")) {
 					others = endpnt;
 					
@@ -854,7 +854,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 					List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 					int rows=json2csv.size()-1;
 					
-					String tableName = credentials.getCurrConnId().getConnectionId() + "_" + ent.getKey();
+					String tableName = credentials.getCurrConnObj().getConnectionId() + "_" + ent.getKey();
 						
 					System.out.println("Export Data without schedule");						
 
@@ -972,7 +972,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 					List<UrlObject> endpoints = credentials.getSrcObj().getDataEndPoints();
 					int totalRows=0;
 					Metering metring = new Metering();
-					metring.setConnId(credentials.getCurrConnId().getConnectionId());
+					metring.setConnId(credentials.getCurrConnObj().getConnectionId());
 					
 					metring.setTime(new Date()+"");
 					metring.setType(choice);
@@ -1227,7 +1227,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 					JFlat x = new JFlat(outputData);
 					List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 					rows=json2csv.size()-1;
-					String tableName = credentials.getCurrConnId().getConnectionId() + "_" + endpoint.getLabel();
+					String tableName = credentials.getCurrConnObj().getConnectionId() + "_" + endpoint.getLabel();
 					if (choice.equalsIgnoreCase("export") && truncateAndPush(tableName)) {
 						
 						System.out.println("Export Data without schedule");
@@ -1315,37 +1315,37 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 		try {
 			boolean selectAction = false;
 			JsonElement respBody = new JsonObject();
-			System.out.println(credentials.getCurrConnId() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
+			System.out.println(credentials.getCurrConnObj() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
 			if (Utilities.isSessionValid(httpsession, applicationCredentials,credentials.getUserId())) {
 				applicationCredentials.getApplicationCred().get(credentials.getUserId())
 						.setLastAccessTime(httpsession.getLastAccessedTime());
-				if (credentials.getCurrConnId() == null) {
+				if (credentials.getCurrConnObj() == null) {
 					System.out.println("currconId is null");
 					credentials.setCurrDestValid(false);
 					credentials.setCurrSrcValid(false);
 					respBody.getAsJsonObject().addProperty("data", "DifferentAll");
 					respBody.getAsJsonObject().addProperty("status", "13");
 					//return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-				} else if (credentials.getCurrConnId().getConnectionId().equalsIgnoreCase(connId)) {					
+				} else if (credentials.getCurrConnObj().getConnectionId().equalsIgnoreCase(connId)) {					
 					out = selectAction(choice,  httpsession);
 					respBody = gson.fromJson(out.getBody(), JsonElement.class);
 					selectAction=true;
 				} else {
 					if (credentials.getConnectionIds(connId).getSourceName()
-							.equalsIgnoreCase(credentials.getCurrConnId().getSourceName())
+							.equalsIgnoreCase(credentials.getCurrConnObj().getSourceName())
 							&& credentials.getConnectionIds(connId).getDestName()
-									.equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
+									.equalsIgnoreCase(credentials.getCurrConnObj().getDestName())) {
 						out = selectAction(choice,  httpsession);
 						respBody = gson.fromJson(out.getBody(), JsonElement.class);
 						selectAction=true;
 					} else if (credentials.getConnectionIds(connId).getSourceName()
-							.equalsIgnoreCase(credentials.getCurrConnId().getSourceName())) {
+							.equalsIgnoreCase(credentials.getCurrConnObj().getSourceName())) {
 						credentials.setCurrDestValid(false);
 						respBody.getAsJsonObject().addProperty("data", "DifferentDestination");
 						respBody.getAsJsonObject().addProperty("status", "12");
 						//return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 					} else if (credentials.getConnectionIds(connId).getDestName()
-							.equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {
+							.equalsIgnoreCase(credentials.getCurrConnObj().getDestName())) {
 						credentials.setCurrSrcValid(false);
 						respBody.getAsJsonObject().addProperty("data", "DifferentSource");
 						respBody.getAsJsonObject().addProperty("status", "11");
@@ -1366,7 +1366,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 				currConnId.setPeriod(credentials.getConnectionIds(connId).getPeriod());
 				currConnId.setScheduled(credentials.getConnectionIds(connId).getScheduled());
 				credentials.setConnectionIds(connId, currConnId);
-				credentials.setCurrConnId(currConnId);
+				credentials.setCurrConnObj(currConnId);
 				if(selectAction) {
 					if(!choice.equalsIgnoreCase("export"))
 						headers=out.getHeaders();

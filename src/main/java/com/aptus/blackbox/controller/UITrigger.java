@@ -173,9 +173,9 @@ public class UITrigger {
 		headers.add("access-control-allow-credentials", "true");
 		if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 			if(credentials.getConnectionIds(connId).getSourceName().
-						equalsIgnoreCase(credentials.getCurrConnId().getSourceName()) &&
+						equalsIgnoreCase(credentials.getCurrConnObj().getSourceName()) &&
 				   credentials.getConnectionIds(connId).getDestName().
-						equalsIgnoreCase(credentials.getCurrConnId().getDestName())) {				
+						equalsIgnoreCase(credentials.getCurrConnObj().getDestName())) {				
 				if(toggle.equalsIgnoreCase("on")) {
 					boolean ret=false;
 					ResponseEntity<String> out = null;
@@ -243,7 +243,7 @@ public class UITrigger {
 		            				.getUserId()).getSchedulingObjects().get(connId)!=null) {
 		            			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
 		                				.getUserId()).getSchedulingObjects().get(connId).getThread()
-		            					, true, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
+		            					, true, credentials.getUserId(), credentials.getCurrConnObj().getConnectionId()));
 		            			credentials.getConnectionIds(connId).setScheduled("false");
 	            		}            		
 	            	}
@@ -267,13 +267,13 @@ public class UITrigger {
 				applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));	
 			}
 				else if(credentials.getConnectionIds(connId).getSourceName().
-						equalsIgnoreCase(credentials.getCurrConnId().getSourceName())) {
+						equalsIgnoreCase(credentials.getCurrConnObj().getSourceName())) {
 					credentials.setCurrDestValid(false);
 					respBody.addProperty("data", "DifferentDestination");
 					respBody.addProperty("status", "12");
 				}
 				else if(credentials.getConnectionIds(connId).getDestName().
-						equalsIgnoreCase(credentials.getCurrConnId().getDestName()))	{
+						equalsIgnoreCase(credentials.getCurrConnObj().getDestName()))	{
 					credentials.setCurrSrcValid(false);
 					respBody.addProperty("data", "DifferentSource");
 					respBody.addProperty("status", "11");

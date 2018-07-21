@@ -88,12 +88,12 @@ abstract public class DestinationAuthorisation {
 				connection(destToken, destObj);
 			PreparedStatement stmt;
 			stmt = con.prepareStatement("SELECT count(*) AS COUNT FROM information_schema.tables WHERE table_name ="
-					+ destObj.getValue_quote_open() + credentials.getCurrConnId().getConnectionId()
+					+ destObj.getValue_quote_open() + credentials.getCurrConnObj().getConnectionId()
 					+ destObj.getValue_quote_close() + ";");
 			ResultSet res = stmt.executeQuery();
 			res.first();
 			if (res.getInt("COUNT") != 0) {
-				stmt = con.prepareStatement("DROP TABLE " + credentials.getCurrConnId().getConnectionId() + ";");
+				stmt = con.prepareStatement("DROP TABLE " + credentials.getCurrConnObj().getConnectionId() + ";");
 				stmt.execute();
 			}
 			return true;

@@ -124,6 +124,27 @@ public class home extends RESTFetch{
 		return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
 	}
 	
+	@RequestMapping(value="/activeUsers")
+	private ResponseEntity<String> getActiveUsers()
+	{
+		JsonObject jobj;
+		try {
+			jobj = new JsonObject();
+			System.out.println("Users Currently Active");
+			applicationCredentials.getSessionId().forEach((k,v)->{
+				System.out.println(k+":"+v);
+				jobj.addProperty(k, v);
+			});
+			return ResponseEntity.status(HttpStatus.OK).headers(null).body(jobj.toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+		
+	}
+		
+	
 	@RequestMapping(value="/login")
 	private ResponseEntity<String> login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
 	{
@@ -560,7 +581,10 @@ public class home extends RESTFetch{
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
+
 	
+	
+
 	
 	@RequestMapping(value="/getconnectionids")
 	private ResponseEntity<String> getConnectionIds(HttpSession session) {

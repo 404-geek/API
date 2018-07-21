@@ -7,12 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
 import com.aptus.blackbox.dataInterfaces.UserConnectorDAO;
-import com.aptus.blackbox.datamodels.ConnectorObj;
-import com.aptus.blackbox.datamodels.UserConnector;
-import com.aptus.blackbox.datamodels.UserInfo;
+import com.aptus.blackbox.datamodels.UserConnectors;
+import com.aptus.blackbox.models.ConnObj;
 
 @Repository
 public class UserConnectorImpl implements UserConnectorDAO{
@@ -21,23 +21,23 @@ public class UserConnectorImpl implements UserConnectorDAO{
 	private MongoTemplate mongoTemplate;
 	
 	@Override
-	public void createUser(UserConnector _init) {
-		mongoTemplate.save(_init);
+	public void createUser(UserConnectors usrConn) {
+		mongoTemplate.save(usrConn);
 		
 	}
 
 	@Override
-	public List<ConnectorObj> getConnectorObjects(String _id) {
+	public List<ConnObj> getConnectorObjects(String _id) {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("_id").is(_id));
-		query.fields().include("srcdestId");
-		System.out.println(mongoTemplate.findOne(query, UserConnector.class));
+		query.fields().include("connectorObjs");
+		System.out.println(mongoTemplate.findOne(query, UserConnectors.class));
 		return null;
 		
 	}
 
 	@Override
-	public ConnectorObj getConnectorObject(String _id, String connectionId) {
+	public ConnObj getConnectorObject(String _id, String connectionId) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -51,6 +51,15 @@ public class UserConnectorImpl implements UserConnectorDAO{
 	@Override
 	public boolean deleteConnectorObject(String _id, String connectionId) {
 		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean addConnectorObj(String _id, ConnObj connectorObj) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("_id").is(_id));
+		//mongoTemplate.updateFirst(query,new Update().addToSet("").each(values), UserConnector.class);
+		mongoTemplate.updateFirst(query, new Update().addToSet("connectorObjs", connectorObj), UserConnectors.class);
 		return false;
 	}
 

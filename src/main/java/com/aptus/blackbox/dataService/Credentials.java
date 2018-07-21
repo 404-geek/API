@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Service;
 
+
 import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.index.SchedulingObjects;
@@ -20,8 +21,9 @@ import com.aptus.blackbox.models.ConnObj;
 public class Credentials implements Serializable {
 	
 	private String userId,currSrcName,currDestName;
-	private ConnObj currConnId;
+	private ConnObj currConnObj;
 	private Map<String,ConnObj>connectionIds=new HashMap<>();
+	
 	
 	private boolean userExist,usrSrcExist,usrDestExist;
 	private boolean currSrcValid,currDestValid;
@@ -118,11 +120,12 @@ public class Credentials implements Serializable {
 	public void setConnectionIds(String connectionId,ConnObj obj) {
 		this.connectionIds.put(connectionId, obj);
 	}
-	public ConnObj getCurrConnId() {
-		return currConnId;
+	public ConnObj getCurrConnObj() {
+		return currConnObj;
 	}
-	public void setCurrConnId(ConnObj currConnId) {
-		this.currConnId = currConnId;
+	public void setCurrConnObj(ConnObj currConnId) {
+		this.currConnObj = currConnId;
 	}
+
 	
 }

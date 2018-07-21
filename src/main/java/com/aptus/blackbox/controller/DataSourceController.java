@@ -36,12 +36,14 @@ import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataInterfaces.DestinationConfigDAO;
 import com.aptus.blackbox.dataInterfaces.SourceConfigDAO;
 import com.aptus.blackbox.dataInterfaces.SrcDestCredentialsDAO;
+import com.aptus.blackbox.dataInterfaces.UserConnectorDAO;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
+import com.aptus.blackbox.datamodels.UserConnectors;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.Socket;
@@ -72,6 +74,8 @@ public class DataSourceController extends RESTFetch {
 	private DestinationConfigDAO destinationConfigDAO;
 	@Autowired
 	private SrcDestCredentialsDAO srcDestCredentialsDAO;
+	@Autowired
+	private UserConnectorDAO userConnectorDAO;
 	@Autowired
 	private ApplicationContext Context;
 	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
@@ -136,15 +140,20 @@ public class DataSourceController extends RESTFetch {
 				System.out.println(type+ " "+srcdestId);
 				
 				if (type.equalsIgnoreCase("source")) {	
-					    SourceConfig srcobj=  sourceConfigDAO.getSourceConfig(srcdestId);
-					    //TODO check if srcObj is null
+					    SourceConfig srcobj=  sourceConfigDAO.getSourceConfig(srcdestId.toUpperCase());
+					    if(srcobj == null) {
+					    	logger.error("Source Config Object is null");
+					    }
 						credentials.setSrcObj(srcobj);
 						credentials.setCurrSrcName(srcdestId.toLowerCase());
 						credentials.setCurrSrcValid(false);
+						System.out.println(srcobj);
 
 				} else {			
 						DestinationConfig destObj = destinationConfigDAO.getDestinationConfig(srcdestId);
-						//TODO check if destObj is null
+						if(destObj == null) {
+					    	logger.error("Destination Config Object is null");
+					    }
 						credentials.setDestObj(destObj);
 						credentials.setCurrDestName(srcdestId.toLowerCase());
 						credentials.setCurrDestValid(false);
@@ -182,7 +191,7 @@ public class DataSourceController extends RESTFetch {
 			
 			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
 				
-				credentials.setCurrConnId(null);///check here
+				credentials.setCurrConnObj(null);///check here
 				System.out.println(srcdestId);
 				srcDestId1(type,srcdestId);
 				String credentialId = credentials.getUserId()+"_";
@@ -248,7 +257,7 @@ public class DataSourceController extends RESTFetch {
 			
 			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
 				
-				credentials.setCurrConnId(null);///check here
+				credentials.setCurrConnObj(null);///check here
 				System.out.println(srcdestId);
 				srcDestId(type,srcdestId);
 				
@@ -482,7 +491,7 @@ public class DataSourceController extends RESTFetch {
 				}				
 			} 
 			else {
-				System.out.println("New credentials fetch");
+				logger.info("New credentials fetch");
 				
 				String url;
 				if (type.equalsIgnoreCase("source")) {
@@ -511,7 +520,7 @@ public class DataSourceController extends RESTFetch {
 
 		catch (HttpStatusCodeException e) {
 			
-			System.out.println("Inside initialiser catch");
+			logger.debug("Inside initialiser catch");
 			e.getStatusCode();
 			
 			ExceptionHandling exceptionhandling=new ExceptionHandling();
@@ -527,7 +536,7 @@ public class DataSourceController extends RESTFetch {
 		
 		catch (Exception e) {
 			e.printStackTrace();
-			System.out.println("home.init");
+			logger.debug("home.init");
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
@@ -546,16 +555,16 @@ public class DataSourceController extends RESTFetch {
 				for(Map.Entry<String, String> map : hm.entrySet())
 					credentials.addSrcToken(map.getKey(), map.getValue());
 			}
-			System.out.println("Keys: "+credentials.getSrcToken().keySet()+" \nValues: "+credentials.getSrcToken().values());
+			logger.debug("Keys: "+credentials.getSrcToken().keySet()+" \nValues: "+credentials.getSrcToken().values());
 		} 
 		
 		catch (HttpStatusCodeException e) {
 			
-			System.out.println("Inside fetchSrcCred catch");
+			logger.debug("Inside fetchSrcCred catch");
 			e.getStatusCode();
 			ExceptionHandling exceptionhandling=new ExceptionHandling();
 			out = exceptionhandling.clientException(e);
-			System.out.println(out.getBody());
+			logger.debug(out.getBody());
 			//System.out.println(out.getStatusCode().toString());
 			//ResponseEntity.status(HttpStatus.OK).body(null);
 			
@@ -704,7 +713,7 @@ public class DataSourceController extends RESTFetch {
                 				.getUserId()).getSchedulingObjects().get(connId)!=null) {
                 			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
                     				.getUserId()).getSchedulingObjects().get(connId).getThread()
-                					, false, credentials.getUserId(), credentials.getCurrConnId().getConnectionId()));
+                					, false, credentials.getUserId(), credentials.getCurrConnObj().getConnectionId()));
                 			url = config.getMongoUrl() + "/credentials/scheduledStatus/" + credentials.getUserId();
                             System.out.println("Delete scheduled DataSource");
                             System.out.println(url);
@@ -812,7 +821,7 @@ public class DataSourceController extends RESTFetch {
 					currobj.setPeriod(Integer.parseInt(period)*1000);
 					currobj.setScheduled(schedule);
 					
-					credentials.setCurrConnId(currobj);
+					credentials.setCurrConnObj(currobj);
 					
 					ResponseEntity<String> str = Context.getBean(DataController.class).selectAction("view", session);
 					HttpHeaders headers = new HttpHeaders();
@@ -914,8 +923,8 @@ public class DataSourceController extends RESTFetch {
 					currobj.setPeriod(Integer.parseInt(period)*1000);
 					currobj.setScheduled(schedule);
 					
-					credentials.setCurrConnId(currobj);
-					System.out.println("DatasourceController:createdatasource\t"+credentials.getCurrConnId().getConnectionId());
+					credentials.setCurrConnObj(currobj);
+					System.out.println("DatasourceController:createdatasource\t"+credentials.getCurrConnObj().getConnectionId());
 					credentials.setConnectionIds(conId, currobj);	
 					
 					JsonObject jsonObj;
@@ -957,10 +966,10 @@ public class DataSourceController extends RESTFetch {
 					
 					applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), credentials.getDestObj(),credentials.getSrcToken() , credentials.getDestToken(),
 							credentials.getCurrSrcName(), destination.toLowerCase(), credentials.getUserId()));				
-					credentials.setCurrConnId(currobj);
+					credentials.setCurrConnObj(currobj);
 					
 					if(choice.equalsIgnoreCase("export")) {
-						String out = Context.getBean(DataController.class).checkConnection("export", credentials.getCurrConnId().getConnectionId(), session).getBody();
+						String out = Context.getBean(DataController.class).checkConnection("export", credentials.getCurrConnObj().getConnectionId(), session).getBody();
 						respBody.addProperty("data", out);
 					}
 					else if(choice.equalsIgnoreCase("download")) {
@@ -986,6 +995,119 @@ public class DataSourceController extends RESTFetch {
 		return ret;
 	}
 	
-	
-	
+		
+	@RequestMapping(method = RequestMethod.GET, value = "/createdatasource1")
+	private ResponseEntity<String> createDataSource1(@RequestParam(value = "filteredEndpoints", required=false) String filteredEndpoints,
+			@RequestParam(value="scheduled") String schedule,
+			@RequestParam(value="period",required=false) String period,
+			@RequestParam(value="destination") String destination,
+			@RequestParam(value="choice") String choice,
+			HttpSession session) {
+		ResponseEntity<String> ret = null;
+		try {
+			System.out.println(filteredEndpoints.getClass());
+			System.out.println(filteredEndpoints + " ");
+			HttpHeaders headers = new HttpHeaders();
+			headers.add("Cache-Control", "no-cache");
+			headers.add("access-control-allow-origin", config.getRootUrl());
+			headers.add("access-control-allow-credentials", "true");
+			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
+				// if(validateCredentials==null||endPoints==null||refreshToken==null) {
+				// init();
+				// }
+				List<String> downloadDest = new ArrayList<String>(){{
+					add("csv");
+					add("xml");
+					add("json");
+				}};
+				String conId;
+				JsonObject respBody = new JsonObject();
+				if(downloadDest.contains(destination)) {
+					credentials.setCurrDestName(destination);
+				}
+				if((credentials.getCurrDestName()!=null)&&(!credentials.getCurrDestName().equalsIgnoreCase(destination))) {
+					respBody.addProperty("message", "not matching dest name");
+					respBody.addProperty("status", "401");
+				}
+				else if((credentials.getCurrDestName()==null)&&(!downloadDest.contains(destination))) {
+					respBody.addProperty("message", "incorrect dest name");
+					respBody.addProperty("status", "401");
+				}
+				else {
+					conId = credentials.getUserId() + "_" + credentials.getCurrSrcName() + "_" + destination.toLowerCase() + "_"
+							+ String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
+					Gson gson = new Gson();
+//					String schedule = filteredEndpoints.get("scheduled");
+//					String period = filteredEndpoints.get("period");
+//					String schedule = "true";
+//					String period = "120";
+					JsonArray temp2,endpoints = new JsonArray();
+					JsonObject temp1;
+					JsonElement temp = gson.fromJson(filteredEndpoints, JsonElement.class)
+							.getAsJsonObject();
+					for(Entry<String, JsonElement> e : temp.getAsJsonObject().entrySet()) {
+						temp1  = new JsonObject();
+						temp2 = new JsonArray();
+						temp1.addProperty("name",e.getKey());
+						temp1.addProperty("key",e.getKey());
+						
+						for(Entry<String, JsonElement> e1 : e.getValue().getAsJsonObject().entrySet()) {
+							if(e1.getValue().getAsString().equalsIgnoreCase("true"))
+								temp2.add(e1.getKey());
+						}
+						temp1.add("value", temp2);
+						endpoints.add(temp1);
+					}
+					System.out.println(endpoints);
+					ConnObj currobj = new ConnObj();
+					Endpoint endpoint = new Endpoint();
+					for (JsonElement obj : endpoints) {
+						endpoint = gson.fromJson(obj, Endpoint.class);
+						currobj.setEndPoints(endpoint);
+					}
+					currobj.setConnectionId(conId);
+					currobj.setSourceName(credentials.getCurrSrcName());
+					currobj.setDestName(destination.toLowerCase());
+					currobj.setPeriod(Integer.parseInt(period)*1000);
+					currobj.setScheduled(schedule);
+					
+					credentials.setCurrConnObj(currobj);
+					System.out.println("DatasourceController:createdatasource\t"+credentials.getCurrConnObj().getConnectionId());
+					credentials.setConnectionIds(conId, currobj);	
+					
+					//add to userConnectors
+					userConnectorDAO.addConnectorObj(credentials.getUserId(), currobj);
+					
+					applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
+					
+					applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), credentials.getDestObj(),credentials.getSrcToken() , credentials.getDestToken(),
+							credentials.getCurrSrcName(), destination.toLowerCase(), credentials.getUserId()));				
+					credentials.setCurrConnObj(currobj);
+					
+					if(choice.equalsIgnoreCase("export")) {
+						String out = Context.getBean(DataController.class).checkConnection("export", credentials.getCurrConnObj().getConnectionId(), session).getBody();
+						respBody.addProperty("data", out);
+					}
+					else if(choice.equalsIgnoreCase("download")) {
+						JsonObject out = Context.getBean(DataController.class).fordownload(gson.fromJson(filteredEndpoints, JsonElement.class)
+								.getAsJsonObject(), session).getBody();
+						respBody.add("data", out);
+					}
+					
+	    			respBody.addProperty("message", "DataSource created");
+					respBody.addProperty("status", "200");
+				}				
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			} else {
+				System.out.println("Session expired!");
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return ret;
+	}
 }
