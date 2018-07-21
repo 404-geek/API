@@ -8,6 +8,9 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +28,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
@@ -78,6 +82,11 @@ public class home extends RESTFetch{
 	@Autowired
 	SrcDestCredentialsService srcDestCredentialsService;
 	
+	
+	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
+
+	
+	
 	@RequestMapping("/log")
 	private ResponseEntity<String> dfs() {
 		System.out.println(credentials.getSrcObj()+" TOKEN == "+credentials.getSrcToken());
@@ -117,9 +126,14 @@ public class home extends RESTFetch{
 		}
 		
 		else { 
+			
 			response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
 			credentials.setUserId(_id);
 			applicationCredentials.setSessionId(_id, session.getId());
+//			
+//			ThreadContext.clearAll();
+//			 ThreadContext.put("id", "192.168.21.9");
+//			logger.info("User success login");
 		}
 		return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
 	}
@@ -127,6 +141,8 @@ public class home extends RESTFetch{
 	@RequestMapping(value="/activeUsers")
 	private ResponseEntity<String> getActiveUsers()
 	{
+		ThreadContext.put("id", "poupopuop");
+		logger.error("Helllo worls");
 		JsonObject jobj;
 		try {
 			jobj = new JsonObject();
@@ -399,6 +415,12 @@ public class home extends RESTFetch{
 		try {
 			boolean ret=false;
 			credentials.setUserId(userId);
+			
+			System.out.println("LOGGGGGIIINNN");
+			  ThreadContext.put("id", "192.168.21.9loginn");
+			  logger.info("asfdsadasfdf");
+			
+			
 			RestTemplate restTemplate = new RestTemplate();
 			//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 			String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
