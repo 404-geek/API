@@ -846,6 +846,7 @@ public class DataSourceController extends RESTFetch {
 			@RequestParam(value="choice") String choice,
 			HttpSession session) {
 		ResponseEntity<String> ret = null;
+		
 		try {
 //			filteredEndpoints = new HashMap<>();
 //			filteredEndpoints.put("filteredendpoints", "{\"endpoints\": [{\n" + 
@@ -1101,7 +1102,8 @@ public class DataSourceController extends RESTFetch {
 			} else {
 				System.out.println("Session expired!");
     			JsonObject respBody = new JsonObject();
-    			respBody.addProperty("message", "Sorry! Your session has expired");
+    			respBody.addProperty("message", "Sorry! Your saptus"
+    					+ "ession has expired");
 				respBody.addProperty("status", "33");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
 			}
