@@ -29,6 +29,7 @@ public class BlackBoxReloadedApp extends SpringBootServletInitializer{
 		 logger.trace("trac  msg");
 		
 		SpringApplication.run(BlackBoxReloadedApp.class, args);
+		 logger.info("Spring started");
 		
 	}
 	

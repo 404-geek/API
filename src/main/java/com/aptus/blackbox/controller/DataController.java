@@ -24,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.XML;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -617,6 +618,11 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 			metring.setUserId(credentials.getUserId());
 			
 			Map<String,List<UrlObject>> endp = new HashMap<>();
+			
+			/*put endpoints in  new category if not present
+			  else create new category and put them
+			*/
+			
 			for(UrlObject object:endpoints) {
 				if(endp.containsKey(object.getCatagory())) {
 					endp.get(object.getCatagory()).add(object);
@@ -627,9 +633,12 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
     				endp.put(object.getCatagory(), lst);
 				}
 			}
+			
 			Endpoint others = null;
 			System.out.println(endp);
 			for(Endpoint endpnt : credentials.getCurrConnObj().getEndPoints()) {
+				
+				//for category = Others
 				if(endpnt.getKey().equalsIgnoreCase("others")) {
 					others = endpnt;
 					
@@ -658,7 +667,9 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 							}
 						
 					}
+					System.out.println("Total rows fetched for category Others:"+totalRows);
 				}
+				// for category!=Others
 				else {
 					UrlObject object = endp.get(endpnt.getKey().toLowerCase()).get(0);
 					for(String endpntLable:endpnt.getValue()) {
@@ -689,8 +700,16 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 							endpoint.add(datum);
 						}
 					}
+					System.out.println("Total rows fetched for category Not-Others:"+totalRows);
+
 				}
+				
+				System.out.println("Total rows fetched for category Others+Not Others:"+totalRows);
+
 			}
+			
+			
+			///    infoendpoints  handling start
 			
 			List<String> infoendpnts = new ArrayList<>();
 			for(UrlObject endpnt:credentials.getSrcObj().getInfoEndpoints()) {
@@ -719,13 +738,15 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 					}
 				}
 				
-				
-				metring.setTotalRowsFetched(totalRows);
-				if(!choice.equalsIgnoreCase("view")) {
-					applicationEventPublisher.publishEvent(metring);
-				}
 			}
+			//    infoendpoints  handling end
+			System.out.println("publish metering"+totalRows);
 			
+			if(!choice.equalsIgnoreCase("view")) {
+				metring.setTotalRowsFetched(totalRows);
+				applicationEventPublisher.publishEvent(metring);
+			}
+			System.out.println("Done with fetch endpoints"+totalRows);
 			
 			
 			data.add("data", endpoint);

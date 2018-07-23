@@ -362,6 +362,7 @@ public class DataListeners {
         headers.add("Content-Type", "application/json");
         Gson gson = new Gson();
 		try {
+			System.out.println("-----------Pushing Metering Data--------started-------");
 			ResponseEntity<String> out = null;
 			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
 			String filter = "{\"_id\":\"" + metering.getUserId() + "\"}";
@@ -446,6 +447,7 @@ public class DataListeners {
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();	
 				out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity,String.class);
 			}
+			System.out.println("-----------Pushing Metering Data--------ended-------");
 			applicationEventPublisher.publishEvent(new Socket(metering.getUserId()));
 		} catch (RestClientException e) {
 			// TODO Auto-generated catch block
