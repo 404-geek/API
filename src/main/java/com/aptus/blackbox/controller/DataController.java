@@ -135,7 +135,7 @@ public class DataController extends RESTFetch {
 				{
 					logger.info("dest valid"+false);
 					credentials.setCurrDestValid(false);
-					System.out.println("Invalid database credentials");
+					logger.error("Invalid database credentials");
 					JsonObject ret = new JsonObject();
 					ret.addProperty("isvalid", false);
 					URI uri = UriComponentsBuilder.fromUriString("/close.html").build().encode().toUri();
@@ -147,9 +147,9 @@ public class DataController extends RESTFetch {
 				else
 				{
 					
-					logger.info("dest valid"+true);
+				logger.info("dest valid: "+true);
 				credentials.setCurrDestValid(true);
-				System.out.println("Database credentials validated");
+				logger.info("Database credentials validated");
 				credentials.setDestToken(destCred);
 				JsonObject jobject = new JsonObject();
 				jobject.addProperty("isvalid",credentials.isCurrDestValid());
@@ -242,7 +242,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 					}
 					i++;
 				}
-				System.out.println("All pushed");
+				logger.info("All pushed");
 				con.close();
 				return true;
 			}
@@ -258,7 +258,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 	public ResponseEntity<String> connection(Map<String, String> destToken, DestinationConfig destObj) throws SQLException {
 		try {
 
-			System.out.println("DataController-driver: " + destObj.getDrivers());
+			logger.debug("DataController-driver: " + destObj.getDrivers());
 			Class.forName(destObj.getDrivers());
 			String url = destObj.getUrlprefix() + destToken.get("server_host") + ":" + destToken.get("server_port")
 					+ destObj.getDbnameseparator() + destToken.get("database_name");
@@ -269,7 +269,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 		
 		catch (SQLException  e) {
 			
-			System.out.println("inside connection sql exception");
+			logger.error("inside connection sql exception");
 			e.printStackTrace();
 			JsonObject respBody = new JsonObject();
             respBody.addProperty("code", "0");
@@ -348,30 +348,30 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				HttpHeaders headers = new HttpHeaders();
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-				JsonObject MeteringCred  = new Gson().fromJson((restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class).getBody()),JsonObject.class);
+				JsonObject meteringCredentials  = new Gson().fromJson((restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class).getBody()),JsonObject.class);
 				
 				Map<String,Integer> dateRows = new HashMap<String,Integer>();
 				
-				Calendar cad = Calendar.getInstance();
-				cad.setTime(new Date());
+				Calendar calendar = Calendar.getInstance();
+				calendar.setTime(new Date());
 				
 				ArrayList<String> viewDate = new ArrayList<>();
 				ArrayList<Integer> data = new ArrayList<>();
 				ArrayList<String> label = new ArrayList<>();
 				
 				for(int i=0;i<7;i++) {
-					viewDate.add(new SimpleDateFormat("yyyy-MM-dd").format(cad.getTime()));
-					cad.roll(Calendar.DATE, false);
+					viewDate.add(new SimpleDateFormat("yyyy-MM-dd").format(calendar.getTime()));
+					calendar.roll(Calendar.DATE, false);
 				}
 				
 				
-				for(Entry<String, JsonElement> conn:MeteringCred.entrySet()) {
+				for(Entry<String, JsonElement> conn:meteringCredentials.entrySet()) {
 					if(conn.getValue().isJsonObject() && conn.getValue().getAsJsonObject().keySet().contains("MeteringInfo")) {					
 						for(JsonElement temp :conn.getValue().getAsJsonObject().get("MeteringInfo").getAsJsonArray()) {
 							if(temp.isJsonObject()) {
 								JsonObject temp1 = temp.getAsJsonObject();
 								Date date = new SimpleDateFormat("EEE MMM dd kk:mm:ss z yyyy").parse(temp1.get("Time").getAsString());
-								cad.setTime(date);
+								calendar.setTime(date);
 								
 								String time = new SimpleDateFormat("yyyy-MM-dd").format(date);
 								int totalRows = temp1.get("Total Rows").getAsInt();
@@ -401,6 +401,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 				}
 				
 				label.set(label.size()-1, "Today");
+				
 								
 				
 				System.out.println("\n"+dateRows+"\n"+data+"\n"+label);
@@ -563,7 +564,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 		}
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
 	}
-	private ResponseEntity<String> validateData(UrlObject valid, List<UrlObject> endPoints, String choice) {
+	private ResponseEntity<String> validateData(UrlObject valid, List<UrlObject> dataEndPoints, String choice) {
 		ResponseEntity<String> ret = null;
 		HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
@@ -579,7 +580,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 			} else {
 				if(choice.equalsIgnoreCase("export")||choice.equalsIgnoreCase("view"))
 				{
-					ret = fetchEndpointsData(endPoints, choice);
+					ret = fetchEndpointsData(dataEndPoints, choice);
 					return ret;
 				}
 				else {
@@ -598,7 +599,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 	}
 
 	
-	private ResponseEntity<String> fetchEndpointsData(List<UrlObject> endpoints, String choice) {
+	private ResponseEntity<String> fetchEndpointsData(List<UrlObject> dataEndpoints, String choice) {
 		HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
 		header.add("access-control-allow-origin", config.getRootUrl());
@@ -610,21 +611,21 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 			JsonArray endpoint = new JsonArray();
 			boolean success=true;
 			int totalRows=0;
-			Metering metring = new Metering();
-			metring.setConnId(credentials.getCurrConnObj().getConnectionId());
-			metring.setTime(new Date()+"");
-			metring.setType(choice);
-			metring.setUserId(credentials.getUserId());
+			Metering metering = new Metering();
+			metering.setConnId(credentials.getCurrConnObj().getConnectionId());
+			metering.setTime(new Date()+"");
+			metering.setType(choice);
+			metering.setUserId(credentials.getUserId());
 			
 			Map<String,List<UrlObject>> endp = new HashMap<>();
-			for(UrlObject object:endpoints) {
-				if(endp.containsKey(object.getCatagory())) {
-					endp.get(object.getCatagory()).add(object);
+			for(UrlObject dataEndpoint:dataEndpoints) {
+				if(endp.containsKey(dataEndpoint.getCatagory())) {
+					endp.get(dataEndpoint.getCatagory()).add(dataEndpoint);
 				}
 				else {
 					List<UrlObject> lst = new ArrayList<>();
-					lst.add(object);
-    				endp.put(object.getCatagory(), lst);
+					lst.add(dataEndpoint);
+    				endp.put(dataEndpoint.getCatagory(), lst);
 				}
 			}
 			Endpoint others = null;
@@ -651,7 +652,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 								}
 								if(!choice.equalsIgnoreCase("view")) {
 									totalRows+=rows;
-									metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+									metering.setRowsFetched(object.getLabel().toLowerCase(), rows);
 								}
 								datum.addProperty("endpoint", object.getLabel());
 								endpoint.add(datum);
@@ -683,7 +684,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 							
 							if(!choice.equalsIgnoreCase("view")) {
 								totalRows+=rows;
-								metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+								metering.setRowsFetched(object.getLabel().toLowerCase(), rows);
 							}
 							datum.addProperty("endpoint", object.getLabel());
 							endpoint.add(datum);
@@ -715,14 +716,14 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 				else {
 					for(Entry<JsonElement, Integer> ent:ret.entrySet()) {
 						totalRows+=ent.getValue();
-						metring.setRowsFetched(ent.getKey().getAsString(),ent.getValue());
+						metering.setRowsFetched(ent.getKey().getAsString(),ent.getValue());
 					}
 				}
 				
 				
-				metring.setTotalRowsFetched(totalRows);
+				metering.setTotalRowsFetched(totalRows);
 				if(!choice.equalsIgnoreCase("view")) {
-					applicationEventPublisher.publishEvent(metring);
+					applicationEventPublisher.publishEvent(metering);
 				}
 			}
 			
@@ -804,7 +805,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 				List<List<List<String>>> infoEndpointOrder = credentials.getSrcObj().getInfoEndpointOrder();
 				
 				if(infoEndpointOrder == null) {
-					System.out.println("No Implicit Data Available");
+					System.out.println("No InfoEndpoint Data Available");
 					return null;
 
 				}
