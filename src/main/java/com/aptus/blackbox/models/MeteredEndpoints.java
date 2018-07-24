@@ -4,6 +4,11 @@ public class MeteredEndpoints {
 	private String endpoint;
 	private  int numRecords;
 	
+	public MeteredEndpoints(String endpoint, int numRecords) {
+		this.endpoint = endpoint;
+		this.numRecords = numRecords;
+	}
+	
 	public String getEndpoint() {
 		return endpoint;
 	}

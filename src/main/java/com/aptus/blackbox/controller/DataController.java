@@ -205,8 +205,10 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 						statement = "CREATE TABLE " + destObj.getIdentifier_quote_open() + tableName
 								+ destObj.getIdentifier_quote_close() + "(";
 						int j=0;
+						System.out.println("Attributes: ");
 						for (Object t : row) {
 							String type;
+							System.out.print( json2csv.get(1)[j]+" ");
 							JsonPrimitive test = (JsonPrimitive) json2csv.get(1)[j];
 							if(test.isNumber()) {
 								type=destObj.getType_real();
@@ -216,6 +218,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 							}
 							statement += t.toString().replace("_", "") +" "+type+ ",";
 						}
+						System.out.println();
 
 						statement = statement.substring(0, statement.length() - 1) + ");";
 						System.out.println("-----" + statement);
@@ -727,7 +730,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 			
 			Map<JsonElement,Integer> ret = getInfoEndpoints(infoendpnts,choice);
 			
-			if(ret!=null) {
+ 			if(ret!=null) {
 				if(choice.equalsIgnoreCase("view")) {
 					JsonObject view = ret.entrySet().iterator().next().getKey().getAsJsonObject();
 					for(Entry<String, JsonElement> end:view.entrySet()) {
@@ -739,7 +742,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 				else {
 					for(Entry<JsonElement, Integer> ent:ret.entrySet()) {
 						totalRows+=ent.getValue();
-						metering.setRowsFetched(ent.getKey().getAsString(),ent.getValue());
+						metering.setRowsFetched("Info",ent.getKey().getAsString(),ent.getValue());
 					}
 				}
 
@@ -765,13 +768,14 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
 	}
 
-private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpointOrder,Map<String,UrlObject> urlObjs,int pos, Map<String, List<String>> childrens, List<String> endpoins,String choice) {
+private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpointOrder,Map<String,UrlObject> urlObjs,int index, Map<String, List<String>> childrens, List<String> endpoins,String choice) {
 		
 		Map<String,JsonElement> ret = new HashMap<String,JsonElement>();
 		try {
-			if(pos == infoEndpointOrder.size())
+			if(index == infoEndpointOrder.size())
 				return ret;
-			List<String> inf=infoEndpointOrder.get(pos) ;
+			List<String> inf=infoEndpointOrder.get(index) ;
+			//Iterate over innermost 
 			for(String key:inf) {
 				//ResponseEntity<String> res=token(urlObjs.get(key),credentials.getSrcToken(), "infoEndpointHelper");
 				
@@ -782,7 +786,8 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 				
 				if(endpoins.contains(key)){
 					if(ret.containsKey(key)) {
-						JsonArray elem = ret.get(key).getAsJsonArray();elem.add(element);
+						JsonArray elem = ret.get(key).getAsJsonArray();
+						elem.add(element);
 						ret.put(key, elem);
 					}
 					else {
@@ -798,7 +803,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 				
 				for(String id:list) {
 					credentials.addSrcToken(urlObjs.get(key).getLabel(),id);
-					ret.putAll(infoEndpointHelper(infoEndpointOrder,urlObjs,pos+1,childrens, endpoins,choice));					
+					ret.putAll(infoEndpointHelper(infoEndpointOrder,urlObjs,index+1,childrens, endpoins,choice));					
 					
 				}
 				
@@ -844,11 +849,12 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 						ends.addAll(lst.get(i));
 					}
 				}
-				
+//childres:{thread_id=[], ticket_comments=[], ticket_id=[thread_id, ticket_comments], orgId=[thread_id, ticket_comments, ticket_id]}
+
 				System.out.println("childres:"+childrens);
-				
+//endpoins:[orgId, thread_id]				
 				System.out.println("endpoins:"+endpoins);
-				
+//infoEndpointOrder:[[[orgId], [ticket_id], [thread_id, ticket_comments]]]				
 				System.out.println("infoEndpointOrder:"+infoEndpointOrder);
 				
 				Map<String,UrlObject> urlObjs = new HashMap<>();
@@ -857,16 +863,19 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 				Map<String,JsonElement> elem = new HashMap<String,JsonElement>();
 				
 				for(List<List<String>> as:infoEndpointOrder) {
+					//[thread_id, ticket_comments, ticket_id]
 					System.out.println(childrens.get(as.get(0).get(0)));
-					childrens.get(as.get(0).get(0)).forEach(o->{
-						if(endpoins.contains(o)||endpoins.contains(as.get(0).get(0))) {
+					childrens.get(as.get(0).get(0)).forEach(obj->{
+						if(endpoins.contains(obj)||endpoins.contains(as.get(0).get(0))) {
 							System.out.println("inside");
+							//[orgId, thread_id]
+							logger.info("Infoendpoint : "+endpoins);
 							elem.putAll(infoEndpointHelper(as,urlObjs,0,childrens,endpoins,choice));
 						}
 					});					
 				}
 				
-				System.out.println(elem);
+				System.out.println("Elements "+elem);
 				
 				Map<JsonElement,Integer> ret = new HashMap<JsonElement,Integer>();
 				
@@ -1278,6 +1287,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 					}
 				}
 				else {
+					//return infoendpoints data
 					response.put(mergedData,0);
 					return response;
 				}

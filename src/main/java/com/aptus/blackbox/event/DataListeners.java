@@ -379,13 +379,20 @@ public class DataListeners {
 			time.addProperty("Total Rows", metering.getTotalRowsFetched());
 			time.addProperty("Type", metering.getType());	
 			time.addProperty("Time", metering.getTime());
-			JsonArray endPoints = new JsonArray();
+			
+			
+			
 			System.out.println(out.getBody());
-			for(Entry<String, MeteredEndpoints> temp:metering.getRowsFetched().entrySet()) {
-				JsonObject endPoint = new JsonObject();
-				endPoint.addProperty("name", temp.getKey());
-				endPoint.addProperty("rows", temp.getValue().getNumRecords());
-				endPoints.add(endPoint);
+			JsonObject endPoints = new JsonObject();
+			for(Entry<String, List<MeteredEndpoints>> temp:metering.getRowsFetched().entrySet()) {
+				JsonArray categoryData = new JsonArray();
+				for(MeteredEndpoints me:temp.getValue()){
+					JsonObject endPoint = new JsonObject();
+					endPoint.addProperty("name", me.getEndpoint());
+					endPoint.addProperty("rows", me.getNumRecords());
+					categoryData.add(endPoint);
+				}
+				endPoints.add(temp.getKey(), categoryData);
 			}
 			time.add("Endpoints", endPoints);
 			System.out.println(out.getBody());

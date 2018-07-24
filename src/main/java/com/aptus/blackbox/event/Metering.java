@@ -1,6 +1,9 @@
 package com.aptus.blackbox.event;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.aptus.blackbox.models.MeteredEndpoints;
@@ -8,14 +11,14 @@ import com.aptus.blackbox.models.MeteredEndpoints;
 public class Metering {
 	private int totalRowsFetched;
 	private String connId,time,type,userId;
-	private Map<String,MeteredEndpoints> rowsFetched= new HashMap<>();
+	private Map<String,List<MeteredEndpoints>> rowsFetched= new HashMap<>();
 	public int getTotalRowsFetched() {
 		return totalRowsFetched;
 	}
 	public void setTotalRowsFetched(int totalRowsFetched) {
 		this.totalRowsFetched = totalRowsFetched;
 	}
-	public Map<String, MeteredEndpoints> getRowsFetched() {
+	public Map<String, List<MeteredEndpoints>> getRowsFetched() {
 		return rowsFetched;
 	}
 //	public void setRowsFetched(Map<String, Integer> rowsFetched) {
@@ -50,8 +53,15 @@ public class Metering {
 	}
 
 	public void setRowsFetched(String catagory, String label, int rows) {
-		// TODO Auto-generated method stub
-		
+	
+		if(rowsFetched.containsKey(catagory))
+			rowsFetched.get(catagory).add(new MeteredEndpoints(label,rows));
+		else{
+			rowsFetched.put(catagory,new ArrayList<>());
+			rowsFetched.get(catagory).add(new MeteredEndpoints(label, rows));
+			
+		}
+
 	}
 	
 }

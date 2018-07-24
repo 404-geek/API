@@ -1,5 +1,7 @@
 package com.aptus.blackbox.threading;
 
+import static org.mockito.Matchers.endsWith;
+
 import java.net.URI;
 import java.sql.Timestamp;
 import java.sql.Connection;
@@ -432,7 +434,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 					List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 					this.endpoint = urlObjs.get(ent.getKey());
 					int rows=json2csv.size()-1;
-					
+					String category = endpoint.getCatagory();
 					String tableName=connectionId+"_"+ent.getKey();
 					
 					System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN table "+tableName);	
@@ -443,7 +445,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 					    if(pushDB(outputData, tableName)) {
 					    	Status respBody = new Status("22","successfully pushed");
 					    	
-					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(ent.getKey().toLowerCase(), rows);
+					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(category,ent.getKey().toLowerCase(), rows);
 							applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
 							.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
 		
