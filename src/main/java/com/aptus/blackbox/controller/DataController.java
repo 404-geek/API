@@ -665,7 +665,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 								}
 								if(!choice.equalsIgnoreCase("view")) {
 									totalRows+=rows;
-									metering.setRowsFetched(object.getLabel().toLowerCase(), rows);
+									metering.setRowsFetched(object.getCatagory(),object.getLabel(), rows);
 								}
 								datum.addProperty("endpoint", object.getLabel());
 								endpoint.add(datum);
@@ -699,7 +699,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 							
 							if(!choice.equalsIgnoreCase("view")) {
 								totalRows+=rows;
-								metering.setRowsFetched(object.getLabel().toLowerCase(), rows);
+								metering.setRowsFetched(object.getCatagory(),object.getLabel(), rows);
 							}
 							datum.addProperty("endpoint", object.getLabel());
 							endpoint.add(datum);
@@ -1034,7 +1034,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 						JsonElement data=entry.getKey();
 						Integer rows=entry.getValue();
 						totalRows=rows;
-						metring.setRowsFetched(object.getLabel().toLowerCase(), rows);
+						metring.setRowsFetched(object.getCatagory(),object.getLabel(), rows);
 						metring.setTotalRowsFetched(totalRows);
 						applicationEventPublisher.publishEvent(metring);
 						

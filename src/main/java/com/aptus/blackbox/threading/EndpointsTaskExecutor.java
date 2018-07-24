@@ -280,7 +280,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	
 				    if(pushDB(outputData, tableName)) {
 				    	Status respBody = new Status("22","successfully pushed");
-				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(endpoint.getLabel().toLowerCase(), rows);
+				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(endpoint.getCatagory().toLowerCase(),endpoint.getLabel().toLowerCase(), rows);
 						applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
 						.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
 	

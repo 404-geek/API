@@ -35,6 +35,7 @@ import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
+import com.aptus.blackbox.models.MeteredEndpoints;
 import com.aptus.blackbox.threading.ConnectionsTaskScheduler;
 import com.aptus.blackbox.utils.Constants;
 import com.aptus.blackbox.utils.Utilities;
@@ -380,10 +381,10 @@ public class DataListeners {
 			time.addProperty("Time", metering.getTime());
 			JsonArray endPoints = new JsonArray();
 			System.out.println(out.getBody());
-			for(Entry<String, Integer> temp:metering.getRowsFetched().entrySet()) {
+			for(Entry<String, MeteredEndpoints> temp:metering.getRowsFetched().entrySet()) {
 				JsonObject endPoint = new JsonObject();
 				endPoint.addProperty("name", temp.getKey());
-				endPoint.addProperty("rows", temp.getValue());
+				endPoint.addProperty("rows", temp.getValue().getNumRecords());
 				endPoints.add(endPoint);
 			}
 			time.add("Endpoints", endPoints);
