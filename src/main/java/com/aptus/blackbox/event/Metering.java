@@ -1,16 +1,21 @@
 package com.aptus.blackbox.event;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
 import com.aptus.blackbox.models.MeteredEndpoints;
 
+
 public class Metering {
+	
+	private String userId;
 	private int totalRowsFetched;
-	private String connId,time,type,userId;
+	private String time,type,connId;
 	private Map<String,List<MeteredEndpoints>> rowsFetched= new HashMap<>();
 	public int getTotalRowsFetched() {
 		return totalRowsFetched;
@@ -52,13 +57,13 @@ public class Metering {
 		this.userId = userId;
 	}
 
-	public void setRowsFetched(String catagory, String label, int rows) {
+	public void setRowsFetched(String category, String label, int rows) {
 	
-		if(rowsFetched.containsKey(catagory))
-			rowsFetched.get(catagory).add(new MeteredEndpoints(label,rows));
+		if(rowsFetched.containsKey(category))
+			rowsFetched.get(category).add(new MeteredEndpoints(label,rows));
 		else{
-			rowsFetched.put(catagory,new ArrayList<>());
-			rowsFetched.get(catagory).add(new MeteredEndpoints(label, rows));
+			rowsFetched.put(category,new ArrayList<>());
+			rowsFetched.get(category).add(new MeteredEndpoints(label, rows));
 			
 		}
 
