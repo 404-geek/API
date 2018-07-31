@@ -35,15 +35,16 @@ import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataInterfaces.DestinationConfigDAO;
 import com.aptus.blackbox.dataInterfaces.SourceConfigDAO;
-import com.aptus.blackbox.dataInterfaces.SrcDestCredentialsDAO;
-import com.aptus.blackbox.dataInterfaces.UserConnectorDAO;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.dataServices.MeteringService;
+import com.aptus.blackbox.dataServices.SourceConfigService;
+import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
+import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
-import com.aptus.blackbox.datamodels.UserConnectors;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.Socket;
@@ -69,15 +70,18 @@ public class DataSourceController extends RESTFetch {
 	@Autowired
 	private Config config;
 	@Autowired
-	private SourceConfigDAO sourceConfigDAO;
+	private SourceConfigService sourceConfigService;
 	@Autowired
 	private DestinationConfigDAO destinationConfigDAO;
 	@Autowired
-	private SrcDestCredentialsDAO srcDestCredentialsDAO;
+	private SrcDestCredentialsService srcDestCredentialsService;
 	@Autowired
-	private UserConnectorDAO userConnectorDAO;
+	private UserConnectorService userConnectorSerive;
 	@Autowired
 	private ApplicationContext Context;
+	@Autowired
+	private MeteringService meteringService;
+	
 	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
 
 	
@@ -95,7 +99,7 @@ public class DataSourceController extends RESTFetch {
 	@RequestMapping(value ="/src",method= RequestMethod.POST)
 	public void addSourceConfig(@RequestBody String conf) {
 		SourceConfig conf1 = new Gson().fromJson(conf, SourceConfig.class);
-		sourceConfigDAO.createSourceConfig(conf1);
+		sourceConfigService.createSourceConfig(conf1);
 	}
 	
 	@RequestMapping(value ="/dest",method= RequestMethod.POST)
@@ -111,7 +115,7 @@ public class DataSourceController extends RESTFetch {
 			System.out.println(type+ " "+srcdestId);
 			Parser parse = Context.getBean(Parser.class);
 			if (type.equalsIgnoreCase("source")) {	
-				    System.out.println("sssssssssssssss :"+sourceConfigDAO.getSourceConfig(srcdestId));
+				    System.out.println("sssssssssssssss :"+sourceConfigService.getSourceConfig(srcdestId));
 				if(parse.parsingJson("source",srcdestId.toUpperCase(),config.getMongoUrl()).getStatusCode().is2xxSuccessful());{
 					credentials.setSrcObj(parse.getSrcProp());
 					credentials.setCurrSrcName(srcdestId.toLowerCase());
@@ -140,7 +144,7 @@ public class DataSourceController extends RESTFetch {
 				System.out.println(type+ " "+srcdestId);
 				
 				if (type.equalsIgnoreCase("source")) {	
-					    SourceConfig srcobj=  sourceConfigDAO.getSourceConfig(srcdestId.toUpperCase());
+					    SourceConfig srcobj=  sourceConfigService.getSourceConfig(srcdestId.toUpperCase());
 					    if(srcobj == null) {
 					    	logger.error("Source Config Object is null");
 					    }
@@ -200,13 +204,13 @@ public class DataSourceController extends RESTFetch {
 				 */
 				if (type.equalsIgnoreCase("source")) {
 					credentialId += credentials.getCurrSrcName();
-					boolean usrSrcExist = srcDestCredentialsDAO.srcDestCredentialsExist(credentialId.toLowerCase(), Constants.COLLECTION_SOURCECREDENTIALS);
+					boolean usrSrcExist = srcDestCredentialsService.srcDestCredentialsExist(credentialId.toLowerCase(), Constants.COLLECTION_SOURCECREDENTIALS);
 					credentials.setUsrSrcExist(usrSrcExist);
 					System.out.println("User Source Exist : "+credentials.isUsrSrcExist());
 				}
 				else {
 					credentialId += credentials.getCurrDestName();
-					boolean usrDestExist = srcDestCredentialsDAO.srcDestCredentialsExist(credentialId.toLowerCase(), Constants.COLLECTION_DESTINATIONCREDENTIALS);
+					boolean usrDestExist = srcDestCredentialsService.srcDestCredentialsExist(credentialId.toLowerCase(), Constants.COLLECTION_DESTINATIONCREDENTIALS);
 					credentials.setUsrDestExist(usrDestExist);
 					System.out.println("User Destination Exist : "+credentials.isUsrDestExist());
 				}
@@ -549,7 +553,7 @@ public class DataSourceController extends RESTFetch {
 		try {		
 			String credentialId = userid.toLowerCase()+"_"+credentials.getCurrSrcName().toLowerCase();
 		
-			SrcDestCredentials srcDestCredential = srcDestCredentialsDAO.
+			SrcDestCredentials srcDestCredential = srcDestCredentialsService.
 					getCredentials(credentialId, Constants.COLLECTION_SOURCECREDENTIALS);
 			for(Map<String,String> hm:srcDestCredential.getCredentials()) {
 				for(Map.Entry<String, String> map : hm.entrySet())
@@ -1077,10 +1081,16 @@ public class DataSourceController extends RESTFetch {
 					credentials.setConnectionIds(conId, currobj);	
 					
 					//add to userConnectors
-					userConnectorDAO.addConnectorObj(credentials.getUserId(), currobj);
+					userConnectorSerive.addConnectorObj(credentials.getUserId(), currobj);
+					
+					
+					//add to MeteringData
+					meteringService.createUser(credentials.getUserId());
+					
 					
 					applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
 					
+					//publish credentials
 					applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), credentials.getDestObj(),credentials.getSrcToken() , credentials.getDestToken(),
 							credentials.getCurrSrcName(), destination.toLowerCase(), credentials.getUserId()));				
 					credentials.setCurrConnObj(currobj);

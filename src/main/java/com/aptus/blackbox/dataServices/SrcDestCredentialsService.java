@@ -26,4 +26,14 @@ public class SrcDestCredentialsService {
 	public SrcDestCredentials readCredentials(String credentialId,String collection) {
 		return srcDestCredentialDAO.getCredentials(credentialId, collection);
 	}
+
+	public SrcDestCredentials getCredentials(String credentialId, String collection) {
+		return srcDestCredentialDAO.getCredentials(credentialId, collection);
+	}
+
+	public boolean srcDestCredentialsExist(String credentialId, String collection) {
+		return srcDestCredentialDAO.srcDestCredentialsExist(credentialId, collection);
+	}
+
+	
 }

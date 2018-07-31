@@ -45,7 +45,7 @@ public class MeteringData {
 	}
 
 	
-	private class ConnectionMetering{
+	private static class ConnectionMetering{
 		private List<TimeMetering> timeMetering = new ArrayList<>();
 		private long totalRows;
 		
@@ -64,7 +64,7 @@ public class MeteringData {
 		
 
 
-		private class TimeMetering{
+		private static class TimeMetering{
 			private long totalRows;
 			private String type,time;
 			private Map<String,List<EndpointMetering>> endpoints= new HashMap<>();
@@ -101,7 +101,7 @@ public class MeteringData {
 
 			
 
-			private class EndpointMetering {
+			private static class EndpointMetering {
 				private String endpoint;
 				private long totalRows;
 				

@@ -32,6 +32,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
+import com.aptus.blackbox.datamodels.MeteringData;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
@@ -353,6 +354,14 @@ public class DataListeners {
 			
 		}
 	}
+	
+	
+	@EventListener
+	private void pushMeteringData(MeteringData meteringData) {
+		
+		 
+	}
+	
 	@EventListener
 	private void pushMeteringInfo(Metering metering) {
 		HttpHeaders headers = new HttpHeaders();

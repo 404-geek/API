@@ -33,6 +33,7 @@ import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserInfoService;
@@ -78,6 +79,8 @@ public class home extends RESTFetch{
 	@Autowired
 	private UserConnectorService userConnectorService;
 
+	@Autowired
+	private MeteringService meteringService;
 
 	@Autowired
 	SrcDestCredentialsService srcDestCredentialsService;
@@ -269,7 +272,7 @@ public class home extends RESTFetch{
 			  
 			  userInfoService.createUser(user);
 			  userConnectorService.createUser(user.getUserId());
-			  
+			  meteringService.createUser(user.getUserId());
 			  
 			  
 			  response = new ResponseObject()
