@@ -45,6 +45,7 @@ import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
+import com.aptus.blackbox.datamodels.Metering.ConnectionMetering;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.Socket;
@@ -1082,11 +1083,9 @@ public class DataSourceController extends RESTFetch {
 					
 					//add to userConnectors
 					userConnectorSerive.addConnectorObj(credentials.getUserId(), currobj);
-					
-					
-					//add to MeteringData
-					meteringService.createUser(credentials.getUserId());
-					
+				
+					//insert
+					meteringService.addConnection(credentials.getUserId(), conId, new ConnectionMetering());
 					
 					applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
 					

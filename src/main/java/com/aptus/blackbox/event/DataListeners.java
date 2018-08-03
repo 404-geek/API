@@ -31,9 +31,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
+import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
-import com.aptus.blackbox.datamodels.MeteringData;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
+import com.aptus.blackbox.datamodels.Metering.TimeMetering;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.models.MeteredEndpoints;
@@ -59,6 +60,9 @@ public class DataListeners {
 	ThreadPoolTaskScheduler threadPoolTaskScheduler;	
 	@Autowired
 	private ApplicationContext Context;
+	
+	@Autowired
+	private MeteringService meteringService;
 
 	private SimpMessagingTemplate template;
 	@Autowired
@@ -356,11 +360,7 @@ public class DataListeners {
 	}
 	
 	
-	@EventListener
-	private void pushMeteringData(MeteringData meteringData) {
-		
-		 
-	}
+
 	
 	@EventListener
 	private void pushMeteringInfo(Metering metering) {

@@ -124,7 +124,8 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
 				.setLastPushed(time);
 				applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
-				System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));				
+				System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));			
+				//publish Metering Data
 				applicationEventPublisher.publishEvent(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering());
 			}
 			else {
@@ -282,8 +283,12 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	
 				    if(pushDB(outputData, tableName)) {
 				    	Status respBody = new Status("22","successfully pushed");
-				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(endpoint.getCatagory().toLowerCase(),endpoint.getLabel().toLowerCase(), rows);
-						applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+
+				    	//set endpoint and rows fetched
+				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+				    	.setRowsFetched(endpoint.getCatagory().toLowerCase(),endpoint.getLabel().toLowerCase(), rows);
+						//setTotalRowsFetched
+				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
 						.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
 	
 						setResult(respBody);
@@ -444,9 +449,10 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 		
 					    if(pushDB(outputData, tableName)) {
 					    	Status respBody = new Status("22","successfully pushed");
-					    	
+					    	//set totalRows fetched
 					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(category,ent.getKey().toLowerCase(), rows);
-							applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+							//set endpoint and rows fetched
+					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
 							.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
 		
 							setResult(respBody);

@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 
 import com.aptus.blackbox.dataInterfaces.MeteringDAO;
 import com.aptus.blackbox.datamodels.MeteringData;
+import com.aptus.blackbox.datamodels.Metering.ConnectionMetering;
+import com.aptus.blackbox.datamodels.Metering.TimeMetering;
 
 @Service
 public class MeteringService {
@@ -17,10 +19,14 @@ public class MeteringService {
 		metering.setId(userId);
 		meteringDAO.createUser(metering);
 	}
-	public boolean addConnection(String userId,String connectionId) {
-		return meteringDAO.addConnection(userId, connectionId);
+	public boolean addConnection(String userId,String connectionId,ConnectionMetering connectionMetering) {
+		return meteringDAO.addConnection(userId, connectionId, connectionMetering);
 	}
 	
+	public boolean addTimeMetering(String userId, String connectionId, TimeMetering timeMetering, long totalRows) {
+		
+		return meteringDAO.addTimeMetering(userId, connectionId, timeMetering, totalRows);
+	}
 	
 	
 }

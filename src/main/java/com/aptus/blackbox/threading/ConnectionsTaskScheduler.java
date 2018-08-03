@@ -80,7 +80,8 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
 	@Override
 	public void run() {
         ResponseEntity<String> ret = null;
-        try {        	
+        try {
+        	//Set scheduling and endpoint status to running(31)
         	applicationCredentials.getApplicationCred().get(userId).
     		getSchedulingObjects().get(connectionId).setMessage("Running");    		
     		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
@@ -94,6 +95,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
         			get(connectionId).getEndPointStatus().get(endpt).put(end, new Status("31","Running"));
     			}    			
     		}
+    		//publish status
     		applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
         	SourceConfig obj = scheduleObjectInfo.getSrcObj();
             if (obj.getRefresh().equals("YES")) {

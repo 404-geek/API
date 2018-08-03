@@ -24,7 +24,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.XML;
-import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -50,9 +49,14 @@ import com.aptus.blackbox.dataInterfaces.SrcDestCredentialsDAO;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.datamodels.DestinationConfig;
+import com.aptus.blackbox.datamodels.MeteringData;
 import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
+import com.aptus.blackbox.datamodels.Metering.ConnectionMetering;
+import com.aptus.blackbox.datamodels.Metering.EndpointMetering;
+import com.aptus.blackbox.datamodels.Metering.TimeMetering;
 import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.ScheduleEventData;
@@ -89,7 +93,8 @@ public class DataController extends RESTFetch {
 	private ApplicationContext Context;
 	@Autowired
 	private ApplicationEventPublisher applicationEventPublisher;
-	
+	@Autowired
+	private MeteringService meteringService;
 	@Autowired
 	private SrcDestCredentialsDAO srcDestCredentialsDAO;
 	
@@ -621,6 +626,12 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 			metering.setType(choice);
 			metering.setUserId(credentials.getUserId());
 			
+			
+			TimeMetering timeMetering  =  new TimeMetering();
+			timeMetering.setTime(new Date()+"");
+			timeMetering.setType(choice);
+			
+			
 			Map<String,List<UrlObject>> endp = new HashMap<>();
 
 			for(UrlObject dataEndpoint:dataEndpoints) {
@@ -669,6 +680,11 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 								if(!choice.equalsIgnoreCase("view")) {
 									totalRows+=rows;
 									metering.setRowsFetched(object.getCatagory(),object.getLabel(), rows);
+									// set metering
+									EndpointMetering endpointMetering = new EndpointMetering();
+									endpointMetering.setEndpoint(object.getLabel());
+									endpointMetering.setTotalRows(rows);
+									timeMetering.setEndpoints(object.getCatagory(),endpointMetering);
 								}
 								datum.addProperty("endpoint", object.getLabel());
 								endpoint.add(datum);
@@ -702,7 +718,14 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 							
 							if(!choice.equalsIgnoreCase("view")) {
 								totalRows+=rows;
+								
 								metering.setRowsFetched(object.getCatagory(),object.getLabel(), rows);
+								// set metering
+								EndpointMetering endpointMetering = new EndpointMetering();
+								endpointMetering.setEndpoint(object.getLabel());
+								endpointMetering.setTotalRows(rows);
+								timeMetering.setEndpoints(object.getCatagory(),endpointMetering);
+								
 							}
 							datum.addProperty("endpoint", object.getLabel());
 							endpoint.add(datum);
@@ -743,6 +766,11 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 					for(Entry<JsonElement, Integer> ent:ret.entrySet()) {
 						totalRows+=ent.getValue();
 						metering.setRowsFetched("Info",ent.getKey().getAsString(),ent.getValue());
+						// set metering
+						EndpointMetering endpointMetering = new EndpointMetering();
+						endpointMetering.setEndpoint(ent.getKey().getAsString());
+						endpointMetering.setTotalRows(ent.getValue());
+						timeMetering.setEndpoints("Info",endpointMetering);
 					}
 				}
 
@@ -752,7 +780,11 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 			
 			if(!choice.equalsIgnoreCase("view")) {
 				metering.setTotalRowsFetched(totalRows);
+				timeMetering.setTotalRows(totalRows);
 				applicationEventPublisher.publishEvent(metering);
+				meteringService.addTimeMetering(credentials.getUserId(),
+						credentials.getCurrConnObj().getConnectionId(),
+						timeMetering,totalRows);
 			}
 			System.out.println("Done with fetch endpoints"+totalRows);
 			
@@ -1012,6 +1044,10 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 					metring.setTime(new Date()+"");
 					metring.setType(choice);
 					metring.setUserId(credentials.getUserId());
+					
+					
+					
+					
 					Map<String,UrlObject> dataPoints = new HashMap<>();
 					Map<String,UrlObject> infoData = new HashMap<>();
 					for (UrlObject object : endpoints) {
@@ -1045,6 +1081,22 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 						totalRows=rows;
 						metring.setRowsFetched(object.getCatagory(),object.getLabel(), rows);
 						metring.setTotalRowsFetched(totalRows);
+					
+						EndpointMetering endpointMetering = new EndpointMetering();
+						endpointMetering.setEndpoint(object.getLabel());
+						endpointMetering.setTotalRows(rows);
+		
+						
+						TimeMetering timeMetering = new TimeMetering();
+						timeMetering.setTime(new Date()+"");
+						timeMetering.setType(choice);
+						timeMetering.setEndpoints(object.getCatagory(), endpointMetering);
+						timeMetering.setTotalRows(rows);
+						
+						meteringService.addTimeMetering(credentials.getUserId(),
+								credentials.getCurrConnObj().getConnectionId(),
+							    timeMetering, rows);
+						
 						applicationEventPublisher.publishEvent(metring);
 						
 						String sheet="";
