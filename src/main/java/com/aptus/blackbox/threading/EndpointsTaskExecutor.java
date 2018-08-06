@@ -44,7 +44,10 @@ import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.DestinationAuthorisation;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.datamodels.DestinationConfig;
+import com.aptus.blackbox.datamodels.Metering.EndpointMetering;
+import com.aptus.blackbox.datamodels.Metering.TimeMetering;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.models.Cursor;
@@ -70,6 +73,9 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	private ApplicationCredentials applicationCredentials;
 	@Autowired
 	private ApplicationEventPublisher applicationEventPublisher;
+	
+	@Autowired
+	private MeteringService meteringService;
 
 	private boolean bool;
 	private List<String> endpoints;
@@ -125,7 +131,12 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 				.setLastPushed(time);
 				applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
 				System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));			
+				
 				//publish Metering Data
+				TimeMetering timeMetering = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getTimeMetering();
+				long totalRows = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getTotalRows();
+				
+				meteringService.addTimeMetering(userId, connectionId, timeMetering, totalRows);
 				applicationEventPublisher.publishEvent(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering());
 			}
 			else {
@@ -287,7 +298,17 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 				    	//set endpoint and rows fetched
 				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
 				    	.setRowsFetched(endpoint.getCatagory().toLowerCase(),endpoint.getLabel().toLowerCase(), rows);
-						//setTotalRowsFetched
+						
+				    	EndpointMetering endpointMetering = new EndpointMetering();
+						endpointMetering.setEndpoint(endpoint.getLabel());
+						endpointMetering.setTotalRows(rows);
+						
+						SchedulingObjects schdelueObj=applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
+				    	schdelueObj.getTimeMetering().setEndpoints(endpoint.getCatagory(), endpointMetering);
+				    	schdelueObj.getTimeMetering().setTotalRows(rows);
+				    	schdelueObj.setTotalRows(rows);
+				    	
+				    	//setTotalRowsFetched
 				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
 						.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
 	
@@ -439,7 +460,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 					List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 					this.endpoint = urlObjs.get(ent.getKey());
 					int rows=json2csv.size()-1;
-					String category = endpoint.getCatagory();
+					
 					String tableName=connectionId+"_"+ent.getKey();
 					
 					System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN table "+tableName);	
@@ -450,8 +471,19 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 					    if(pushDB(outputData, tableName)) {
 					    	Status respBody = new Status("22","successfully pushed");
 					    	//set totalRows fetched
-					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(category,ent.getKey().toLowerCase(), rows);
-							//set endpoint and rows fetched
+					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(endpoint.getCatagory(),ent.getKey().toLowerCase(), rows);
+							
+					       	EndpointMetering endpointMetering = new EndpointMetering();
+							endpointMetering.setEndpoint(endpoint.getLabel());
+							endpointMetering.setTotalRows(rows);
+							
+							SchedulingObjects schdelueObj=applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
+					    	schdelueObj.getTimeMetering().setEndpoints(endpoint.getCatagory(), endpointMetering);
+					    	schdelueObj.getTimeMetering().setTotalRows(rows);
+					    	schdelueObj.setTotalRows(rows);
+					    	
+					    	
+					    	//set endpoint and rows fetched
 					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
 							.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
 		

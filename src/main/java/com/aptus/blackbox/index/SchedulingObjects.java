@@ -9,6 +9,7 @@ import java.util.concurrent.ScheduledFuture;
 
 import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.datamodels.SourceConfig;
+import com.aptus.blackbox.datamodels.Metering.TimeMetering;
 import com.aptus.blackbox.event.Metering;
 
 public class SchedulingObjects implements Serializable{
@@ -17,11 +18,18 @@ public class SchedulingObjects implements Serializable{
 	private long lastPushed,nextPush,period;
 	private Map<String,Map<String,Status>>endPointStatus = new HashMap<String,Map<String,Status>>();
 	private Metering metering = new Metering();
+	private TimeMetering timeMetering;
+	private long totalRows;
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
 	private SourceConfig SrcObj;
 	private DestinationConfig DestObj;
 	private ScheduledFuture<?> thread;
+	
+	public SchedulingObjects() {
+		setTimeMetering(new TimeMetering());
+	}
+	
 	public boolean isSrcValid() {
 		return SrcValid;
 	}
@@ -129,6 +137,22 @@ public class SchedulingObjects implements Serializable{
 	}
 	public void setMetering(Metering metering) {
 		this.metering = metering;
+	}
+
+	public TimeMetering getTimeMetering() {
+		return timeMetering;
+	}
+
+	public void setTimeMetering(TimeMetering timeMetering) {
+		this.timeMetering = timeMetering;
+	}
+
+	public long getTotalRows() {
+		return totalRows;
+	}
+
+	public void setTotalRows(long totalRows) {
+		this.totalRows = this.totalRows+totalRows;
 	}
 
 }

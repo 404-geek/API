@@ -10,8 +10,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -26,9 +26,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.RestClientException;
 
+import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.datamodels.SourceConfig;
+import com.aptus.blackbox.datamodels.Metering.TimeMetering;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PostExecutorComplete;
@@ -43,6 +45,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
+
 @Component
 @Scope("prototype")
 public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
@@ -62,7 +65,8 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
 	private String connectionId,userId;
 	private SchedulingObjects scheduleObjectInfo;
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionsTaskScheduler.class);
+	final Logger logger = LogManager.getLogger(ConnectionsTaskScheduler.class);
+	
 
 	public void setConnectionsTaskScheduler(String connectionId,String userId) {		
 		this.connectionId = connectionId;
@@ -172,6 +176,12 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     			metring.setTime(new Date()+"");
     			metring.setType("Export");
     			metring.setUserId(userId);
+    			
+    			TimeMetering timeMetering = new TimeMetering();
+    			timeMetering.setTime(new Date()+"");
+    			timeMetering.setType("Export");
+    			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setTimeMetering(timeMetering);
+    			
     			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMetering(metring);
     			Map<String,List<UrlObject>> endp = new HashMap<>();
     			for(UrlObject object:endpoints) {
