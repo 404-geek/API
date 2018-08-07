@@ -782,9 +782,11 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 				metering.setTotalRowsFetched(totalRows);
 				timeMetering.setTotalRows(totalRows);
 				applicationEventPublisher.publishEvent(metering);
+				System.out.println("Metering Service publish data start");
 				meteringService.addTimeMetering(credentials.getUserId(),
 						credentials.getCurrConnObj().getConnectionId(),
 						timeMetering,totalRows);
+				System.out.println("Metering Service publish data end");
 			}
 			System.out.println("Done with fetch endpoints"+totalRows);
 			

@@ -34,7 +34,8 @@ import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
-import com.aptus.blackbox.datamodels.Metering.TimeMetering;
+import com.aptus.blackbox.datamodels.Scheduling.Connection;
+import com.aptus.blackbox.datamodels.Scheduling.Endpoint;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.models.MeteredEndpoints;
@@ -276,6 +277,8 @@ public class DataListeners {
 				e.printStackTrace();
 			}
 	}
+	
+	
 	public void pushStatus(String connectionId,String userId,String s)
 	{
 		try {
@@ -285,6 +288,8 @@ public class DataListeners {
 			Iterator<Entry<String, Map<String, Status>>> entry=tempScheduleObj.getEndPointStatus().entrySet().iterator();
 			JsonObject connStatus = new JsonObject();
 			JsonObject temp = new JsonObject();
+			
+			Connection connection = new Connection();
 			while(entry.hasNext())
 			{
 				JsonObject catagoryStatus = new JsonObject();
@@ -292,16 +297,31 @@ public class DataListeners {
 				System.out.println(s + e.getKey()+" : "+e.getValue());
 				Iterator<Entry<String, Status>> itr = e.getValue().entrySet().iterator();
 				System.out.println("loop1");
+				
+				
 				while(itr.hasNext()) {
 					JsonObject endpointStatus = new JsonObject();
 					Entry<String, Status> it = itr.next();
 					endpointStatus.addProperty("status", it.getValue().getStatus());
 					endpointStatus.addProperty("messsage", it.getValue().getMessage());
 					catagoryStatus.add(it.getKey(), endpointStatus);
+					
+					Endpoint endpoint = new Endpoint();
+					endpoint.setEndpoints(it.getKey(), it.getValue().getStatus(), it.getValue().getMessage());
+					connection.setCategory(e.getKey(), endpoint);	
 					System.out.println("\tloop2");
-				}				
+				}
+				
+				
 				temp.add(e.getKey(), catagoryStatus);
 			}
+			
+			connection.setLastSuccessfullPushed(new Date(new Timestamp(tempScheduleObj.getLastPushed()).getTime())+"");
+			connection.setStatus(tempScheduleObj.getStatus());
+			connection.setMessage(tempScheduleObj.getMessage());
+			
+			
+			
 			String value = new Date(new Timestamp(tempScheduleObj.getNextPush()).getTime())+"";
 			temp.addProperty("Last Succesfully Pushed", new Date(new Timestamp(tempScheduleObj.getLastPushed()).getTime())+"");
 			temp.addProperty("status", tempScheduleObj.getStatus());
@@ -312,6 +332,10 @@ public class DataListeners {
 				System.out.println(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)+"");
 			}			
 			temp.addProperty("Next Scheduled Pushed", value);
+			connection.setNextScheduledPushed(value);
+			
+		///////////////////   push to database     //////////////////////////
+			
 			connStatus.add(connectionId, temp);
 			ResponseEntity<String> out = null;
 			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());

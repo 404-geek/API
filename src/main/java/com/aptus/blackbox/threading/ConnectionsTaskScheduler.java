@@ -101,9 +101,9 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     		}
     		//publish status
     		applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
-        	SourceConfig obj = scheduleObjectInfo.getSrcObj();
-            if (obj.getRefresh().equals("YES")) {
-                ret = Utilities.token(obj.getRefreshToken(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
+        	SourceConfig srcObj = scheduleObjectInfo.getSrcObj();
+            if (srcObj.getRefresh().equals("YES")) {
+                ret = Utilities.token(srcObj.getRefreshToken(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
                 if (!ret.getStatusCode().is2xxSuccessful()) {	
     				setOut(new Status("51","Re-authorize"));
     				return;
@@ -124,18 +124,18 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
         			SchedulingObjects schedulingObjects = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
         			applicationEventPublisher.publishEvent(new PushCredentials(schedulingObjects.getSrcObj(), schedulingObjects.getDestObj(), schedulingObjects.getSrcToken(), 
         					schedulingObjects.getDestToken(), schedulingObjects.getSrcName(), schedulingObjects.getDestName(), userId));
-        			setOut(validateData(obj.getValidateCredentials(), obj.getDataEndPoints()));
+        			setOut(validateData(srcObj.getValidateCredentials(), srcObj.getDataEndPoints()));
                     return ;
                 }
             } else {
-                ret = Utilities.token(obj.getValidateCredentials(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
+                ret = Utilities.token(srcObj.getValidateCredentials(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
                 if (!ret.getStatusCode().is2xxSuccessful()) {                	
                 	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setSrcValid(false);
                 	setOut(new Status("51","Re-authorize"));
     				return;
                 } else {
                 	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setSrcValid(true);                    
-                    setOut(fetchEndpointsData(obj.getDataEndPoints()));
+                    setOut(fetchEndpointsData(srcObj.getDataEndPoints()));
                     return ;
                 }
             }
@@ -203,17 +203,20 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     						others = scheduleObjectInfo.getEndPointStatus().get("others".toLowerCase()).keySet();
     						System.out.println("\t"+others);
     						System.out.println("\t"+endp.get(catagory.getKey()));
+    						int num=1;
     						for(UrlObject endpnt:endp.get(catagory.getKey())) {
     							if(end.containsKey(endpnt.getLabel())) {
-    								System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor1");
+    								System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor1 num="+num++);
     	            				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
     	            				endpointsTaskExecutor.setEndpointsTaskExecutor(null,endpnt, connectionId, userId,Thread.currentThread(),catagory.getKey(),true);
     	            				//Context.getAutowireCapableBeanFactory().autowireBean(endpointsTaskExecutor);
     	            				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
     							}
+    							
     						}
     					}
     					else {
+    						int num=1;
     						UrlObject endpnt = endp.get(catagory.getKey()).get(0);
     						for(String endpntName:end.keySet()) {
     							endpnt.setLabel(endpntName);
@@ -221,7 +224,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     							ne.put(catagory.getKey(), endpntName);
     							endpnt.setUrl(Utilities.url(endpnt.getUrl(), ne));
     							
-    							System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor2");
+    							System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor2 num="+num++);
 	            				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
 	            				endpointsTaskExecutor.setEndpointsTaskExecutor(null,endpnt, connectionId, userId,Thread.currentThread(),catagory.getKey(),true);
 	            				//Context.getAutowireCapableBeanFactory().autowireBean(endpointsTaskExecutor);
@@ -232,6 +235,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     			
     			    			
     			List<String> infoendpnts = new ArrayList<>();
+    			int num=1;
     			for(UrlObject endpnt:scheduleObjectInfo.getSrcObj().getInfoEndpoints()) {
     				if(others.contains(endpnt.getLabel())) {
     					infoendpnts.add(endpnt.getLabel());
@@ -239,7 +243,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     			}
     			
     			if(!infoendpnts.isEmpty()) {
-    				System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor3");
+    				System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA Starting executor3num="+num++);
         			System.out.println(Thread.currentThread().getName()+"\t"+infoendpnts);
     				EndpointsTaskExecutor endpointsTaskExecutor=Context.getBean(EndpointsTaskExecutor.class);
     				
