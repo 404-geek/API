@@ -1,6 +1,6 @@
 package com.aptus.blackbox.datamodels.Scheduling;
 
-public class Status {
+public class StatusObj {
 	private String message;
 	private String code;
 	public String getMessage() {

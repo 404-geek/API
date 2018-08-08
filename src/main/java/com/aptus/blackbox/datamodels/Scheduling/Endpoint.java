@@ -4,14 +4,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Endpoint {
-	private Map<String,Status> endpoints=new HashMap<>();
+	private Map<String,StatusObj> endpoints=new HashMap<>();
 
-	public Map<String,Status> getEndpoints() {
+	public Map<String,StatusObj> getEndpoints() {
 		return endpoints;
 	}
 
 	
-	public void setEndpoints(String endpoint,Status status) {
+	public void setEndpoints(String endpoint,StatusObj status) {
 		this.endpoints.put(endpoint, status);
 	}
 	

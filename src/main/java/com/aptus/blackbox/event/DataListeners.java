@@ -310,14 +310,12 @@ public class DataListeners {
 					endpointStatus.addProperty("messsage", it.getValue().getMessage());
 					catagoryStatus.add(it.getKey(), endpointStatus);
 					
-					System.out.println("INNER"+"category: "+e.getKey()+"endp:"+it.getKey() +"status:"  + it.getValue().getStatus()+"messsage:"+ it.getValue().getMessage());
-					
 					Endpoint endpoint = new Endpoint();
 					endpoint.setEndpoints(it.getKey(), it.getValue().getStatus(), it.getValue().getMessage());
 					connection.setCategory(e.getKey(), endpoint);	
 					System.out.println("\tloop2");
 				}
-				System.out.println("\tloopnd");
+				
 				
 				temp.add(e.getKey(), catagoryStatus);
 			}
