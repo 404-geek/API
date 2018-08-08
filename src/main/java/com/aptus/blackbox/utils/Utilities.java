@@ -405,7 +405,7 @@ private static String JsonBuilder(MultiValueMap<String, String> preBody, String 
 	public static boolean postpatchMetaData(JsonObject body, String type, String method,String userId,String mongoUrl) {
 		try {
 
-			System.out.println("postpatchMetaData:\nBody: "+body.toString()+"\nType: "+type+"\nMethod"+method);
+			
 			ResponseEntity<String> out = null;
 			String url = "";
 			String appname = "";

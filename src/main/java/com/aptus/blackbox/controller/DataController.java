@@ -271,7 +271,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 			Class.forName(destObj.getDrivers());
 			String url = destObj.getUrlprefix() + destToken.get("server_host") + ":" + destToken.get("server_port")
 					+ destObj.getDbnameseparator() + destToken.get("database_name");
-			System.out.println(url+" "+destToken.get("db_username")+" "+destToken.get("db_password"));
+		
 			con = DriverManager.getConnection(url, destToken.get("db_username"), destToken.get("db_password"));
 		} 
 		
@@ -436,7 +436,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 		header.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(httpsession, applicationCredentials,credentials.getUserId())) {
-				System.out.println(credentials.getCurrConnObj() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
+			
 				if(choice.equalsIgnoreCase("view")) {
 					return validateSourceCred(choice);
 				}
@@ -532,8 +532,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 							credentials.getDestObj(), credentials.getSrcToken(), credentials.getDestToken(),
 							credentials.getCurrSrcName(), credentials.getCurrDestName(),
 							credentials.getUserId()));
-					System.out.println("token : " + credentials.getSrcToken().keySet() + ":"
-							+ credentials.getSrcToken().values());
+					
 					ret = validateData(obj.getValidateCredentials(), obj.getDataEndPoints(), choice);
 					return ret;
 				}
@@ -1035,7 +1034,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				ResponseEntity<String> out = validateSourceCred(choice);
-				System.out.println(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").getAsString());
+			
 				if(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").getAsString().equalsIgnoreCase("200")) {
 					System.out.println("inside If block");
 					List<UrlObject> endpoints = credentials.getSrcObj().getDataEndPoints();

@@ -116,7 +116,7 @@ public class DataSourceController extends RESTFetch {
 			System.out.println(type+ " "+srcdestId);
 			Parser parse = Context.getBean(Parser.class);
 			if (type.equalsIgnoreCase("source")) {	
-				    System.out.println("sssssssssssssss :"+sourceConfigService.getSourceConfig(srcdestId));
+				    
 				if(parse.parsingJson("source",srcdestId.toUpperCase(),config.getMongoUrl()).getStatusCode().is2xxSuccessful());{
 					credentials.setSrcObj(parse.getSrcProp());
 					credentials.setCurrSrcName(srcdestId.toLowerCase());
@@ -152,7 +152,7 @@ public class DataSourceController extends RESTFetch {
 						credentials.setSrcObj(srcobj);
 						credentials.setCurrSrcName(srcdestId.toLowerCase());
 						credentials.setCurrSrcValid(false);
-						System.out.println(srcobj);
+						
 
 				} else {			
 						DestinationConfig destObj = destinationConfigDAO.getDestinationConfig(srcdestId);
@@ -197,7 +197,7 @@ public class DataSourceController extends RESTFetch {
 			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
 				
 				credentials.setCurrConnObj(null);///check here
-				System.out.println(srcdestId);
+				
 				srcDestId1(type,srcdestId);
 				String credentialId = credentials.getUserId()+"_";
 				/*
@@ -287,7 +287,7 @@ public class DataSourceController extends RESTFetch {
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();				
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-				System.out.println(out.getBody());
+				
 				JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 				JsonObject jobj = jelem.getAsJsonObject();
 				System.out.println("datasourceontroller /validate"+jobj.get("_returned").getAsInt());
@@ -332,7 +332,6 @@ public class DataSourceController extends RESTFetch {
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
-		System.out.println("srcExist:"+credentials.isUsrSrcExist() +"\ndestExist:"+ credentials.isUsrDestExist()+" type:"+type);
 
 		try {			
 			if (credentials.isUsrSrcExist() || credentials.isUsrDestExist()) {				
@@ -569,7 +568,7 @@ public class DataSourceController extends RESTFetch {
 			e.getStatusCode();
 			ExceptionHandling exceptionhandling=new ExceptionHandling();
 			out = exceptionhandling.clientException(e);
-			logger.debug(out.getBody());
+			
 			//System.out.println(out.getStatusCode().toString());
 			//ResponseEntity.status(HttpStatus.OK).body(null);
 			
@@ -598,7 +597,7 @@ public class DataSourceController extends RESTFetch {
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-			System.out.println(out.getBody());
+			
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
 			for(JsonElement ob:jobj.get("credentials").getAsJsonArray()) {
@@ -619,7 +618,7 @@ public class DataSourceController extends RESTFetch {
 			
 			ExceptionHandling exceptionhandling=new ExceptionHandling();
 			out = exceptionhandling.clientException(e);
-			System.out.println(out.getBody());
+			
 			//System.out.println(out.getStatusCode().toString());
 			//ResponseEntity.status(HttpStatus.OK).body(null);
 			

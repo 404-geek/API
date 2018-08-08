@@ -99,9 +99,11 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
         			get(connectionId).getEndPointStatus().get(endpt).put(end, new Status("31","Running"));
     			}    			
     		}
+    		System.out.println("publishing status from connection task scheduler");
     		//publish status
     		applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
-        	SourceConfig srcObj = scheduleObjectInfo.getSrcObj();
+        	
+    		SourceConfig srcObj = scheduleObjectInfo.getSrcObj();
             if (srcObj.getRefresh().equals("YES")) {
                 ret = Utilities.token(srcObj.getRefreshToken(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
                 if (!ret.getStatusCode().is2xxSuccessful()) {	

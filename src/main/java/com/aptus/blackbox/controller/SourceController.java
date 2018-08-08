@@ -132,7 +132,7 @@ public class SourceController extends RESTFetch {
 	@ResponseStatus(value = HttpStatus.OK)
 	private ResponseEntity<String> handlefooo(@RequestParam HashMap<String, String> parameters) {
 		credentials.getSrcToken().putAll(parameters);
-		System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
+		
 		System.out.println("parameters : " + parameters.keySet() + ":" + parameters.values());
 		ResponseEntity<String> out = null;
 		try {
@@ -173,7 +173,7 @@ public class SourceController extends RESTFetch {
 			out = restTemplate.exchange(uri, method, httpEntity, String.class);
 			saveValues(out);
 			out = Utilities.token(validateCredentials,credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
-			System.out.println(out.getBody()+" "+out.getStatusCode());
+			
 			System.out.println(out);
 			headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
@@ -208,7 +208,7 @@ public class SourceController extends RESTFetch {
 		if (out.getBody() != null) {
 			try {
 				credentials.getSrcToken().putAll(new Gson().fromJson(out.getBody().replace("\\", ""), HashMap.class));
-				System.out.println("SRC TOKEN==::"+credentials.getSrcToken());
+			
 				
 			} catch (Exception e) {
 				for (String s : out.getBody().toString().split("&")) {
@@ -216,7 +216,7 @@ public class SourceController extends RESTFetch {
 					credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
 				}
 			}
-			System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
+			
 		}
 	}
 }

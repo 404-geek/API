@@ -11,13 +11,8 @@ public class Endpoint {
 	}
 
 	
-	public void setEndpoints(String endpoint,String statusCode,String statusMsg) {
-	
-		Status status = new Status();
-		status.setCode(statusCode);
-		status.setMessage(statusMsg);
+	public void setEndpoints(String endpoint,Status status) {
 		this.endpoints.put(endpoint, status);
 	}
-	
 	
 }

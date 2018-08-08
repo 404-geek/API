@@ -32,6 +32,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataServices.MeteringService;
+import com.aptus.blackbox.dataServices.SchedulingService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.datamodels.Scheduling.Connection;
@@ -64,6 +65,9 @@ public class DataListeners {
 	
 	@Autowired
 	private MeteringService meteringService;
+	
+	@Autowired
+	private SchedulingService schedulingService;
 
 	private SimpMessagingTemplate template;
 	@Autowired
@@ -227,14 +231,14 @@ public class DataListeners {
 					srcDestCredentials  = new SrcDestCredentials();
 					srcDestCredentials.setCredentialId(pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getSrcName().toLowerCase());
 					srcDestCredentials.setCredentials(mSrcDestCred);
-					System.out.println(srcDestCredentials);
+					
 					srcDestCredentialsService.insertCredentials(srcDestCredentials, Constants.COLLECTION_SOURCECREDENTIALS);
 					
 					jsonObj.addProperty("_id",
 							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getSrcName().toLowerCase());
 					jsonObj.add("credentials", sourceBody);
 					Utilities.postpatchMetaData(jsonObj, "source", "POST",pushCredentials.getUserId(),config.getMongoUrl());
-					System.out.println(sourceBody);
+					
 				}
 				// destCredentials
 				if((pushCredentials.getDestName()!=null)&&(pushCredentials.getDestToken()!=null)&&(pushCredentials.getDestObj()!=null)) {
@@ -262,7 +266,7 @@ public class DataListeners {
 					srcDestCredentials.setCredentialId(pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase()+"_"+
 							pushCredentials.getDestToken().get("database_name"));
 					srcDestCredentials.setCredentials(mSrcDestCred);
-					System.out.println(srcDestCredentials);
+					
 					srcDestCredentialsService.insertCredentials(srcDestCredentials, Constants.COLLECTION_DESTINATIONCREDENTIALS);
 					
 					jsonObj.addProperty("_id",
@@ -270,7 +274,7 @@ public class DataListeners {
 									+ pushCredentials.getDestToken().get("database_name"));
 					jsonObj.add("credentials", destBody);
 					Utilities.postpatchMetaData(jsonObj, "destination", "POST",pushCredentials.getUserId(),config.getMongoUrl());
-					System.out.println(destBody);
+					
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -294,7 +298,7 @@ public class DataListeners {
 			{
 				JsonObject catagoryStatus = new JsonObject();
 				Entry<String, Map<String, Status>> e = entry.next();
-				System.out.println(s + e.getKey()+" : "+e.getValue());
+				
 				Iterator<Entry<String, Status>> itr = e.getValue().entrySet().iterator();
 				System.out.println("loop1");
 				
@@ -306,12 +310,14 @@ public class DataListeners {
 					endpointStatus.addProperty("messsage", it.getValue().getMessage());
 					catagoryStatus.add(it.getKey(), endpointStatus);
 					
+					System.out.println("INNER"+"category: "+e.getKey()+"endp:"+it.getKey() +"status:"  + it.getValue().getStatus()+"messsage:"+ it.getValue().getMessage());
+					
 					Endpoint endpoint = new Endpoint();
 					endpoint.setEndpoints(it.getKey(), it.getValue().getStatus(), it.getValue().getMessage());
 					connection.setCategory(e.getKey(), endpoint);	
 					System.out.println("\tloop2");
 				}
-				
+				System.out.println("\tloopnd");
 				
 				temp.add(e.getKey(), catagoryStatus);
 			}
@@ -334,7 +340,12 @@ public class DataListeners {
 			temp.addProperty("Next Scheduled Pushed", value);
 			connection.setNextScheduledPushed(value);
 			
+			
+			
 		///////////////////   push to database     //////////////////////////
+			System.out.println("PUSHING SCHEDULING TO DB");
+			schedulingService.addConnection(userId, connectionId, connection);
+			
 			
 			connStatus.add(connectionId, temp);
 			ResponseEntity<String> out = null;
@@ -342,12 +353,13 @@ public class DataListeners {
 			String filter = "{\"_id\":\"" + userId.toLowerCase() + "\"}";
 			String url;
 			url = config.getMongoUrl()+"/credentials/scheduledStatus?filter=" + filter;
+			
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			HttpHeaders headers = new HttpHeaders();
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-			System.out.println(s+out.getBody());
+			
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
 			Boolean isPost=false;
@@ -370,6 +382,7 @@ public class DataListeners {
 				out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
 			}
 			System.out.println(connStatus.toString());
+			System.out.println("url = "+url);
 		} 
 		catch(JsonSyntaxException e) {
 			e.printStackTrace();
@@ -405,7 +418,7 @@ public class DataListeners {
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();		
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-			System.out.println(out.getBody());
+			
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
 			JsonObject time = new JsonObject();
@@ -415,7 +428,7 @@ public class DataListeners {
 			
 			
 			
-			System.out.println(out.getBody());
+			
 			JsonObject endPoints = new JsonObject();
 			for(Entry<String, List<MeteredEndpoints>> temp:metering.getRowsFetched().entrySet()) {
 				JsonArray categoryData = new JsonArray();
@@ -428,13 +441,13 @@ public class DataListeners {
 				endPoints.add(temp.getKey(), categoryData);
 			}
 			time.add("Endpoints", endPoints);
-			System.out.println(out.getBody());
+			
 			if(jobj.get("_returned").getAsInt() == 0 ? false : true) {
 				url = config.getMongoUrl()+"/credentials/metering/"+metering.getUserId().toLowerCase();
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();		
 				httpEntity = new HttpEntity<Object>(headers);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				System.out.println(out.getBody().toString());
+				
 				int TotalRows = gson.fromJson(out.getBody(), JsonObject.class).get("Total rows").getAsInt();
 				JsonObject addtoset=new JsonObject();
 				JsonArray each=new JsonArray();
@@ -445,13 +458,13 @@ public class DataListeners {
 					System.out.println(numRows);
 					numRows+=metering.getTotalRowsFetched();
 					
-					System.out.println("if"+out.getBody());
+					
 						
 					
-					System.out.println(each);
+					
 					JsonObject e=new JsonObject();
 					e.add("$each", each);
-					System.out.println(e);
+					
 					JsonObject f=new JsonObject();
 					f.add(metering.getConnId()+"."+"MeteringInfo", e);
 					System.out.println(f);
@@ -473,7 +486,7 @@ public class DataListeners {
 				out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
 			}
 			else {
-				System.out.println("else"+out.getBody());
+				
 				JsonArray meteringInfo=new JsonArray();
 				meteringInfo.add(time);				
 				JsonObject upper = new JsonObject();				

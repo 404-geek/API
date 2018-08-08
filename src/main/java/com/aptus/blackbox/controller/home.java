@@ -34,6 +34,7 @@ import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.dataServices.MeteringService;
+import com.aptus.blackbox.dataServices.SchedulingService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserInfoService;
@@ -84,7 +85,10 @@ public class home extends RESTFetch{
 	private MeteringService meteringService;
 
 	@Autowired
-	SrcDestCredentialsService srcDestCredentialsService;
+	private SrcDestCredentialsService srcDestCredentialsService;
+	
+	@Autowired
+	private SchedulingService schedulingService;
 	
 	
 	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
@@ -213,7 +217,7 @@ public class home extends RESTFetch{
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}
 			else{
-				System.out.println(ret.getBody());
+				
 				/*respBody.addProperty("id", user);
 				respBody.addProperty("status", "404");
 				System.out.println(respBody.toString());
@@ -241,7 +245,7 @@ public class home extends RESTFetch{
 			
 			ExceptionHandling exceptionhandling=new ExceptionHandling();
 			out = exceptionhandling.clientException(e);
-			System.out.println(out.getBody());
+			
 			//System.out.println(out.getStatusCode().toString());
 			return out;
 			//ResponseEntity.status(HttpStatus.OK).body(null);
@@ -275,7 +279,7 @@ public class home extends RESTFetch{
 			  userInfoService.createUser(user);
 			  userConnectorService.createUser(user.getUserId());
 			  meteringService.createUser(user.getUserId());
-			  
+			  schedulingService.createUser(user.getUserId());
 			  
 			  response = new ResponseObject()
 					  .Response( Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, user.getUserId());
@@ -441,7 +445,7 @@ public class home extends RESTFetch{
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
 			System.out.println("inside existuser");
-			System.out.println(out.getBody());
+			
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
 			ret=jobj.get("_returned").getAsInt() == 0 ? false : true;
@@ -506,7 +510,7 @@ public class home extends RESTFetch{
 				HttpHeaders header = new HttpHeaders();
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
 				s  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-				System.out.println(s.getBody());
+				
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(s.getBody().toString());
 			}
 			else {
@@ -528,7 +532,7 @@ public class home extends RESTFetch{
 			
 			ExceptionHandling exceptionhandling=new ExceptionHandling();
 			out = exceptionhandling.clientException(e);
-			System.out.println(out.getBody());
+			
 			//System.out.println(out.getStatusCode().toString());
 			return out;
 			//ResponseEntity.status(HttpStatus.OK).body(null);
@@ -633,7 +637,7 @@ public class home extends RESTFetch{
 				header.add("Cache-Control", "no-cache");
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				System.out.println(out.getBody());
+				
 				Gson gson=new Gson();								
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("status", "200");

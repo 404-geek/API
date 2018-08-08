@@ -33,11 +33,7 @@ public class SrcDestCredentials {
 	public void setCredentials(List<Map<String,String>> credentials) {
 		this.credentials = credentials;
 	}
-	@Override
-	public String toString() {
-		return "CredentialsId:"+credentialId+"\n"
-				+ "Credentials" + credentials;
-	}
+	
 	
 }
 

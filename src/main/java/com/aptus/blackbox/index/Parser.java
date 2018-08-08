@@ -44,7 +44,7 @@ public class Parser implements Serializable {
 			out = restTemplate.exchange(url, HttpMethod.GET, httpEntity, String.class);
 			respBody.addProperty("message", "success");
 			respBody.addProperty("status", "200");
-			System.out.println(out.getBody());
+			
 
 			if (type.equalsIgnoreCase("source")) {
 				srcProp = gson.fromJson(out.getBody(), SourceConfig.class);

@@ -1,0 +1,10 @@
+2018-08-08T12:25:32,580 [main]  [192.168.21.9] INFO  (BlackBoxReloadedApp.java:24) - INFO MSG
+2018-08-08T12:25:32,586 [main]  [192.168.21.9] DEBUG (BlackBoxReloadedApp.java:25) - debug MSG
+2018-08-08T12:25:32,586 [main]  [192.168.21.9] ERROR (BlackBoxReloadedApp.java:26) - error MSG
+2018-08-08T12:25:32,586 [main]  [] WARN  (BlackBoxReloadedApp.java:28) - warn MSG
+2018-08-08T12:25:32,586 [main]  [] TRACE (BlackBoxReloadedApp.java:29) - trac  msg
+2018-08-08T12:25:49,895 [main]  [192.168.21.9] INFO  (BlackBoxReloadedApp.java:24) - INFO MSG
+2018-08-08T12:25:49,898 [main]  [192.168.21.9] DEBUG (BlackBoxReloadedApp.java:25) - debug MSG
+2018-08-08T12:25:49,898 [main]  [192.168.21.9] ERROR (BlackBoxReloadedApp.java:26) - error MSG
+2018-08-08T12:25:49,898 [main]  [] WARN  (BlackBoxReloadedApp.java:28) - warn MSG
+2018-08-08T12:25:49,898 [main]  [] TRACE (BlackBoxReloadedApp.java:29) - trac  msg
