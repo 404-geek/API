@@ -172,8 +172,8 @@ public class SourceController extends RESTFetch {
 			out = restTemplate.exchange(uri, method, httpEntity, String.class);
 			saveValues(out);
 			out = Utilities.token(validateCredentials,credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
-			System.out.println(out.getBody()+" "+out.getStatusCode());
-			System.out.println(out);
+			
+			
 			headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
 			headers.add("access-control-allow-origin", config.getRootUrl());
@@ -209,11 +209,11 @@ public class SourceController extends RESTFetch {
 				credentials.getSrcToken().putAll(new Gson().fromJson(out.getBody(), HashMap.class));
 			} catch (Exception e) {
 				for (String s : out.getBody().toString().split("&")) {
-					System.out.println(s);
+					
 					credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
 				}
 			}
-			System.out.println("token : " + credentials.getSrcToken().keySet() + ":" + credentials.getSrcToken().values());
+			
 		}
 	}
 }

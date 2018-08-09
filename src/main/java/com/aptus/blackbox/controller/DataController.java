@@ -23,6 +23,7 @@ import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
@@ -109,6 +110,7 @@ public class DataController extends RESTFetch {
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
+		logger.info("auth destination");
 		try {
 			//if (Utilities.isSessionValid(session, credentials)) {
 //				applicationCredentials.getApplicationCred().get(credentials.getUserId())
@@ -197,23 +199,33 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 				int i = 0;
 				for (Object[] row : json2csv) {
 					if (i == 0) {
+						
+						System.out.println("Attributes Name : "+ Arrays.toString(json2csv.get(0)));
+						System.out.println("First Record : "+ Arrays.toString(json2csv.get(1)));
 						statement = "CREATE TABLE " + destObj.getIdentifier_quote_open() + tableName
 								+ destObj.getIdentifier_quote_close() + "(";
 						int j=0;
 						for (Object t : row) {
 							String type;
-							JsonPrimitive test = (JsonPrimitive) json2csv.get(1)[j];
-							if(test.isNumber()) {
-								type=destObj.getType_real();
-							}
-							else {
+							JsonPrimitive test = (JsonPrimitive) json2csv.get(1)[j++];
+							
+							
+							if(test == null)
 								type=destObj.getType_text();
-							}
-							statement += t.toString().replace("_", "") +" "+type+ ",";
-						}
+							else if(test.isNumber()) 
+								type=destObj.getType_real();
+							else 
+								type=destObj.getType_text();
 
+							System.out.print("[ data : "+test+" type : "+type+" ]");
+							
+							statement += t.toString().replaceAll("[^\\w]","") +" "+type+ ",";
+						}
+						System.out.println();
 						statement = statement.substring(0, statement.length() - 1) + ");";
-						System.out.println("-----" + statement);
+						
+						
+						System.out.println("Query : " + statement);
 						preparedStmt = con.prepareStatement(statement,ResultSet.TYPE_SCROLL_SENSITIVE, 
 		                        ResultSet.CONCUR_UPDATABLE);
 						preparedStmt.execute();
@@ -226,6 +238,9 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 							instmt += "?,";
 
 						instmt = instmt.substring(0, instmt.length() - 1) + ");";
+						
+					
+						
 						PreparedStatement stmt = con.prepareStatement(instmt,ResultSet.TYPE_SCROLL_SENSITIVE, 
 		                        ResultSet.CONCUR_UPDATABLE);
 
@@ -524,6 +539,24 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 					return ret;
 				}
 			} else {
+				
+				if(credentials.getSrcObj().getAuthtype().equalsIgnoreCase("NoAuth")) {
+					ResponseEntity<String> response = null;
+					credentials.setCurrSrcValid(true);
+					if(choice.equalsIgnoreCase("export")||choice.equalsIgnoreCase("view")){
+						response = fetchEndpointsData(obj.getDataEndPoints(), choice);
+					}
+					else {
+						JsonObject respBody = new JsonObject();
+						respBody.addProperty("message", "Validated");
+						respBody.addProperty("status", "200");
+						return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+					}
+					return response;
+					
+				}
+					
+					
 				ret = Utilities.token(obj.getValidateCredentials(), credentials.getSrcToken(),
 						"DataController.validateSourceCred");
 				if (!ret.getStatusCode().is2xxSuccessful()) {
@@ -548,7 +581,7 @@ public boolean pushDB(String jsonString, String tableName,DestObject destObj,Map
 						respBody.addProperty("status", "200");
 						return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 					}
-					System.out.println(out.getBody().substring(0, 20));
+					
 					System.out.println("Headers Inside validateSourceCred "+out.getHeaders());
 					return out;
 				}
@@ -962,7 +995,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				ResponseEntity<String> out = validateSourceCred(choice);
-				System.out.println(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").getAsString());
+				
 				if(new Gson().fromJson(out.getBody(),JsonObject.class).get("status").getAsString().equalsIgnoreCase("200")) {
 					System.out.println("inside If block");
 					List<UrlObject> endpoints = credentials.getSrcObj().getDataEndPoints();
@@ -1366,8 +1399,8 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 				if(selectAction) {
 					if(!choice.equalsIgnoreCase("export"))
 						headers=out.getHeaders();
-					System.out.println("************");
-					System.out.println(out.getBody());
+					
+					
 					System.out.println(out.getHeaders().values()+""+out.getHeaders().getContentLength()+"");
 				}
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());

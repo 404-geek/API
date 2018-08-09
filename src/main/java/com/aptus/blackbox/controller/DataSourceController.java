@@ -127,6 +127,17 @@ public class DataSourceController extends RESTFetch {
 				String filter;
 				String url;
 				if (type.equalsIgnoreCase("source")) {
+					boolean dec = credentials.getSrcObj().getAuthtype().equalsIgnoreCase("NoAuth");
+					System.out.println("Auth Req: "+credentials.getSrcObj().getAuthtype());
+					if(dec)
+						{
+						System.out.println("No Authentication");
+						url="/close.html";
+						URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+						headers.setLocation(uri);
+						
+						return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
+						}
 					name = credentials.getCurrSrcName();
 					filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase()+"_"+name.toLowerCase() + "\"}";
 				}					
@@ -340,6 +351,17 @@ public class DataSourceController extends RESTFetch {
 				boolean isvalid = false;
 				System.out.println(type+" "+srcDestId);
 				if(type.equals("source")){
+					
+					
+					if(credentials.getSrcObj().getAuthtype().equalsIgnoreCase("NoAuth")) {
+						isvalid = true;
+						credentials.setCurrSrcValid(isvalid);
+
+						JsonObject jobject = new JsonObject();
+						jobject.addProperty("isvalid",isvalid);
+						return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobject.toString());
+					}
+					
 					if(!credentials.getCurrSrcName().equalsIgnoreCase(srcDestId)) {
 						isvalid=false;
 					}

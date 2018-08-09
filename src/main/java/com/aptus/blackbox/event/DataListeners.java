@@ -269,7 +269,7 @@ public class DataListeners {
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-			System.out.println(s+out.getBody());
+			
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
 			Boolean isPost=false;
@@ -322,7 +322,7 @@ public class DataListeners {
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();		
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-			System.out.println(out.getBody());
+			
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
 			JsonObject time = new JsonObject();
@@ -330,7 +330,7 @@ public class DataListeners {
 			time.addProperty("Type", metering.getType());	
 			time.addProperty("Time", metering.getTime());
 			JsonArray endPoints = new JsonArray();
-			System.out.println(out.getBody());
+			
 			for(Entry<String, Integer> temp:metering.getRowsFetched().entrySet()) {
 				JsonObject endPoint = new JsonObject();
 				endPoint.addProperty("name", temp.getKey());
@@ -338,13 +338,13 @@ public class DataListeners {
 				endPoints.add(endPoint);
 			}
 			time.add("Endpoints", endPoints);
-			System.out.println(out.getBody());
+			
 			if(jobj.get("_returned").getAsInt() == 0 ? false : true) {
 				url = config.getMongoUrl()+"/credentials/metering/"+metering.getUserId().toLowerCase();
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();		
 				httpEntity = new HttpEntity<Object>(headers);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				System.out.println(out.getBody().toString());
+				
 				int TotalRows = gson.fromJson(out.getBody(), JsonObject.class).get("Total rows").getAsInt();
 				JsonObject addtoset=new JsonObject();
 				JsonArray each=new JsonArray();
@@ -355,7 +355,7 @@ public class DataListeners {
 					System.out.println(numRows);
 					numRows+=metering.getTotalRowsFetched();
 					
-					System.out.println("if"+out.getBody());
+					
 						
 					
 					System.out.println(each);
@@ -383,7 +383,7 @@ public class DataListeners {
 				out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
 			}
 			else {
-				System.out.println("else"+out.getBody());
+				
 				JsonArray meteringInfo=new JsonArray();
 				meteringInfo.add(time);				
 				JsonObject upper = new JsonObject();				

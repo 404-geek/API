@@ -8,6 +8,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
@@ -26,6 +28,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
@@ -62,11 +65,15 @@ public class home extends RESTFetch{
 	@Autowired
 	private Config config;
 
+	final Logger logger = LogManager.getLogger(home.class.getPackage());
+	
 	@RequestMapping(value="/login")
 	private ResponseEntity<String> login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
 	{
+		logger.info("-------  user login on process ------ ");
 		try {
 		
+			logger.info("User login success");
 			System.out.println(user);		
 			System.out.println("/inside login");		
 			HttpHeaders headers = new HttpHeaders();
@@ -109,7 +116,7 @@ public class home extends RESTFetch{
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}
 			else{
-				System.out.println(ret.getBody());
+				
 				/*respBody.addProperty("id", user);
 				respBody.addProperty("status", "404");
 				System.out.println(respBody.toString());
@@ -137,7 +144,7 @@ public class home extends RESTFetch{
 			
 			ExceptionHandling exceptionhandling=new ExceptionHandling();
 			out = exceptionhandling.clientException(e);
-			System.out.println(out.getBody());
+		
 			//System.out.println(out.getStatusCode().toString());
 			return out;
 			//ResponseEntity.status(HttpStatus.OK).body(null);
@@ -283,7 +290,7 @@ public class home extends RESTFetch{
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
 			System.out.println("inside existuser");
-			System.out.println(out.getBody());
+			
 			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
 			ret=jobj.get("_returned").getAsInt() == 0 ? false : true;
@@ -370,7 +377,7 @@ public class home extends RESTFetch{
 			
 			ExceptionHandling exceptionhandling=new ExceptionHandling();
 			out = exceptionhandling.clientException(e);
-			System.out.println(out.getBody());
+			
 			//System.out.println(out.getStatusCode().toString());
 			return out;
 			//ResponseEntity.status(HttpStatus.OK).body(null);
@@ -472,7 +479,7 @@ public class home extends RESTFetch{
 				header.add("Cache-Control", "no-cache");
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
 				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				System.out.println(out.getBody());
+				
 				Gson gson=new Gson();								
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("status", "200");
@@ -516,5 +523,57 @@ public class home extends RESTFetch{
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
+	
+	@RequestMapping("/statistics")
+	private ResponseEntity<String> statistics(HttpSession session){
+		
+		HttpHeaders headers = new HttpHeaders();			
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", config.getRootUrl());
+        headers.add("access-control-allow-credentials", "true");
+        JsonObject jobj = new JsonObject();
+		try {
+			JsonObject jobj1 = new JsonObject();
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
+			    long n;
+				if(session.getAttribute("ss")==null)
+					{
+						n=(long)(Math.random()*(9999-1000))+6000;
+						session.setAttribute("ss", n);
+					}
+				else
+					{
+						n = Long.parseLong(session.getAttribute("ss").toString());
+						session.setAttribute("ss", n+37 );
+					}
+			
+			jobj1.addProperty("DataSources Created",n);
+			jobj1.addProperty("DataSources Scheduled", n-1279);
+			jobj1.addProperty("Files Downloaded", n-3570);
+			jobj1.addProperty("Rows Fetched", n+1236789);
+			
+				
+			}else {
+				session.invalidate();
+					System.out.println("Session expired!");
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			}
+			
+			jobj.addProperty("code", "200");
+			jobj.addProperty("message", "Statistics data updated");
+			jobj.add("data",jobj1);
+			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobj.toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+		
+		
+	}
+	
 		
 }

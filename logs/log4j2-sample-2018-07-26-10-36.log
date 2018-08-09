@@ -1,0 +1,6 @@
+2018-07-26T10:36:02,525 [main] INFO  (BlackBoxReloadedApp.java:18) - INFO MSG
+2018-07-26T10:36:02,532 [main] ERROR (BlackBoxReloadedApp.java:20) - error MSG
+2018-07-26T10:36:10,620 [main] INFO  (BlackBoxReloadedApp.java:18) - INFO MSG
+2018-07-26T10:36:10,622 [main] ERROR (BlackBoxReloadedApp.java:20) - error MSG
+2018-07-26T10:36:21,868 [main] INFO  (BlackBoxReloadedApp.java:18) - INFO MSG
+2018-07-26T10:36:21,871 [main] ERROR (BlackBoxReloadedApp.java:20) - error MSG
