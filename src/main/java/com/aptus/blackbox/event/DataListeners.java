@@ -37,6 +37,7 @@ import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.datamodels.Scheduling.Connection;
 import com.aptus.blackbox.datamodels.Scheduling.Endpoint;
+import com.aptus.blackbox.datamodels.Scheduling.StatusObj;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.models.MeteredEndpoints;
@@ -78,7 +79,7 @@ public class DataListeners {
 	@EventListener
 	public void changeSocket(Socket socket) {
 		
-		String user = socket.getUser();
+	/*	String user = socket.getUser();
 		Gson gson = new Gson();
     	
     	RestTemplate restTemplate = new RestTemplate();
@@ -139,7 +140,7 @@ public class DataListeners {
 		
 		
     	this.template.convertAndSend("/client/message",ret.toString());
-	}
+*/	}
 
 	@EventListener
 	public void scheduleListner(ScheduleEventData scheduleEventData) {		
@@ -293,6 +294,8 @@ public class DataListeners {
 			JsonObject connStatus = new JsonObject();
 			JsonObject temp = new JsonObject();
 			
+			System.out.println("loop0");
+			
 			Connection connection = new Connection();
 			while(entry.hasNext())
 			{
@@ -301,7 +304,7 @@ public class DataListeners {
 				
 				Iterator<Entry<String, Status>> itr = e.getValue().entrySet().iterator();
 				System.out.println("loop1");
-				
+				System.out.println("CATEGORY:"+e.getKey());
 				
 				while(itr.hasNext()) {
 					JsonObject endpointStatus = new JsonObject();
@@ -310,13 +313,28 @@ public class DataListeners {
 					endpointStatus.addProperty("messsage", it.getValue().getMessage());
 					catagoryStatus.add(it.getKey(), endpointStatus);
 					
+					System.out.println("Endpoint:"+it.getKey());
+					System.out.println("StatusCode:"+it.getValue().getStatus());
+					System.out.println("StatusMsg:"+it.getValue().getMessage());
+					
+					System.out.println("loop2");
+					
+					StatusObj statusObj = new StatusObj();
+					System.out.println("loop3");
+					
+					statusObj.setCode(it.getValue().getStatus());
+					System.out.println("loop4");
+					statusObj.setMessage(it.getValue().getMessage());
+					System.out.println("loop5");
 					Endpoint endpoint = new Endpoint();
-					endpoint.setEndpoints(it.getKey(), it.getValue().getStatus(), it.getValue().getMessage());
+					System.out.println("loop6");
+					endpoint.setEndpoints(it.getKey(),statusObj);
+					System.out.println("loop7");
 					connection.setCategory(e.getKey(), endpoint);	
-					System.out.println("\tloop2");
+					System.out.println("loop8");
 				}
 				
-				
+				System.out.println("loop9");
 				temp.add(e.getKey(), catagoryStatus);
 			}
 			
@@ -324,7 +342,7 @@ public class DataListeners {
 			connection.setStatus(tempScheduleObj.getStatus());
 			connection.setMessage(tempScheduleObj.getMessage());
 			
-			
+			System.out.println("GGGG"+new Gson().toJson(connection, Connection.class));
 			
 			String value = new Date(new Timestamp(tempScheduleObj.getNextPush()).getTime())+"";
 			temp.addProperty("Last Succesfully Pushed", new Date(new Timestamp(tempScheduleObj.getLastPushed()).getTime())+"");

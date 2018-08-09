@@ -1,6 +1,7 @@
 package com.aptus.blackbox.datamodels.Scheduling;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +11,11 @@ public class Connection {
 	private String lastSuccessfullPushed,nextScheduledPushed;
 	private Map<String,List<Endpoint>> category;
 	
+	
+	public Connection() {
+		super();
+		this.category = new HashMap<>();
+	}
 	public String getStatus() {
 		return status;
 	}
