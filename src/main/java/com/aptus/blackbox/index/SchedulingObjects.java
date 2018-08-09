@@ -7,9 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledFuture;
 
+import com.aptus.blackbox.datamodels.DestinationConfig;
+import com.aptus.blackbox.datamodels.SourceConfig;
+import com.aptus.blackbox.datamodels.Metering.TimeMetering;
 import com.aptus.blackbox.event.Metering;
-import com.aptus.blackbox.models.DestObject;
-import com.aptus.blackbox.models.SrcObject;
 
 public class SchedulingObjects implements Serializable{
 	private boolean SrcValid,DestValid;
@@ -17,11 +18,18 @@ public class SchedulingObjects implements Serializable{
 	private long lastPushed,nextPush,period;
 	private Map<String,Map<String,Status>>endPointStatus = new HashMap<String,Map<String,Status>>();
 	private Metering metering = new Metering();
+	private TimeMetering timeMetering;
+	private int totalRows;
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
-	private SrcObject SrcObj;
-	private DestObject DestObj;
+	private SourceConfig SrcObj;
+	private DestinationConfig DestObj;
 	private ScheduledFuture<?> thread;
+	
+	public SchedulingObjects() {
+		setTimeMetering(new TimeMetering());
+	}
+	
 	public boolean isSrcValid() {
 		return SrcValid;
 	}
@@ -49,16 +57,16 @@ public class SchedulingObjects implements Serializable{
 	public void setDestToken(Map<String, String> destToken) {
 		DestToken = destToken;
 	}
-	public SrcObject getSrcObj() {
+	public SourceConfig getSrcObj() {
 		return SrcObj;
 	}
-	public void setSrcObj(SrcObject srcObj) {
+	public void setSrcObj(SourceConfig srcObj) {
 		SrcObj = srcObj;
 	}
-	public DestObject getDestObj() {
+	public DestinationConfig getDestObj() {
 		return DestObj;
 	}
-	public void setDestObj(DestObject destObj) {
+	public void setDestObj(DestinationConfig destObj) {
 		DestObj = destObj;
 	}
 	public String getStatus() {
@@ -129,6 +137,22 @@ public class SchedulingObjects implements Serializable{
 	}
 	public void setMetering(Metering metering) {
 		this.metering = metering;
+	}
+
+	public TimeMetering getTimeMetering() {
+		return timeMetering;
+	}
+
+	public void setTimeMetering(TimeMetering timeMetering) {
+		this.timeMetering = timeMetering;
+	}
+
+	public int getTotalRows() {
+		return totalRows;
+	}
+
+	public void setTotalRows(int totalRows) {
+		this.totalRows = this.totalRows+totalRows;
 	}
 
 }

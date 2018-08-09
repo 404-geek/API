@@ -1,5 +1,7 @@
 package com.aptus.blackbox.threading;
 
+
+
 import java.net.URI;
 import java.sql.Timestamp;
 import java.sql.Connection;
@@ -42,10 +44,13 @@ import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.DestinationAuthorisation;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
+import com.aptus.blackbox.dataServices.MeteringService;
+import com.aptus.blackbox.datamodels.DestinationConfig;
+import com.aptus.blackbox.datamodels.Metering.EndpointMetering;
+import com.aptus.blackbox.datamodels.Metering.TimeMetering;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.models.Cursor;
-import com.aptus.blackbox.models.DestObject;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
 import com.aptus.blackbox.utils.Utilities;
@@ -68,6 +73,9 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	private ApplicationCredentials applicationCredentials;
 	@Autowired
 	private ApplicationEventPublisher applicationEventPublisher;
+	
+	@Autowired
+	private MeteringService meteringService;
 
 	private boolean bool;
 	private List<String> endpoints;
@@ -122,7 +130,13 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
 				.setLastPushed(time);
 				applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
-				System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));				
+				System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));			
+				
+				//publish Metering Data
+				TimeMetering timeMetering = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getTimeMetering();
+				int totalRows = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getTotalRows();
+				
+				meteringService.addTimeMetering(userId, connectionId, timeMetering, totalRows);
 				applicationEventPublisher.publishEvent(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering());
 			}
 			else {
@@ -280,8 +294,22 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	
 				    if(pushDB(outputData, tableName)) {
 				    	Status respBody = new Status("22","successfully pushed");
-				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(endpoint.getLabel().toLowerCase(), rows);
-						applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+
+				    	//set endpoint and rows fetched
+				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+				    	.setRowsFetched(endpoint.getCatagory().toLowerCase(),endpoint.getLabel().toLowerCase(), rows);
+						
+				    	EndpointMetering endpointMetering = new EndpointMetering();
+						endpointMetering.setEndpoint(endpoint.getLabel());
+						endpointMetering.setTotalRows(rows);
+						
+						SchedulingObjects schdelueObj=applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
+				    	schdelueObj.getTimeMetering().setEndpoints(endpoint.getCatagory(), endpointMetering);
+				    	schdelueObj.getTimeMetering().setTotalRows(rows);
+				    	schdelueObj.setTotalRows(rows);
+				    	
+				    	//setTotalRowsFetched
+				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
 						.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
 	
 						setResult(respBody);
@@ -442,9 +470,21 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 		
 					    if(pushDB(outputData, tableName)) {
 					    	Status respBody = new Status("22","successfully pushed");
+					    	//set totalRows fetched
+					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(endpoint.getCatagory(),ent.getKey().toLowerCase(), rows);
+							
+					       	EndpointMetering endpointMetering = new EndpointMetering();
+							endpointMetering.setEndpoint(endpoint.getLabel());
+							endpointMetering.setTotalRows(rows);
+							
+							SchedulingObjects schdelueObj=applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
+					    	schdelueObj.getTimeMetering().setEndpoints(endpoint.getCatagory(), endpointMetering);
+					    	schdelueObj.getTimeMetering().setTotalRows(rows);
+					    	schdelueObj.setTotalRows(rows);
 					    	
-					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(ent.getKey().toLowerCase(), rows);
-							applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+					    	
+					    	//set endpoint and rows fetched
+					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
 							.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
 		
 							setResult(respBody);
@@ -543,7 +583,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 	}
 
 	
-	public void connection(Map<String,String> destToken,DestObject destObj) throws SQLException {
+	public void connection(Map<String,String> destToken,DestinationConfig destObj) throws SQLException {
 		try {
 			
 			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR CONNECTION DataController-driver: "+destObj.getDrivers());
@@ -565,7 +605,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 		}
 	}
 
-	public boolean checkDB(String dbase,Map<String,String> destToken,DestObject destObj) throws SQLException {
+	public boolean checkDB(String dbase,Map<String,String> destToken,DestinationConfig destObj) throws SQLException {
 
 		try {
 			if (con == null || con.isClosed())

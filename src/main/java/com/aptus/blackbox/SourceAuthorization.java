@@ -15,7 +15,7 @@ import javax.crypto.spec.SecretKeySpec;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.models.objects;
 
-import sun.misc.BASE64Encoder;
+
 
 public abstract class SourceAuthorization 
 {

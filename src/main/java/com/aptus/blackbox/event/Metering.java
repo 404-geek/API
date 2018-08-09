@@ -1,27 +1,37 @@
 package com.aptus.blackbox.event;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import com.aptus.blackbox.models.MeteredEndpoints;
+
+
 public class Metering {
+	
+	private String userId;
 	private int totalRowsFetched;
-	private String connId,time,type,userId;
-	private Map<String,Integer> rowsFetched= new HashMap<>();
+	private String time,type,connId;
+	private Map<String,List<MeteredEndpoints>> rowsFetched= new HashMap<>();
 	public int getTotalRowsFetched() {
 		return totalRowsFetched;
 	}
 	public void setTotalRowsFetched(int totalRowsFetched) {
 		this.totalRowsFetched = totalRowsFetched;
 	}
-	public Map<String, Integer> getRowsFetched() {
+	public Map<String, List<MeteredEndpoints>> getRowsFetched() {
 		return rowsFetched;
 	}
-	public void setRowsFetched(Map<String, Integer> rowsFetched) {
-		this.rowsFetched = rowsFetched;
-	}
-	public void setRowsFetched(String endpoint, Integer rows) {
-		this.rowsFetched.put(endpoint, rows);
-	}
+//	public void setRowsFetched(Map<String, Integer> rowsFetched) {
+//		this.rowsFetched = rowsFetched;
+//	}
+//	public void setRowsFetched(String endpoint, Integer rows) {
+//		this.rowsFetched.put(endpoint, rows);
+//	}
 	public String getConnId() {
 		return connId;
 	}
@@ -45,5 +55,18 @@ public class Metering {
 	}
 	public void setUserId(String userId) {
 		this.userId = userId;
-	} 
+	}
+
+	public void setRowsFetched(String category, String label, int rows) {
+	
+		if(rowsFetched.containsKey(category))
+			rowsFetched.get(category).add(new MeteredEndpoints(label,rows));
+		else{
+			rowsFetched.put(category,new ArrayList<>());
+			rowsFetched.get(category).add(new MeteredEndpoints(label, rows));
+			
+		}
+
+	}
+	
 }

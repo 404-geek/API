@@ -6,7 +6,6 @@
 	<groupId>com.aptus</groupId>
 	<artifactId>blackbox</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
 
 	<name>BlackBoxReloaded</name>
 	<description></description>
@@ -128,16 +127,28 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-websocket</artifactId>
 		</dependency>
-	</dependencies>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+		</dependency>
+				<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-mongodb</artifactId>
+		</dependency>
+</dependencies>
 
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				 <configuration>
+        			<executable>true</executable>
+    			 </configuration>
 			</plugin>
 		</plugins>
 	</build>
 
 
+	<packaging>war</packaging>
 </project>

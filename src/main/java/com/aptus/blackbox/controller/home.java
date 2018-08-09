@@ -10,9 +10,10 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import org.apache.logging.log4j.ThreadContext;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -20,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -33,10 +35,20 @@ import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.dataServices.MeteringService;
+import com.aptus.blackbox.dataServices.SchedulingService;
+import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
+import com.aptus.blackbox.dataServices.UserConnectorService;
+import com.aptus.blackbox.dataServices.UserInfoService;
+import com.aptus.blackbox.datamodels.SrcDestCredentials;
+import com.aptus.blackbox.datamodels.UserInfo;
+import com.aptus.blackbox.datamodels.Metering.ConnectionMetering;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.models.ConnObj;
+import com.aptus.blackbox.models.ResponseObject;
 import com.aptus.blackbox.models.UrlObject;
 import com.aptus.blackbox.security.ExceptionHandling;
+import com.aptus.blackbox.utils.Constants;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -64,8 +76,105 @@ public class home extends RESTFetch{
 	
 	@Autowired
 	private Config config;
+	
+	@Autowired
+	private UserInfoService userInfoService;
+	
+	@Autowired
+	private UserConnectorService userConnectorService;
+
 
 	final Logger logger = LogManager.getLogger(home.class.getPackage());
+
+	@Autowired
+	private MeteringService meteringService;
+
+	@Autowired
+	private SrcDestCredentialsService srcDestCredentialsService;
+	
+	@Autowired
+	private SchedulingService schedulingService;
+	
+	
+	
+
+	
+	
+	@RequestMapping("/log")
+	private ResponseEntity<String> dfs() {
+		
+		System.out.println(credentials.getSrcObj()+" TOKEN == "+credentials.getSrcToken());
+		List<Map<String,String>> mcred = new ArrayList<Map<String,String>>();
+		
+		for (Map.Entry<String, String> mp : credentials.getSrcToken().entrySet()) {
+			
+			
+			Map<String, String > map = new HashMap<String,String>();
+			map.put("key", String.valueOf(mp.getKey()));
+			map.put("value", String.valueOf(mp.getValue()));
+			mcred.add(map);
+			
+			
+		}
+		SrcDestCredentials srcCredentials  = new SrcDestCredentials();
+		srcCredentials.setCredentialId(credentials.getUserId().toLowerCase() + "_" + credentials.getCurrSrcName().toLowerCase());
+		srcCredentials.setCredentials(mcred);
+		System.out.println(srcCredentials);
+		srcDestCredentialsService.insertCredentials(srcCredentials, "sourceCredentials");
+		System.out.println("Data : "+srcDestCredentialsService.readCredentials("bla_zohocrm", "sourceCredentials"));
+		
+		return null;
+	}
+	
+	@RequestMapping(value="/login1")
+	private ResponseEntity<String> login1(@RequestParam("userId") String _id,@RequestParam("password") String password,HttpSession session )
+	{
+		JsonObject response = new JsonObject();
+		
+		if(!userInfoService.userExist(_id)) {
+			response = new ResponseObject().Response(Constants.USER_NOT_FOUND_CODE, Constants.USER_NOT_FOUND_MSG, _id);
+		}
+		
+		else if(!userInfoService.userValid(_id,password)) {
+			response = new ResponseObject().Response(Constants.INVALID_CREDENTIALS_CODE, Constants.INVALID_CREDENTIALS_MSG, _id);
+		}
+		
+		else { 
+			
+			response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
+			credentials.setUserId(_id);
+			applicationCredentials.setSessionId(_id, session.getId());
+//			
+//			ThreadContext.clearAll();
+//			 ThreadContext.put("id", "192.168.21.9");
+//			logger.info("User success login");
+		}
+		return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
+	}
+	
+	@RequestMapping(value="/activeUsers")
+	private ResponseEntity<String> getActiveUsers()
+	{
+		ThreadContext.put("id", "poupopuop");
+		logger.error("Helllo worls");
+		JsonObject jobj;
+		try {
+			jobj = new JsonObject();
+			System.out.println("Users Currently Active");
+			applicationCredentials.getSessionId().forEach((k,v)->{
+				System.out.println(k+":"+v);
+				jobj.addProperty(k, v);
+			});
+			return ResponseEntity.status(HttpStatus.OK).headers(null).body(jobj.toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+		
+	}
+		
+
 	
 	@RequestMapping(value="/login")
 	private ResponseEntity<String> login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
@@ -144,7 +253,7 @@ public class home extends RESTFetch{
 			
 			ExceptionHandling exceptionhandling=new ExceptionHandling();
 			out = exceptionhandling.clientException(e);
-		
+
 			//System.out.println(out.getStatusCode().toString());
 			return out;
 			//ResponseEntity.status(HttpStatus.OK).body(null);
@@ -158,6 +267,37 @@ public class home extends RESTFetch{
 	}
 	
 
+	@RequestMapping(value="/signup1",method = RequestMethod.POST)
+	private ResponseEntity<String> signup1(@RequestBody UserInfo user)
+	{
+	  System.out.println(user);
+	  
+	  JsonObject response = null ;
+	  try {
+		if(userInfoService.userExist(user.getUserId())) {
+			  System.out.println("User ID Exists "+user.getUserId());
+			  
+			  response = new ResponseObject()
+					  .Response( Constants.USER_EXIST_CODE, Constants.USER_EXIST_MSG, user.getUserId());
+		  }
+		  else {
+			  applicationCredentials.setApplicationCred(user.getUserId(), new ScheduleInfo());
+			  System.out.println("User ID Not Exists "+user.getUserId());
+			  
+			  userInfoService.createUser(user);
+			  userConnectorService.createUser(user.getUserId());
+			  meteringService.createUser(user.getUserId());
+			  schedulingService.createUser(user.getUserId());
+			  
+			  response = new ResponseObject()
+					  .Response( Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, user.getUserId());
+		  }
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+	  return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
+	}
+	
 	
 	
 	@RequestMapping(value="/signup")
@@ -214,7 +354,24 @@ public class home extends RESTFetch{
 		//store in credentials
 	}
 	
-	
+	@RequestMapping(value="/update1")
+	private ResponseEntity<String> update1(@RequestBody UserInfo user)
+	{
+		JsonObject response = null ;
+		if(userInfoService.userExist(user.getUserId())) {
+			  System.out.println("User ID Exists "+user.getUserId());
+			  response = new ResponseObject()
+					  .Response( Constants.USER_EXIST_CODE, Constants.USER_EXIST_MSG, user.getUserId());
+		  }
+		  else {
+			 
+			  System.out.println("User ID Not Exists "+user.getUserId());
+			//  userInfoService.updateUser(user);
+			  response = new ResponseObject()
+					  .Response( Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, user.getUserId());
+		  }
+		return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
+	}
 	
 	@RequestMapping(value="/update")
 	private ResponseEntity<String> update(@RequestParam HashMap<String,String> params,HttpSession session)
@@ -275,6 +432,12 @@ public class home extends RESTFetch{
 		try {
 			boolean ret=false;
 			credentials.setUserId(userId);
+			
+			System.out.println("LOGGGGGIIINNN");
+			  ThreadContext.put("id", "192.168.21.9loginn");
+			  logger.info("asfdsadasfdf");
+			
+			
 			RestTemplate restTemplate = new RestTemplate();
 			//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 			String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
@@ -347,7 +510,7 @@ public class home extends RESTFetch{
 		try {
 			
 			System.out.println(session.getId());			
-			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
+			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
 				String name;
 				RestTemplate restTemplate = new RestTemplate();
 				String url = config.getMongoUrl()+"/copy_credentials/SrcDstlist/srcdestlist";
@@ -355,7 +518,7 @@ public class home extends RESTFetch{
 				HttpHeaders header = new HttpHeaders();
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
 				s  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-				System.out.println(s.getBody());
+				
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(s.getBody().toString());
 			}
 			else {
@@ -457,7 +620,10 @@ public class home extends RESTFetch{
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
+
 	
+	
+
 	
 	@RequestMapping(value="/getconnectionids")
 	private ResponseEntity<String> getConnectionIds(HttpSession session) {
@@ -468,7 +634,7 @@ public class home extends RESTFetch{
 		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
 		try {
-			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
+			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
 				ResponseEntity<String> out = null;
 				RestTemplate restTemplate = new RestTemplate();
 				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));

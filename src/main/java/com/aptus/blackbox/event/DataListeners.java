@@ -3,17 +3,17 @@ package com.aptus.blackbox.event;
 import java.net.URI;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ScheduledFuture;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.ldap.embedded.EmbeddedLdapProperties.Credential;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -23,7 +23,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
@@ -32,9 +31,18 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
+import com.aptus.blackbox.dataServices.MeteringService;
+import com.aptus.blackbox.dataServices.SchedulingService;
+import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
+import com.aptus.blackbox.datamodels.SrcDestCredentials;
+import com.aptus.blackbox.datamodels.Scheduling.Connection;
+import com.aptus.blackbox.datamodels.Scheduling.Endpoint;
+import com.aptus.blackbox.datamodels.Scheduling.StatusObj;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
+import com.aptus.blackbox.models.MeteredEndpoints;
 import com.aptus.blackbox.threading.ConnectionsTaskScheduler;
+import com.aptus.blackbox.utils.Constants;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -55,6 +63,12 @@ public class DataListeners {
 	ThreadPoolTaskScheduler threadPoolTaskScheduler;	
 	@Autowired
 	private ApplicationContext Context;
+	
+	@Autowired
+	private MeteringService meteringService;
+	
+	@Autowired
+	private SchedulingService schedulingService;
 
 	private SimpMessagingTemplate template;
 	@Autowired
@@ -65,7 +79,7 @@ public class DataListeners {
 	@EventListener
 	public void changeSocket(Socket socket) {
 		
-		String user = socket.getUser();
+	/*	String user = socket.getUser();
 		Gson gson = new Gson();
     	
     	RestTemplate restTemplate = new RestTemplate();
@@ -126,7 +140,7 @@ public class DataListeners {
 		
 		
     	this.template.convertAndSend("/client/message",ret.toString());
-	}
+*/	}
 
 	@EventListener
 	public void scheduleListner(ScheduleEventData scheduleEventData) {		
@@ -180,48 +194,96 @@ public class DataListeners {
 			e.printStackTrace();
 		}
 	}
+	
+	@Autowired
+	private SrcDestCredentialsService srcDestCredentialsService;
+	
+	
 	@EventListener
 	public void updateCredentials(PushCredentials pushCredentials) {			
 			JsonObject jsonObj = new JsonObject();
+			
+		
 			try {
+				
+				List<Map<String,String>> mSrcDestCred;
+				SrcDestCredentials srcDestCredentials;
+				
 				// sourceCredentials
 				if((pushCredentials.getSrcName()!=null)&&(pushCredentials.getSrcToken()!=null)&&(pushCredentials.getSrcObj()!=null))
 				{
 					JsonArray sourceBody = new JsonArray();
+					mSrcDestCred =  new ArrayList<Map<String,String>>();
+					
 					for (Map.Entry<String, String> mp : pushCredentials.getSrcToken().entrySet()) {
 						JsonObject tmp = new JsonObject();
+						
+
+						Map<String, String > map = new HashMap<String,String>();
+						map.put("key", String.valueOf(mp.getKey()));
+						map.put("value", String.valueOf(mp.getValue()));
+						mSrcDestCred.add(map);
+						
+						
 						tmp.addProperty("key", String.valueOf(mp.getKey()));
 						tmp.addProperty("value", String.valueOf(mp.getValue()));
 						sourceBody.add(tmp);
-					}				
+					}
+					srcDestCredentials  = new SrcDestCredentials();
+					srcDestCredentials.setCredentialId(pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getSrcName().toLowerCase());
+					srcDestCredentials.setCredentials(mSrcDestCred);
+					
+					srcDestCredentialsService.insertCredentials(srcDestCredentials, Constants.COLLECTION_SOURCECREDENTIALS);
+					
 					jsonObj.addProperty("_id",
 							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getSrcName().toLowerCase());
 					jsonObj.add("credentials", sourceBody);
 					Utilities.postpatchMetaData(jsonObj, "source", "POST",pushCredentials.getUserId(),config.getMongoUrl());
-					System.out.println(sourceBody);
+					
 				}
 				// destCredentials
 				if((pushCredentials.getDestName()!=null)&&(pushCredentials.getDestToken()!=null)&&(pushCredentials.getDestObj()!=null)) {
 					JsonArray destBody =  new JsonArray();
+					mSrcDestCred =  new ArrayList<Map<String,String>>();
+					
 					for (Map.Entry<String, String> mp : pushCredentials.getDestToken().entrySet()) {
 						JsonObject tmp = new JsonObject();
+						
+						
+						
+						Map<String, String > map = new HashMap<String,String>();
+						map.put("key", String.valueOf(mp.getKey()));
+						map.put("value", String.valueOf(mp.getValue()));
+						mSrcDestCred.add(map);
+						
 						tmp.addProperty("key", String.valueOf(mp.getKey()));
 						tmp.addProperty("value", String.valueOf(mp.getValue()));
 						destBody.add(tmp);
 					}
 					jsonObj = new JsonObject();				
+					
+					
+					srcDestCredentials  = new SrcDestCredentials();
+					srcDestCredentials.setCredentialId(pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase()+"_"+
+							pushCredentials.getDestToken().get("database_name"));
+					srcDestCredentials.setCredentials(mSrcDestCred);
+					
+					srcDestCredentialsService.insertCredentials(srcDestCredentials, Constants.COLLECTION_DESTINATIONCREDENTIALS);
+					
 					jsonObj.addProperty("_id",
 							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase() + "_"
 									+ pushCredentials.getDestToken().get("database_name"));
 					jsonObj.add("credentials", destBody);
 					Utilities.postpatchMetaData(jsonObj, "destination", "POST",pushCredentials.getUserId(),config.getMongoUrl());
-					System.out.println(destBody);
+					
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 	}
+	
+	
 	public void pushStatus(String connectionId,String userId,String s)
 	{
 		try {
@@ -231,23 +293,57 @@ public class DataListeners {
 			Iterator<Entry<String, Map<String, Status>>> entry=tempScheduleObj.getEndPointStatus().entrySet().iterator();
 			JsonObject connStatus = new JsonObject();
 			JsonObject temp = new JsonObject();
+			
+			System.out.println("loop0");
+			
+			Connection connection = new Connection();
 			while(entry.hasNext())
 			{
 				JsonObject catagoryStatus = new JsonObject();
 				Entry<String, Map<String, Status>> e = entry.next();
-				System.out.println(s + e.getKey()+" : "+e.getValue());
+				
 				Iterator<Entry<String, Status>> itr = e.getValue().entrySet().iterator();
 				System.out.println("loop1");
+				System.out.println("CATEGORY:"+e.getKey());
+				
 				while(itr.hasNext()) {
 					JsonObject endpointStatus = new JsonObject();
 					Entry<String, Status> it = itr.next();
 					endpointStatus.addProperty("status", it.getValue().getStatus());
 					endpointStatus.addProperty("messsage", it.getValue().getMessage());
 					catagoryStatus.add(it.getKey(), endpointStatus);
-					System.out.println("\tloop2");
-				}				
+					
+					System.out.println("Endpoint:"+it.getKey());
+					System.out.println("StatusCode:"+it.getValue().getStatus());
+					System.out.println("StatusMsg:"+it.getValue().getMessage());
+					
+					System.out.println("loop2");
+					
+					StatusObj statusObj = new StatusObj();
+					System.out.println("loop3");
+					
+					statusObj.setCode(it.getValue().getStatus());
+					System.out.println("loop4");
+					statusObj.setMessage(it.getValue().getMessage());
+					System.out.println("loop5");
+					Endpoint endpoint = new Endpoint();
+					System.out.println("loop6");
+					endpoint.setEndpoints(it.getKey(),statusObj);
+					System.out.println("loop7");
+					connection.setCategory(e.getKey(), endpoint);	
+					System.out.println("loop8");
+				}
+				
+				System.out.println("loop9");
 				temp.add(e.getKey(), catagoryStatus);
 			}
+			
+			connection.setLastSuccessfullPushed(new Date(new Timestamp(tempScheduleObj.getLastPushed()).getTime())+"");
+			connection.setStatus(tempScheduleObj.getStatus());
+			connection.setMessage(tempScheduleObj.getMessage());
+			
+			System.out.println("GGGG"+new Gson().toJson(connection, Connection.class));
+			
 			String value = new Date(new Timestamp(tempScheduleObj.getNextPush()).getTime())+"";
 			temp.addProperty("Last Succesfully Pushed", new Date(new Timestamp(tempScheduleObj.getLastPushed()).getTime())+"");
 			temp.addProperty("status", tempScheduleObj.getStatus());
@@ -258,12 +354,22 @@ public class DataListeners {
 				System.out.println(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)+"");
 			}			
 			temp.addProperty("Next Scheduled Pushed", value);
+			connection.setNextScheduledPushed(value);
+			
+			
+			
+		///////////////////   push to database     //////////////////////////
+			System.out.println("PUSHING SCHEDULING TO DB");
+			schedulingService.addConnection(userId, connectionId, connection);
+			
+			
 			connStatus.add(connectionId, temp);
 			ResponseEntity<String> out = null;
 			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
 			String filter = "{\"_id\":\"" + userId.toLowerCase() + "\"}";
 			String url;
 			url = config.getMongoUrl()+"/credentials/scheduledStatus?filter=" + filter;
+			
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			HttpHeaders headers = new HttpHeaders();
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -292,6 +398,7 @@ public class DataListeners {
 				out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
 			}
 			System.out.println(connStatus.toString());
+			System.out.println("url = "+url);
 		} 
 		catch(JsonSyntaxException e) {
 			e.printStackTrace();
@@ -304,6 +411,10 @@ public class DataListeners {
 			
 		}
 	}
+	
+	
+
+	
 	@EventListener
 	private void pushMeteringInfo(Metering metering) {
 		HttpHeaders headers = new HttpHeaders();
@@ -314,6 +425,7 @@ public class DataListeners {
         headers.add("Content-Type", "application/json");
         Gson gson = new Gson();
 		try {
+			System.out.println("-----------Pushing Metering Data--------started-------");
 			ResponseEntity<String> out = null;
 			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
 			String filter = "{\"_id\":\"" + metering.getUserId() + "\"}";
@@ -329,13 +441,22 @@ public class DataListeners {
 			time.addProperty("Total Rows", metering.getTotalRowsFetched());
 			time.addProperty("Type", metering.getType());	
 			time.addProperty("Time", metering.getTime());
-			JsonArray endPoints = new JsonArray();
+
 			
-			for(Entry<String, Integer> temp:metering.getRowsFetched().entrySet()) {
-				JsonObject endPoint = new JsonObject();
-				endPoint.addProperty("name", temp.getKey());
-				endPoint.addProperty("rows", temp.getValue());
-				endPoints.add(endPoint);
+			
+			
+			
+			JsonObject endPoints = new JsonObject();
+			for(Entry<String, List<MeteredEndpoints>> temp:metering.getRowsFetched().entrySet()) {
+				JsonArray categoryData = new JsonArray();
+				for(MeteredEndpoints me:temp.getValue()){
+					JsonObject endPoint = new JsonObject();
+					endPoint.addProperty("name", me.getEndpoint());
+					endPoint.addProperty("rows", me.getNumRecords());
+					categoryData.add(endPoint);
+				}
+				endPoints.add(temp.getKey(), categoryData);
+
 			}
 			time.add("Endpoints", endPoints);
 			
@@ -358,10 +479,10 @@ public class DataListeners {
 					
 						
 					
-					System.out.println(each);
+					
 					JsonObject e=new JsonObject();
 					e.add("$each", each);
-					System.out.println(e);
+					
 					JsonObject f=new JsonObject();
 					f.add(metering.getConnId()+"."+"MeteringInfo", e);
 					System.out.println(f);
@@ -398,6 +519,7 @@ public class DataListeners {
 				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();	
 				out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity,String.class);
 			}
+			System.out.println("-----------Pushing Metering Data--------ended-------");
 			applicationEventPublisher.publishEvent(new Socket(metering.getUserId()));
 		} catch (RestClientException e) {
 			// TODO Auto-generated catch block
