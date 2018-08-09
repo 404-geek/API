@@ -46,7 +46,7 @@ public class MeteringImpl implements MeteringDAO{
 	
 
 	@Override
-	public boolean addTimeMetering(String userId, String connectionId, TimeMetering timeMetering, long totalRows) {
+	public boolean addTimeMetering(String userId, String connectionId, TimeMetering timeMetering, int totalRows) {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("_id").is(userId));
 		Update update = new Update();

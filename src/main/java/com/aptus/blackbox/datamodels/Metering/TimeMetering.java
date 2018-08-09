@@ -9,14 +9,14 @@ import java.util.Map;
 
 public class TimeMetering {
 
-	private long totalRows;
+	private int totalRows;
 	private String type,time;
 	private Map<String,List<EndpointMetering>> endpoints= new HashMap<>();
 	
-	public long getTotalRows() {
+	public int getTotalRows() {
 		return totalRows;
 	}
-	public void setTotalRows(long totalRows) {
+	public void setTotalRows(int totalRows) {
 		this.totalRows = totalRows;
 	}
 	public String getType() {

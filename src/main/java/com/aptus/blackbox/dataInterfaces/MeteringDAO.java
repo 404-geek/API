@@ -9,5 +9,5 @@ public interface MeteringDAO {
 	public void createUser(MeteringData metering);
 	public boolean updateMeteringData();
 	boolean addConnection(String userId, String connectionId, ConnectionMetering connMeter);
-	boolean addTimeMetering(String userId, String connectionId, TimeMetering timeMetering, long totalRows);
+	boolean addTimeMetering(String userId, String connectionId, TimeMetering timeMetering, int totalRows);
 }

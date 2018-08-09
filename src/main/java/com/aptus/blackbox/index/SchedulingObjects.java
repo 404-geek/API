@@ -19,7 +19,7 @@ public class SchedulingObjects implements Serializable{
 	private Map<String,Map<String,Status>>endPointStatus = new HashMap<String,Map<String,Status>>();
 	private Metering metering = new Metering();
 	private TimeMetering timeMetering;
-	private long totalRows;
+	private int totalRows;
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
 	private SourceConfig SrcObj;
@@ -147,11 +147,11 @@ public class SchedulingObjects implements Serializable{
 		this.timeMetering = timeMetering;
 	}
 
-	public long getTotalRows() {
+	public int getTotalRows() {
 		return totalRows;
 	}
 
-	public void setTotalRows(long totalRows) {
+	public void setTotalRows(int totalRows) {
 		this.totalRows = this.totalRows+totalRows;
 	}
 

@@ -1,6 +1,6 @@
 package com.aptus.blackbox.threading;
 
-import static org.mockito.Matchers.endsWith;
+
 
 import java.net.URI;
 import java.sql.Timestamp;
@@ -134,7 +134,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 				
 				//publish Metering Data
 				TimeMetering timeMetering = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getTimeMetering();
-				long totalRows = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getTotalRows();
+				int totalRows = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getTotalRows();
 				
 				meteringService.addTimeMetering(userId, connectionId, timeMetering, totalRows);
 				applicationEventPublisher.publishEvent(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering());

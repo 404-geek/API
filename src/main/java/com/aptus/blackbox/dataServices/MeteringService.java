@@ -23,7 +23,7 @@ public class MeteringService {
 		return meteringDAO.addConnection(userId, connectionId, connectionMetering);
 	}
 	
-	public boolean addTimeMetering(String userId, String connectionId, TimeMetering timeMetering, long totalRows) {
+	public boolean addTimeMetering(String userId, String connectionId, TimeMetering timeMetering, int totalRows) {
 		
 		return meteringDAO.addTimeMetering(userId, connectionId, timeMetering, totalRows);
 	}

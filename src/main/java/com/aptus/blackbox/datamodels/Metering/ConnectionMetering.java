@@ -7,12 +7,12 @@ import java.util.List;
 public class ConnectionMetering {
 
 	private List<TimeMetering> timeMetering = new ArrayList<>();
-	private long totalRows;
+	private int totalRows;
 	
-	public long getTotalRows() {
+	public int getTotalRows() {
 		return totalRows;
 	}
-	public void setTotalRows(long totalRows) {
+	public void setTotalRows(int totalRows) {
 		this.totalRows = totalRows;
 	}
 	public List<TimeMetering> getTimeMetering() {
