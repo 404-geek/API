@@ -1,15 +1,24 @@
 package com.aptus.blackbox.datamodels;
 
+import java.io.Serializable;
 import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import com.aptus.blackbox.models.srcdestObj;
+
 
 @Document
-public class SrcDestList {
+public class SrcDestList implements Serializable{
 	@Id
-	private final String _id = "srcdestlist";
+	private  String _id ;
+	public String get_id() {
+		return _id;
+	}
+	public void set_id(String _id) {
+		this._id = _id;
+	}
 	private List<String>  destCategories,srcCategories;
     private List<srcdestObj> destinations,sources;
 	
@@ -39,36 +48,4 @@ public class SrcDestList {
 	}
 	
  	
-}
-
-class srcdestObj{
-	
-	private String id,name,logo;
-	private List<String> categories;
-	
-	
-	public String getId() {
-		return id;
-	}
-	public void setId(String id) {
-		this.id = id;
-	}
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		this.name = name;
-	}
-	public String getLogo() {
-		return logo;
-	}
-	public void setLogo(String logo) {
-		this.logo = logo;
-	}
-	public List<String> getCategories() {
-		return categories;
-	}
-	public void setCategories(List<String> categories) {
-		this.categories = categories;
-	}
 }

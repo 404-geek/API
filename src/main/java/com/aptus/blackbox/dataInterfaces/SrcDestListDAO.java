@@ -1,5 +1,7 @@
 package com.aptus.blackbox.dataInterfaces;
 
-public interface SrcDestListDAO {
+import com.aptus.blackbox.datamodels.SrcDestList;
 
+public interface SrcDestListDAO {
+	SrcDestList getSrcDestList(String _id);
 }

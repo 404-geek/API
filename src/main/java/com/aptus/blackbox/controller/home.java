@@ -32,15 +32,18 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
+import com.aptus.blackbox.dataInterfaces.SrcDestListDAO;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SchedulingService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
+import com.aptus.blackbox.dataServices.SrcDestListService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserInfoService;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
+import com.aptus.blackbox.datamodels.SrcDestList;
 import com.aptus.blackbox.datamodels.UserInfo;
 import com.aptus.blackbox.datamodels.Metering.ConnectionMetering;
 import com.aptus.blackbox.index.ScheduleInfo;
@@ -68,6 +71,8 @@ import com.google.gson.JsonObject;
 @Controller
 public class home extends RESTFetch{
 	
+	@Autowired
+	private SrcDestListService srcdestlistService;
 	@Autowired
 	private Credentials credentials;
 	
@@ -121,7 +126,7 @@ public class home extends RESTFetch{
 		srcCredentials.setCredentials(mcred);
 		System.out.println(srcCredentials);
 		srcDestCredentialsService.insertCredentials(srcCredentials, "sourceCredentials");
-		System.out.println("Data : "+srcDestCredentialsService.readCredentials("bla_zohocrm", "sourceCredentials"));
+		
 		
 		return null;
 	}
@@ -162,7 +167,7 @@ public class home extends RESTFetch{
 			jobj = new JsonObject();
 			System.out.println("Users Currently Active");
 			applicationCredentials.getSessionId().forEach((k,v)->{
-				System.out.println(k+":"+v);
+				logger.info(k+":"+v);
 				jobj.addProperty(k, v);
 			});
 			return ResponseEntity.status(HttpStatus.OK).headers(null).body(jobj.toString());
@@ -495,8 +500,50 @@ public class home extends RESTFetch{
 		
 	}
 
-	
-	
+	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdest1")
+	private ResponseEntity<String> getSrcDest1(HttpSession session) {
+		System.out.println("INSIDE /getsrcdst");
+		ResponseEntity<String> s=null;
+		HttpHeaders headers = new HttpHeaders();
+		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", config.getRootUrl());
+        headers.add("access-control-allow-credentials", "true");
+		try {
+			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
+				String response = srcdestlistService.getSrcDestList();
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response);
+			}else {
+				session.invalidate();
+				System.out.println("Session expired!");
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			}
+		}
+	catch (HttpStatusCodeException e) {
+			
+			System.out.println("Inside getsrcdest catch");
+			ResponseEntity<String> out = null;
+			e.getStatusCode();
+			
+			ExceptionHandling exceptionhandling=new ExceptionHandling();
+			out = exceptionhandling.clientException(e);
+			
+			//System.out.println(out.getStatusCode().toString());
+			return out;
+			//ResponseEntity.status(HttpStatus.OK).body(null);
+			
+		}
+		
+		
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+	}
+		
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdest")
 	private ResponseEntity<String> getSrcDest(HttpSession session) {
