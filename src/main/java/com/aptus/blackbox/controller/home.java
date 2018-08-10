@@ -148,6 +148,7 @@ public class home extends RESTFetch{
 			
 			response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
 			credentials.setUserId(_id);
+			getConnectionIds(session);
 			applicationCredentials.setSessionId(_id, session.getId());
 //			
 //			ThreadContext.clearAll();
@@ -710,7 +711,7 @@ public class home extends RESTFetch{
 			    uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				out  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
 				respBody.add("images",gson.fromJson(out.getBody(), JsonElement.class));				
-				//System.out.println(credentials.getConnectionIds().values());
+				
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}
 			else {

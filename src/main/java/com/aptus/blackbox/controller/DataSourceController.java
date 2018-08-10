@@ -41,10 +41,12 @@ import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SourceConfigService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
+import com.aptus.blackbox.dataServices.SrcDestListService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
+import com.aptus.blackbox.datamodels.SrcDestList;
 import com.aptus.blackbox.datamodels.Metering.ConnectionMetering;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.PushCredentials;
@@ -82,6 +84,9 @@ public class DataSourceController extends RESTFetch {
 	private ApplicationContext Context;
 	@Autowired
 	private MeteringService meteringService;
+	@Autowired
+	private SrcDestListService srcDestListService;
+	
 	
 	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
 
@@ -108,6 +113,14 @@ public class DataSourceController extends RESTFetch {
 		DestinationConfig conf1 = new Gson().fromJson(conf, DestinationConfig.class);
 		destinationConfigDAO.createDestinationConfig(conf1);
 	}
+	
+	
+	@RequestMapping(value="/sdlist",method=RequestMethod.POST)
+	public void addSrcDestList(@RequestBody String list) {
+		SrcDestList srcdestList = new Gson().fromJson(list, SrcDestList.class);
+		srcDestListService.insertData(srcdestList);
+	}
+	
 	
 	public void srcDestId(String type, String srcdestId) {
 		//change return type to void

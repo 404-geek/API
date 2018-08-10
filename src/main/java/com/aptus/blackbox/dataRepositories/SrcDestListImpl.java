@@ -15,14 +15,23 @@ public class SrcDestListImpl  implements SrcDestListDAO{
 	@Autowired
 	private MongoTemplate mongoTemplate;
 	
+	
+	
 	@Override
 	public SrcDestList getSrcDestList(String _id) {
 		
 		Query query =new Query();
 		query.addCriteria(Criteria.where("_id").is(_id));
-		SrcDestList res = mongoTemplate.findOne(query, SrcDestList.class,"SrcDstlist");
-		
+		SrcDestList res = mongoTemplate.findOne(query, SrcDestList.class,"srcDestList");
 		return res;
+	}
+
+
+
+	@Override
+	public void insertData(SrcDestList srcdestList) {
+		mongoTemplate.insert(srcdestList);
+		
 	}
 
 }

@@ -20,4 +20,12 @@ public class SrcDestListService {
 		String data = new Gson().toJson(response, SrcDestList.class); 
 		return data;
 	}
+
+
+	public void insertData(SrcDestList srcdestList) {
+		 srcdestDAO.insertData(srcdestList);		
+	}
+
+
+	
 }
