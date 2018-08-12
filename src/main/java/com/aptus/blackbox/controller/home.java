@@ -44,6 +44,7 @@ import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserInfoService;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.datamodels.SrcDestList;
+import com.aptus.blackbox.datamodels.UserConnectors;
 import com.aptus.blackbox.datamodels.UserInfo;
 import com.aptus.blackbox.datamodels.Metering.ConnectionMetering;
 import com.aptus.blackbox.index.ScheduleInfo;
@@ -54,6 +55,7 @@ import com.aptus.blackbox.security.ExceptionHandling;
 import com.aptus.blackbox.utils.Constants;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -131,9 +133,10 @@ public class home extends RESTFetch{
 		return null;
 	}
 	
-	@RequestMapping(value="/login1")
-	private ResponseEntity<String> login1(@RequestParam("userId") String _id,@RequestParam("password") String password,HttpSession session )
+	@RequestMapping(value="/login")
+	private ResponseEntity<String> login(@RequestParam("userId") String _id,@RequestParam("password") String password,HttpSession session )
 	{
+		System.out.println("/login session"+session.getId());
 		JsonObject response = new JsonObject();
 		
 		if(!userInfoService.userExist(_id)) {
@@ -148,8 +151,8 @@ public class home extends RESTFetch{
 			
 			response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
 			credentials.setUserId(_id);
-			getConnectionIds(session);
 			applicationCredentials.setSessionId(_id, session.getId());
+			getConnectionIds(session);
 //			
 //			ThreadContext.clearAll();
 //			 ThreadContext.put("id", "192.168.21.9");
@@ -168,7 +171,7 @@ public class home extends RESTFetch{
 			jobj = new JsonObject();
 			System.out.println("Users Currently Active");
 			applicationCredentials.getSessionId().forEach((k,v)->{
-				logger.info(k+":"+v);
+				System.out.println(k+":"+v);
 				jobj.addProperty(k, v);
 			});
 			return ResponseEntity.status(HttpStatus.OK).headers(null).body(jobj.toString());
@@ -182,8 +185,8 @@ public class home extends RESTFetch{
 		
 
 	
-	@RequestMapping(value="/login")
-	private ResponseEntity<String> login(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
+	@RequestMapping(value="/loginOld")
+	private ResponseEntity<String> loginOld(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
 	{
 		logger.info("-------  user login on process ------ ");
 		try {
@@ -195,6 +198,7 @@ public class home extends RESTFetch{
 			headers.add("Cache-Control", "no-cache");
 			headers.add("access-control-allow-origin", config.getRootUrl());
             headers.add("access-control-allow-credentials", "true");
+            headers.add("Authorization", "Basic YTph");
 			JsonObject respBody = new JsonObject();
 			ResponseEntity<String> ret=null;
 			ret = existUser(user,"userInfo");
@@ -273,8 +277,8 @@ public class home extends RESTFetch{
 	}
 	
 
-	@RequestMapping(value="/signup1",method = RequestMethod.POST)
-	private ResponseEntity<String> signup1(@RequestBody UserInfo user)
+	@RequestMapping(value="/signup",method = RequestMethod.POST)
+	private ResponseEntity<String> signup(@RequestBody UserInfo user)
 	{
 	  System.out.println(user);
 	  
@@ -306,8 +310,8 @@ public class home extends RESTFetch{
 	
 	
 	
-	@RequestMapping(value="/signup")
-	private ResponseEntity<String> signup(@RequestParam HashMap<String,String> params)
+	@RequestMapping(value="/signupOld")
+	private ResponseEntity<String> signupOld(@RequestParam HashMap<String,String> params)
 	{
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
@@ -454,6 +458,7 @@ public class home extends RESTFetch{
 			HttpHeaders headers = new HttpHeaders();
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 			headers.add("Cache-Control", "no-cache");
+			headers.add("Authorization", "Basic YTph");
 			headers.add("access-control-allow-origin", config.getRootUrl());
             headers.add("access-control-allow-credentials", "true");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
@@ -501,9 +506,9 @@ public class home extends RESTFetch{
 		
 	}
 
-	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdest1")
+	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdest")
 	private ResponseEntity<String> getSrcDest1(HttpSession session) {
-		System.out.println("INSIDE /getsrcdst");
+		System.out.println("/getsrcdest session"+session.getId());
 		ResponseEntity<String> s=null;
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -511,7 +516,7 @@ public class home extends RESTFetch{
 		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
 		try {
-			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 				String response = srcdestlistService.getSrcDestList();
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response);
 			}else {
@@ -546,8 +551,8 @@ public class home extends RESTFetch{
 	}
 		
 	
-	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdest")
-	private ResponseEntity<String> getSrcDest(HttpSession session) {
+	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdestOld")
+	private ResponseEntity<String> getSrcDestOld(HttpSession session) {
 		System.out.println("INSIDE /getsrcdst");
 		ResponseEntity<String> s=null;
 		HttpHeaders headers = new HttpHeaders();
@@ -555,6 +560,7 @@ public class home extends RESTFetch{
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
+        headers.add("Authorization", "Basic YTph");
 		try {
 			
 			System.out.println(session.getId());			
@@ -606,6 +612,7 @@ public class home extends RESTFetch{
 	@RequestMapping(value="/filterendpoints")
 	private ResponseEntity<String> filterendpoints(HttpSession session)
 	{
+		
 		System.out.println("INSIDE /filterendpoints");
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
@@ -613,7 +620,7 @@ public class home extends RESTFetch{
 		headers.add("access-control-allow-credentials", "true");
 		try {			
 			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
-				applicationCredentials.getApplicationCred().get(credentials.getUserId()).setLastAccessTime(session.getLastAccessedTime());
+
 				JsonObject jobj = new JsonObject();
 				JsonArray catagory = new JsonArray();
 				JsonObject temp = new JsonObject();
@@ -673,16 +680,18 @@ public class home extends RESTFetch{
 	
 
 	
-	@RequestMapping(value="/getconnectionids")
-	private ResponseEntity<String> getConnectionIds(HttpSession session) {
-		System.out.println("INSIDE /getconnectionids");
+	@RequestMapping(value="/getconnectionidsOld")
+	private ResponseEntity<String> getConnectionIdsOld(HttpSession session) {
+		System.out.println(applicationCredentials.getSessionId(credentials.getUserId())+"INSIDE /getconnectionids:" +session.getId());
 		String dataSource=null;
 		HttpHeaders headers = new HttpHeaders();			
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
+        headers.add("Authorization", "Basic YTph");
 		try {
-			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
+			
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 				ResponseEntity<String> out = null;
 				RestTemplate restTemplate = new RestTemplate();
 				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
@@ -711,6 +720,57 @@ public class home extends RESTFetch{
 			    uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				out  = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
 				respBody.add("images",gson.fromJson(out.getBody(), JsonElement.class));				
+				
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			}
+			else {
+				session.invalidate();
+   				System.out.println("Session expired!");
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			}			
+		}
+		catch(HttpClientErrorException e) {
+			System.out.println(e.getMessage());
+			if(e.getMessage().startsWith("4")) {
+	            JsonObject respBody = new JsonObject();
+				respBody.addProperty("data", "null");
+				respBody.addProperty("status", "200");
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			}
+		}
+		catch(Exception e){
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+	}
+
+	@RequestMapping(value="/getconnectionids")
+	private ResponseEntity<String> getConnectionIds(HttpSession session) {
+		String dataSource=null;
+		HttpHeaders headers = new HttpHeaders();			
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", config.getRootUrl());
+        headers.add("access-control-allow-credentials", "true");
+        headers.add("Authorization", "Basic YTph");
+		try {
+			
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
+				ResponseEntity<String> out = null;
+				
+				//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
+			
+				UserConnectors connObj = userConnectorService.getConnectorObjects(credentials.getUserId());
+				
+				for(ConnObj ele:connObj.getConnectorObjs()) 
+					credentials.setConnectionIds(ele.getConnectionId(), ele);
+				
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("status", "200");
+				respBody.add("data",new Gson().fromJson(new Gson().toJson(connObj,UserConnectors.class),JsonElement.class));
+				respBody.add("images",new Gson().fromJson(srcdestlistService.getSrcDestList(),JsonElement.class));				
 				
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}

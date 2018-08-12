@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import com.aptus.blackbox.models.ConnObj;
 
@@ -13,7 +14,7 @@ public class UserConnectors {
 
 	@Id
 	private String _id;
-	private List<ConnObj> connectorObjs;
+	private List<ConnObj> srcdestId;
 	
 	public UserConnectors(String _id) {
 		this._id = _id;
@@ -27,15 +28,12 @@ public class UserConnectors {
 		this._id = _id;
 	}
 	public List<ConnObj> getConnectorObjs() {
-		return connectorObjs;
+		return srcdestId;
 	}
 	public void setConnectorObjs(List<ConnObj> connectorObjs) {
-		this.connectorObjs = connectorObjs;
+		this.srcdestId = connectorObjs;
 	}
 	
-	@Override
-	public String toString() {
-		return "_id:"+_id+" connectorObjs:"+connectorObjs;
-	}
+	
 		
 }

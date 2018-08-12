@@ -137,7 +137,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 				int totalRows = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getTotalRows();
 				
 				meteringService.addTimeMetering(userId, connectionId, timeMetering, totalRows);
-				applicationEventPublisher.publishEvent(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering());
+				//OLDapplicationEventPublisher.publishEvent(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering());
 			}
 			else {
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("32");

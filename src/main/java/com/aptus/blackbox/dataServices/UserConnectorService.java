@@ -20,14 +20,12 @@ public class UserConnectorService {
 		userConnectorDAO.createUser(connector);
 	}
 	
-	public List<ConnObj> getConnectorObjects(String _id) {
-		System.out.println("sdyiuhsdauisiu");
-		return userConnectorDAO.getConnectorObjects(_id);
+	public UserConnectors getConnectorObjects(String _id) {
+		UserConnectors connector =  userConnectorDAO.getUserConnector(_id);
+		return connector;
 	}
 	
-	public ConnObj getConnectionObj(String _id,String connectionId) {
-		return userConnectorDAO.getConnectorObject(_id, connectionId);
-	}
+
 	
 	public boolean addConnectorObj(String _id,ConnObj connectorObj) {
 		return userConnectorDAO.addConnectorObj(_id, connectorObj);

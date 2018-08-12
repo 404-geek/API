@@ -36,11 +36,7 @@ public class ConnObj implements Serializable {
 		this.endPoints.clear();
 		this.endPoints.addAll(endPoint);
 	}
-	@Override
-	public String toString() {
-		System.out.println();
-		return this.sourceName+" "+this.destName+" "+this.connectionId+" "+this.endPoints;
-	}
+	
 	public String getScheduled() {
 		return scheduled;
 	}

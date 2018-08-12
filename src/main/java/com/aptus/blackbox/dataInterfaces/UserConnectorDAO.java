@@ -9,8 +9,8 @@ import com.aptus.blackbox.models.ConnObj;
 public interface UserConnectorDAO {
 
 	public void createUser(UserConnectors _init);
-	public List<ConnObj> getConnectorObjects(String _id);
-	public ConnObj getConnectorObject(String _id,String connectionId);
+	public UserConnectors getUserConnector(String _id);
+	
 	public boolean updateConnectorObject(String _id,String connectionId,Map<String,Object> field);
     public boolean deleteConnectorObject(String _id,String connectionId);
     public boolean addConnectorObj(String _id,ConnObj connectorObj);

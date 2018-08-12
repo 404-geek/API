@@ -186,7 +186,7 @@ public class DataSourceController extends RESTFetch {
 		return;
 	}
 
-	@RequestMapping(method = RequestMethod.GET, value = "/validate1")
+	@RequestMapping(method = RequestMethod.GET, value = "/validate")
 	private ResponseEntity<String> verifyUser1(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session,
 			@RequestParam(value ="database_name",required=false) String database_name,
 			@RequestParam(value ="db_username",required=false) String db_username,
@@ -228,7 +228,7 @@ public class DataSourceController extends RESTFetch {
 					credentials.setUsrDestExist(usrDestExist);
 					System.out.println("User Destination Exist : "+credentials.isUsrDestExist());
 				}
-				return initialiser(type,database_name,db_username,db_password,server_host,server_port);
+				return initialiser1(type,database_name,db_username,db_password,server_host,server_port);
 			}
 			else {
 				System.out.println("Ses"
@@ -252,7 +252,7 @@ public class DataSourceController extends RESTFetch {
 	/*
 	 * 
 	 */
-	@RequestMapping(method = RequestMethod.GET, value = "/validate")
+	@RequestMapping(method = RequestMethod.GET, value = "/validateOld")
 	private ResponseEntity<String> verifyUser(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session,
 			@RequestParam(value ="database_name",required=false) String database_name,
 			@RequestParam(value ="db_username",required=false) String db_username,
@@ -347,7 +347,7 @@ public class DataSourceController extends RESTFetch {
 	}
 	private ResponseEntity<String> initialiser1(String type,String database_name,String db_username,String db_password,String server_host,String server_port) {
 		//add destination fetch and validation
-		System.out.println("inside initialiser function");
+		System.out.println("inside initialiser1 function");
 		ResponseEntity<String> out = null;
 		HttpHeaders headers = new HttpHeaders();
 		
@@ -364,9 +364,10 @@ public class DataSourceController extends RESTFetch {
 					fetchSrcCred1();
 					
 					
-					System.out.println(type+" credentials already exist");
+					System.out.println(type+" credentials already exist"+credentials.getSrcObj().get_id());
+					
 					System.out.println(credentials.getSrcObj()+" "+credentials);
-					out = Utilities.token(credentials.getSrcObj().getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser");
+					out = Utilities.token(credentials.getSrcObj().getValidateCredentials(),credentials.getSrcToken(),credentials.getUserId()+"DataSourceController.initialiser1");
 					//System.out.println("OUt:"+out);
 					System.out.println("Out status code :"+out.getStatusCode());
 					if (out.getStatusCode().is2xxSuccessful()) {
@@ -877,7 +878,7 @@ public class DataSourceController extends RESTFetch {
 		return null;
 	}
 	
-	@RequestMapping(method = RequestMethod.GET, value = "/createdatasource")
+	@RequestMapping(method = RequestMethod.GET, value = "/createdatasourceOld")
 	private ResponseEntity<String> createDataSource(@RequestParam(value = "filteredEndpoints", required=false) String filteredEndpoints,
 			@RequestParam(value="scheduled") String schedule,
 			@RequestParam(value="period",required=false) String period,
@@ -1036,7 +1037,7 @@ public class DataSourceController extends RESTFetch {
 	}
 	
 		
-	@RequestMapping(method = RequestMethod.GET, value = "/createdatasource1")
+	@RequestMapping(method = RequestMethod.GET, value = "/createdatasource")
 	private ResponseEntity<String> createDataSource1(@RequestParam(value = "filteredEndpoints", required=false) String filteredEndpoints,
 			@RequestParam(value="scheduled") String schedule,
 			@RequestParam(value="period",required=false) String period,
@@ -1080,7 +1081,8 @@ public class DataSourceController extends RESTFetch {
 //					String schedule = filteredEndpoints.get("scheduled");
 //					String period = filteredEndpoints.get("period");
 //					String schedule = "true";
-//					String period = "120";
+//					String 
+					period = "30";
 					JsonArray temp2,endpoints = new JsonArray();
 					JsonObject temp1;
 					JsonElement temp = gson.fromJson(filteredEndpoints, JsonElement.class)
@@ -1115,17 +1117,23 @@ public class DataSourceController extends RESTFetch {
 					System.out.println("DatasourceController:createdatasource\t"+credentials.getCurrConnObj().getConnectionId());
 					credentials.setConnectionIds(conId, currobj);	
 					
+					System.out.println("Data Source Created");
+					
 					//add to userConnectors
 					userConnectorSerive.addConnectorObj(credentials.getUserId(), currobj);
-				
+					System.out.println("Data Source connector pushed ");
+					
 					//insert
 					meteringService.addConnection(credentials.getUserId(), conId, new ConnectionMetering());
+					System.out.println("Metering Data pushed");
 					
 					applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
 					
 					//publish credentials
 					applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), credentials.getDestObj(),credentials.getSrcToken() , credentials.getDestToken(),
 							credentials.getCurrSrcName(), destination.toLowerCase(), credentials.getUserId()));				
+					System.out.println("Data Source credentials pushed");
+					
 					credentials.setCurrConnObj(currobj);
 					
 					if(choice.equalsIgnoreCase("export")) {

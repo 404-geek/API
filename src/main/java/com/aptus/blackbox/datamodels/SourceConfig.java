@@ -12,7 +12,31 @@ import com.aptus.blackbox.models.UrlObject;
 public class SourceConfig implements Serializable{
 	@Id
 	private String _id;
-	private String authType,steps,refresh;
+	private String name,authType,authLegs,status,steps,refresh;
+	public String get_id() {
+		return _id;
+	}
+	public void set_id(String _id) {
+		this._id = _id;
+	}
+	public String getAuthType() {
+		return authType;
+	}
+	public void setAuthType(String authType) {
+		this.authType = authType;
+	}
+	public String getAuthLegs() {
+		return authLegs;
+	}
+	public void setAuthLegs(String authLegs) {
+		this.authLegs = authLegs;
+	}
+	public String getStatus() {
+		return status;
+	}
+	public void setStatus(String status) {
+		this.status = status;
+	}
 	private UrlObject refreshToken,requestToken,accessCode,accessToken,validateCredentials;
 	private List<UrlObject> DataEndPoints,InfoEndpoints,ImplicitEndpoints;
 	private List<List<List<String>>> infoEndpointOrder;

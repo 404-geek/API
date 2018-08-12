@@ -1,6 +1,5 @@
 package com.aptus.blackbox.dataRepositories;
 
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,20 +26,13 @@ public class UserConnectorImpl implements UserConnectorDAO{
 	}
 
 	@Override
-	public List<ConnObj> getConnectorObjects(String _id) {
+	public UserConnectors getUserConnector(String _id) {
 		Query query = new Query();
 		query.addCriteria(Criteria.where("_id").is(_id));
-		query.fields().include("connectorObjs");
-		System.out.println(mongoTemplate.findOne(query, UserConnectors.class));
-		return null;
-		
+		query.fields().include("srcdestId");
+		return mongoTemplate.findOne(query, UserConnectors.class);
 	}
 
-	@Override
-	public ConnObj getConnectorObject(String _id, String connectionId) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public boolean updateConnectorObject(String _id, String connectionId, Map<String, Object> field) {
@@ -59,9 +51,11 @@ public class UserConnectorImpl implements UserConnectorDAO{
 		Query query = new Query();
 		query.addCriteria(Criteria.where("_id").is(_id));
 		//mongoTemplate.updateFirst(query,new Update().addToSet("").each(values), UserConnector.class);
-		mongoTemplate.updateFirst(query, new Update().addToSet("connectorObjs", connectorObj), UserConnectors.class);
+		mongoTemplate.updateFirst(query, new Update().addToSet("srcdestId", connectorObj), UserConnectors.class);
 		return false;
 	}
+
+	
 
 	
 

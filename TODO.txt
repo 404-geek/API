@@ -1,0 +1,7 @@
+1. change redirect url
+2. change period 18000 for schedule
+3. check metering totalrows
+4. fetchdbs database name not coming
+5. remove noauth in scheduling
+6. auto start schedluling
+7. logging and remove print statements

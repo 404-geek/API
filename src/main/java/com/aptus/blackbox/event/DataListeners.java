@@ -238,7 +238,7 @@ public class DataListeners {
 					jsonObj.addProperty("_id",
 							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getSrcName().toLowerCase());
 					jsonObj.add("credentials", sourceBody);
-					Utilities.postpatchMetaData(jsonObj, "source", "POST",pushCredentials.getUserId(),config.getMongoUrl());
+				//OLD	Utilities.postpatchMetaData(jsonObj, "source", "POST",pushCredentials.getUserId(),config.getMongoUrl());
 					
 				}
 				// destCredentials
@@ -274,7 +274,7 @@ public class DataListeners {
 							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase() + "_"
 									+ pushCredentials.getDestToken().get("database_name"));
 					jsonObj.add("credentials", destBody);
-					Utilities.postpatchMetaData(jsonObj, "destination", "POST",pushCredentials.getUserId(),config.getMongoUrl());
+		//OLD			Utilities.postpatchMetaData(jsonObj, "destination", "POST",pushCredentials.getUserId(),config.getMongoUrl());
 					
 				}
 			} catch (Exception e) {
@@ -293,8 +293,6 @@ public class DataListeners {
 			Iterator<Entry<String, Map<String, Status>>> entry=tempScheduleObj.getEndPointStatus().entrySet().iterator();
 			JsonObject connStatus = new JsonObject();
 			JsonObject temp = new JsonObject();
-			
-			System.out.println("loop0");
 			
 			Connection connection = new Connection();
 			while(entry.hasNext())
@@ -317,21 +315,14 @@ public class DataListeners {
 					System.out.println("StatusCode:"+it.getValue().getStatus());
 					System.out.println("StatusMsg:"+it.getValue().getMessage());
 					
-					System.out.println("loop2");
-					
 					StatusObj statusObj = new StatusObj();
-					System.out.println("loop3");
-					
 					statusObj.setCode(it.getValue().getStatus());
-					System.out.println("loop4");
 					statusObj.setMessage(it.getValue().getMessage());
-					System.out.println("loop5");
+				
 					Endpoint endpoint = new Endpoint();
-					System.out.println("loop6");
 					endpoint.setEndpoints(it.getKey(),statusObj);
-					System.out.println("loop7");
 					connection.setCategory(e.getKey(), endpoint);	
-					System.out.println("loop8");
+					
 				}
 				
 				System.out.println("loop9");
@@ -362,7 +353,8 @@ public class DataListeners {
 			System.out.println("PUSHING SCHEDULING TO DB");
 			schedulingService.addConnection(userId, connectionId, connection);
 			
-			
+			//OLD
+			/*
 			connStatus.add(connectionId, temp);
 			ResponseEntity<String> out = null;
 			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
@@ -398,7 +390,8 @@ public class DataListeners {
 				out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
 			}
 			System.out.println(connStatus.toString());
-			System.out.println("url = "+url);
+			System.out.println("url = "+url);*/
+			System.out.println("PUSHING SCHEDULING TO DB COMPLETED");
 		} 
 		catch(JsonSyntaxException e) {
 			e.printStackTrace();
@@ -413,8 +406,8 @@ public class DataListeners {
 	}
 	
 	
-
-	
+//OLD
+	/*
 	@EventListener
 	private void pushMeteringInfo(Metering metering) {
 		HttpHeaders headers = new HttpHeaders();
@@ -531,5 +524,5 @@ public class DataListeners {
 		catch(Exception e) {
 			e.printStackTrace();
 		}
-	}
+	}*/
 }

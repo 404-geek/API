@@ -806,7 +806,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 			if(!choice.equalsIgnoreCase("view")) {
 				metering.setTotalRowsFetched(totalRows);
 				timeMetering.setTotalRows(totalRows);
-				applicationEventPublisher.publishEvent(metering);
+			///OLD	applicationEventPublisher.publishEvent(metering);
 				System.out.println("Metering Service publish data start");
 				meteringService.addTimeMetering(credentials.getUserId(),
 						credentials.getCurrConnObj().getConnectionId(),
@@ -1124,7 +1124,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 								credentials.getCurrConnObj().getConnectionId(),
 							    timeMetering, rows);
 						
-						applicationEventPublisher.publishEvent(metring);
+					///OLD	applicationEventPublisher.publishEvent(metring);
 						
 						String sheet="";
 						switch(choice) {
@@ -1432,8 +1432,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 			JsonElement respBody = new JsonObject();
 			System.out.println(credentials.getCurrConnObj() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
 			if (Utilities.isSessionValid(httpsession, applicationCredentials,credentials.getUserId())) {
-				applicationCredentials.getApplicationCred().get(credentials.getUserId())
-						.setLastAccessTime(httpsession.getLastAccessedTime());
+				
 				if (credentials.getCurrConnObj() == null) {
 					System.out.println("currconId is null");
 					credentials.setCurrDestValid(false);
@@ -1503,7 +1502,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}	
 	
-	@RequestMapping("/fetchdbs1")
+	@RequestMapping("/fetchdbs")
 	private ResponseEntity<String> fetchDBs1(@RequestParam("destId") String destId, HttpSession session) {
 		ResponseEntity<String> out = null;
 		HttpHeaders headers = new HttpHeaders();
@@ -1513,8 +1512,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
-				applicationCredentials.getApplicationCred().get(credentials.getUserId())
-						.setLastAccessTime(session.getLastAccessedTime());
+			
 				
 				String credentialId =credentials.getUserId()+"_"+destId; 
 				List<SrcDestCredentials> destList =srcDestCredentialsDAO.getAllCredentialsByRegex(credentialId, Constants.COLLECTION_DESTINATIONCREDENTIALS);
@@ -1545,7 +1543,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 	
 	
 
-	@RequestMapping("/fetchdbs")
+	@RequestMapping("/fetchdbsOld")
 	private ResponseEntity<String> fetchDBs(@RequestParam("destId") String destId, HttpSession session) {
 		ResponseEntity<String> out = null;
 		HttpHeaders headers = new HttpHeaders();
@@ -1555,8 +1553,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
-				applicationCredentials.getApplicationCred().get(credentials.getUserId())
-						.setLastAccessTime(session.getLastAccessedTime());
+		
 				String name = destId;
 				String filter = "{\"_id\":{\"$regex\":\".*" + credentials.getUserId().toLowerCase() + "_"
 						+ name.toLowerCase() + ".*\"}}";

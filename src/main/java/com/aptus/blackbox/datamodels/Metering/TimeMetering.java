@@ -17,7 +17,7 @@ public class TimeMetering {
 		return totalRows;
 	}
 	public void setTotalRows(int totalRows) {
-		this.totalRows = totalRows;
+		this.totalRows = this.totalRows+totalRows;
 	}
 	public String getType() {
 		return type;

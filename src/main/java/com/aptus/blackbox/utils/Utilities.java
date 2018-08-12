@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -24,6 +25,7 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -38,14 +40,15 @@ import sun.misc.BASE64Encoder;
 
 public class Utilities {public static boolean isSessionValid(HttpSession session,ApplicationCredentials credentials,String UserID)
 {
-	
-	System.out.println("SESSION");
+//	
+	System.out.println("==========SESSION===BEGIN========");
 	System.out.println("SESSION\t"+session.getId().equals(credentials.getSessionId().get(UserID)));
 	System.out.println("SESSION ID\t"+session.getId());
 	System.out.println("SESSION USER\t"+UserID);
 	System.out.println("SESSION CRED SESSION ID\t"+credentials.getSessionId().get(UserID));
-	System.out.println("SESSION" + credentials.getSessionId());
-	System.out.println("SESSION");
+//	System.out.println("SESSION" + credentials.getSessionId());
+	System.out.println("==========SESSION===END=======");
+
 
 	return session.getId().equals(credentials.getSessionId().get(UserID));		
 }	
@@ -176,6 +179,8 @@ public static HttpHeaders buildHeader (UrlObject token, Map<String, String> valu
 {
 	Map<String, String> oauth; 
 	System.out.println(message+" "+"::HEADERS::");
+	System.out.println(values.keySet().toString());
+	System.out.println(values.values().toString());
 	HttpHeaders headers = new HttpHeaders();
 	for(objects obj:token.getHeader())
 		{
@@ -259,10 +264,16 @@ public static ResponseEntity<String> token(UrlObject object,Map<String, String> 
 	try {
 		RestTemplate restTemplate = new RestTemplate();
 
+		System.out.println("Build Url Started");
 		String url = Utilities.buildUrl(object, values,message);
+		System.out.println("Build Url Stopped");
 		System.out.println(message+" "+object.getLabel() + " = " + url);
 
+		System.out.println("Build Header Started");
 		HttpHeaders headers = Utilities.buildHeader(object, values,message);
+		System.out.println("Build Header Stopped");
+		
+		System.out.println("Build Body Started");
 		HttpEntity<?> httpEntity;
 		if (!object.getResponseBody().isEmpty()) {
 			MultiValueMap<String, String> preBody = Utilities.buildBody(object, values,"");
@@ -278,6 +289,7 @@ public static ResponseEntity<String> token(UrlObject object,Map<String, String> 
 		} else {
 			httpEntity = new HttpEntity<Object>(headers);
 		}
+		System.out.println("Build Body Stopped");
 //		if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
 //			httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
 //		} else if (!object.getResponseBody().isEmpty()) {
@@ -293,6 +305,10 @@ public static ResponseEntity<String> token(UrlObject object,Map<String, String> 
 		out = restTemplate.exchange(URI.create(url), method, httpEntity, String.class);
 		//System.out.println(out.getBody());
 	} 
+	catch(ResourceAccessException e) {
+		
+		out =  new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
+	}
 	catch(HttpClientErrorException e) {
 		System.out.println(e.getMessage());
 		if(!e.getMessage().startsWith("2")) {

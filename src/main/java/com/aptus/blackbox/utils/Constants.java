@@ -22,7 +22,7 @@ public final class Constants {
 	public final static int INTERNAL_SERVER_ERROR = 500;
 	
 	
-	public final static String RESPONSE_CODE = "code";
+	public final static String RESPONSE_CODE = "status";
 	public final static String RESPONSE_MESSAGE = "message";
 	public final static String RESPONSE_DATA = "data";
 

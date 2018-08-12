@@ -253,14 +253,17 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     				
     				threadPoolTaskExecutor.execute(endpointsTaskExecutor);
     			}   
-    			//scheduleObjectInfo.getThread().cancel(false);
+    			
     			return new Status("31","Success");
     		} catch (Exception e) {
     			System.out.println(Thread.currentThread().getName()+"THREAD SCHEDULER FETCHENDPOINTSDATA");
     			e.printStackTrace();
     			System.out.println(e+"token");
         		
-    		}    		
+    		} 
+    		finally {
+    			scheduleObjectInfo.getThread().cancel(false);
+    		}
     		return new Status("34","Error");
     }	
 	
