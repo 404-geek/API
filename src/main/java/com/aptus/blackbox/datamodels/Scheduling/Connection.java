@@ -9,8 +9,8 @@ public class Connection {
 	
 	private String status,message;
 	private String lastSuccessfullPushed,nextScheduledPushed;
-	private Map<String,List<Endpoint>> category;
-	
+	private Map<String,List<Map<String,StatusObj>>> category;
+	///////////<category,<        endpoint,status>>//////
 	
 	public Connection() {
 		super();
@@ -40,16 +40,18 @@ public class Connection {
 	public void setNextScheduledPushed(String nextScheduledPushed) {
 		this.nextScheduledPushed = nextScheduledPushed;
 	}
-	public Map<String,List<Endpoint>> getCategory() {
+	
+	public Map<String, List<Map<String, StatusObj>>> getCategory() {
 		return category;
 	}
-	public void setCategory( String category,Endpoint endpoint) {
-		if(this.category.containsKey(category))
-				this.category.get(category).add(endpoint);
+	public void setCategory(String catgeoryName, Map<String, StatusObj> endpointStatus) {
+	
+		if(this.category.containsKey(catgeoryName))
+				this.category.get(catgeoryName).add(endpointStatus);
 		else {
-				List<Endpoint> list = new ArrayList<>();
-				list.add(endpoint);
-				this.category.put(category, list);
+				List<Map<String,StatusObj>> list = new ArrayList<>();
+				list.add(endpointStatus);
+				this.category.put(catgeoryName, list);
 			}
 	}
 	
