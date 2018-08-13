@@ -85,7 +85,8 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
 	public void run() {
         ResponseEntity<String> ret = null;
         try {
-        	//Set scheduling and endpoint status to running(31)
+        	
+        	System.out.println("=====scheduling and endpoint status to running(31): start====");
         	applicationCredentials.getApplicationCred().get(userId).
     		getSchedulingObjects().get(connectionId).setMessage("Running");    		
     		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().
@@ -99,12 +100,26 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
         			get(connectionId).getEndPointStatus().get(endpt).put(end, new Status("31","Running"));
     			}    			
     		}
-    		System.out.println("publishing status from connection task scheduler");
+    		
     		//publish status
     		applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
         	
+    		System.out.println("===scheduling and endpoint status to running(31): stop====");
+    		
+    		//Get sourceObject from applicationCred
     		SourceConfig srcObj = scheduleObjectInfo.getSrcObj();
-            if (srcObj.getRefresh().equals("YES")) {
+    		
+    		
+    		if(srcObj.getAuthtype().equalsIgnoreCase("NoAuth")) {
+    		applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setSrcValid(true);                    
+            setOut(fetchEndpointsData(srcObj.getDataEndPoints()));
+            return ;
+    		}
+    		
+    		
+            System.out.println("Check if refresh token exist");
+    		if (srcObj.getRefresh().equals("YES")) {
+    			System.out.println(" refresh token exist : TRUE");
                 ret = Utilities.token(srcObj.getRefreshToken(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
                 if (!ret.getStatusCode().is2xxSuccessful()) {	
     				setOut(new Status("51","Re-authorize"));
@@ -130,6 +145,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
                     return ;
                 }
             } else {
+            	System.out.println(" refresh token exist : FALSE");
                 ret = Utilities.token(srcObj.getValidateCredentials(),scheduleObjectInfo.getSrcToken(),Thread.currentThread().getName()+"THREAD SCHEDULER RUN");
                 if (!ret.getStatusCode().is2xxSuccessful()) {                	
                 	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setSrcValid(false);
@@ -184,7 +200,7 @@ public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
     			timeMetering.setType("Export");
     			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setTimeMetering(timeMetering);
     			
-    			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMetering(metring);
+    		//OLD	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMetering(metring);
     			Map<String,List<UrlObject>> endp = new HashMap<>();
     			for(UrlObject object:endpoints) {
     				if(endp.containsKey(object.getCatagory())) {

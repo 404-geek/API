@@ -12,6 +12,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -138,6 +139,11 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 				
 				meteringService.addTimeMetering(userId, connectionId, timeMetering, totalRows);
 				//OLDapplicationEventPublisher.publishEvent(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering());
+			
+				
+				this.scheduleObject.setTotalRows(0);
+				this.scheduleObject.getTimeMetering().setTotalRows(0);
+			
 			}
 			else {
 				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("32");
@@ -280,6 +286,8 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 			}
 			else {
 				String tableName=connectionId+"_"+endpoint.getLabel();
+				tableName=tableName.replaceAll(" ", "_");
+				
 				String outputData = mergedData.toString();
 				
 				JFlat x = new JFlat(outputData);
@@ -296,8 +304,8 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 				    	Status respBody = new Status("22","successfully pushed");
 
 				    	//set endpoint and rows fetched
-				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
-				    	.setRowsFetched(endpoint.getCatagory().toLowerCase(),endpoint.getLabel().toLowerCase(), rows);
+//OLD				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+//OLD				    	.setRowsFetched(endpoint.getCatagory().toLowerCase(),endpoint.getLabel().toLowerCase(), rows);
 						
 				    	EndpointMetering endpointMetering = new EndpointMetering();
 						endpointMetering.setEndpoint(endpoint.getLabel());
@@ -305,12 +313,12 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 						
 						SchedulingObjects schdelueObj=applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
 				    	schdelueObj.getTimeMetering().setEndpoints(endpoint.getCatagory(), endpointMetering);
-				    	schdelueObj.getTimeMetering().setTotalRows(rows);
-				    	schdelueObj.setTotalRows(rows);
+				    	schdelueObj.getTimeMetering().addTotalRows(rows);
+				    	schdelueObj.addTotalRows(rows);
 				    	
 				    	//setTotalRowsFetched
-				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
-						.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
+//OLD				    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+//OLD						.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
 	
 						setResult(respBody);
 						
@@ -462,6 +470,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 					int rows=json2csv.size()-1;
 					
 					String tableName=connectionId+"_"+ent.getKey();
+					tableName=tableName.replaceAll(" ", "_");
 					
 					System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR RUN table "+tableName);	
 					if(truncate(tableName)) {				
@@ -471,7 +480,7 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 					    if(pushDB(outputData, tableName)) {
 					    	Status respBody = new Status("22","successfully pushed");
 					    	//set totalRows fetched
-					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(endpoint.getCatagory(),ent.getKey().toLowerCase(), rows);
+//OLD					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().setRowsFetched(endpoint.getCatagory(),ent.getKey().toLowerCase(), rows);
 							
 					       	EndpointMetering endpointMetering = new EndpointMetering();
 							endpointMetering.setEndpoint(endpoint.getLabel());
@@ -479,13 +488,13 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 							
 							SchedulingObjects schdelueObj=applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId);
 					    	schdelueObj.getTimeMetering().setEndpoints(endpoint.getCatagory(), endpointMetering);
-					    	schdelueObj.getTimeMetering().setTotalRows(rows);
-					    	schdelueObj.setTotalRows(rows);
+					    	schdelueObj.getTimeMetering().addTotalRows(rows);
+					    	schdelueObj.addTotalRows(rows);
 					    	
 					    	
 					    	//set endpoint and rows fetched
-					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
-							.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
+//OLD					    	applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering()
+//OLD							.setTotalRowsFetched(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering().getTotalRowsFetched() + rows);
 		
 							setResult(respBody);
 							
@@ -540,33 +549,56 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 				int i = 0;
 				for (Object[] row : json2csv) {
 					if (i == 0) {
-						 statement="CREATE TABLE "+
-								 scheduleObject.getDestObj().getIdentifier_quote_open()+ tableName +scheduleObject.getDestObj().getIdentifier_quote_close()+
-								 "(";
-						 for(Object t : row)
-								statement += t.toString().replace("_", "") + " TEXT,";
 						
-						 statement=statement.substring(0,statement.length()-1)+");";
-						 System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR PUSHDB-----"+statement);
-						 preparedStmt = con.prepareStatement(statement);
-						 preparedStmt.execute();
-					} else {
-						int k;						
-						String instmt = "INSERT INTO " +
-								scheduleObject.getDestObj().getIdentifier_quote_open()+ tableName +scheduleObject.getDestObj().getIdentifier_quote_close()+
-								  " VALUES(";
-						
-						for(k=0;k<row.length;k++)
-							instmt+="?,";
-						
-						instmt = instmt.substring(0,instmt.length()-1)+");";
-						PreparedStatement stmt = con.prepareStatement(instmt);
-						
-						k=1;
-						for (Object attr : row) {
-							stmt.setString( k++,attr==null?null:attr.toString());
+						System.out.println("Attributes Name : "+ Arrays.toString(json2csv.get(0)));
+						System.out.println("First Record : "+ Arrays.toString(json2csv.get(1)));
+						statement = "CREATE TABLE " + scheduleObject.getDestObj().getIdentifier_quote_open() + tableName
+								+ scheduleObject.getDestObj().getIdentifier_quote_close() + "(";
+						int j=0;
+						System.out.println("Attributes: ");
+						for (Object t : row) {
+							String type;
+							System.out.print( json2csv.get(1)[j]+" ");
+							JsonPrimitive test = (JsonPrimitive) json2csv.get(1)[j++];
+							if(test==null || !test.isNumber()) 
+								type=scheduleObject.getDestObj().getType_text();
+							else if(test.isNumber())
+								type=scheduleObject.getDestObj().getType_real();
+							else
+								type=scheduleObject.getDestObj().getType_text();
+
+							System.out.print("[ data : "+test+" type : "+type+" ]");
+							
+							statement += t.toString().replaceAll("[^\\w]","") +" "+type+ ",";
 						}
-						System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR PUSHDB"+instmt);
+						System.out.println();
+						statement = statement.substring(0, statement.length() - 1) + ");";
+						
+						
+						System.out.println("Query : " + statement);
+						preparedStmt = con.prepareStatement(statement,ResultSet.TYPE_SCROLL_SENSITIVE, 
+		                        ResultSet.CONCUR_UPDATABLE);
+						preparedStmt.execute();
+					} else {
+						int k;
+						String instmt = "INSERT INTO " + scheduleObject.getDestObj().getIdentifier_quote_open() + tableName
+								+ scheduleObject.getDestObj().getIdentifier_quote_close() + " VALUES(";
+
+						for (k = 0; k < row.length; k++)
+							instmt += "?,";
+
+						instmt = instmt.substring(0, instmt.length() - 1) + ");";
+						
+					
+						
+						PreparedStatement stmt = con.prepareStatement(instmt,ResultSet.TYPE_SCROLL_SENSITIVE, 
+		                        ResultSet.CONCUR_UPDATABLE);
+
+						k = 1;
+						for (Object attr : row) {
+							stmt.setString(k++, attr == null ? null : attr.toString());
+						}
+						System.out.println(instmt);
 						stmt.execute();
 					}
 					i++;

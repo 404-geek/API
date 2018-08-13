@@ -186,7 +186,7 @@ public class DataController extends RESTFetch {
 		jobject.addProperty("isvalid",false);
 		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobject.toString());
 	}
-public boolean pushDB(String jsonString, String tableName,DestinationConfig destObj,Map<String, String> destToken) throws SQLException {
+	public boolean pushDB(String jsonString, String tableName,DestinationConfig destObj,Map<String, String> destToken) throws SQLException {
 		System.out.println("pushDBController-driver: " + destObj.getDrivers());
 		try {
 			System.out.println("TABLENAME: " + tableName);
@@ -217,10 +217,12 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 						for (Object t : row) {
 							String type;
 							System.out.print( json2csv.get(1)[j]+" ");
-							JsonPrimitive test = (JsonPrimitive) json2csv.get(1)[j];
-							if(test.isNumber()) 
+							JsonPrimitive test = (JsonPrimitive) json2csv.get(1)[j++];
+							if(test==null || !test.isNumber()) 
+								type=destObj.getType_text();
+							else if(test.isNumber())
 								type=destObj.getType_real();
-							else 
+							else
 								type=destObj.getType_text();
 
 							System.out.print("[ data : "+test+" type : "+type+" ]");
@@ -271,6 +273,7 @@ public boolean pushDB(String jsonString, String tableName,DestinationConfig dest
 		}
 		return false;
 	}
+
 
 	public ResponseEntity<String> connection(Map<String, String> destToken, DestinationConfig destObj) throws SQLException {
 		try {
@@ -1342,6 +1345,8 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 					List<Object[]> json2csv = x.json2Sheet().headerSeparator("_").getJsonAsSheet();
 					rows=json2csv.size()-1;
 					String tableName = credentials.getCurrConnObj().getConnectionId() + "_" + endpoint.getLabel();
+					tableName=tableName.replaceAll(" ", "_");
+					
 					if (choice.equalsIgnoreCase("export") && truncateAndPush(tableName)) {
 						
 						System.out.println("Export Data without schedule");
@@ -1503,7 +1508,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 	}	
 	
 	@RequestMapping("/fetchdbs")
-	private ResponseEntity<String> fetchDBs1(@RequestParam("destId") String destId, HttpSession session) {
+	private ResponseEntity<String> fetchDBs(@RequestParam("destId") String destId, HttpSession session) {
 		ResponseEntity<String> out = null;
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
@@ -1514,9 +1519,9 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 			
 				
-				String credentialId =credentials.getUserId()+"_"+destId; 
-				List<SrcDestCredentials> destList =srcDestCredentialsDAO.getAllCredentialsByRegex(credentialId, Constants.COLLECTION_DESTINATIONCREDENTIALS);
-				
+				String _id =credentials.getUserId()+"_"+destId; 
+				List<SrcDestCredentials> destList =srcDestCredentialsDAO.getAllCredentialsByRegex(_id, Constants.COLLECTION_DESTINATIONCREDENTIALS);
+				System.out.println("DBS:: "+destList);
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("status", "200");
 				respBody.add("data", new Gson().fromJson(new Gson().toJson(destList),JsonElement.class));
@@ -1544,7 +1549,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 	
 
 	@RequestMapping("/fetchdbsOld")
-	private ResponseEntity<String> fetchDBs(@RequestParam("destId") String destId, HttpSession session) {
+	private ResponseEntity<String> fetchDBsOld(@RequestParam("destId") String destId, HttpSession session) {
 		ResponseEntity<String> out = null;
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");

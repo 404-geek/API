@@ -17,7 +17,7 @@ public class SchedulingObjects implements Serializable{
 	private String status,message,DestName,SrcName;
 	private long lastPushed,nextPush,period;
 	private Map<String,Map<String,Status>>endPointStatus = new HashMap<String,Map<String,Status>>();
-	private Metering metering = new Metering();
+	//OLDprivate Metering metering = new Metering();
 	private TimeMetering timeMetering;
 	private int totalRows;
 	private Map<String,String> SrcToken=new HashMap<>();
@@ -132,12 +132,12 @@ public class SchedulingObjects implements Serializable{
 	public void setThread(ScheduledFuture<?> thread) {
 		this.thread = thread;
 	}
-	public Metering getMetering() {
-		return metering;
-	}
-	public void setMetering(Metering metering) {
-		this.metering = metering;
-	}
+//	public Metering getMetering() {
+//		return metering;
+//	}
+//	public void setMetering(Metering metering) {
+//		this.metering = metering;
+//	}
 
 	public TimeMetering getTimeMetering() {
 		return timeMetering;
@@ -151,8 +151,12 @@ public class SchedulingObjects implements Serializable{
 		return totalRows;
 	}
 
-	public void setTotalRows(int totalRows) {
+	public void addTotalRows(int totalRows) {
 		this.totalRows = this.totalRows+totalRows;
+	}
+
+	public void setTotalRows(int totalRows) {
+		this.totalRows = totalRows;
 	}
 
 }

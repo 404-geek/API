@@ -16,9 +16,7 @@ public class TimeMetering {
 	public int getTotalRows() {
 		return totalRows;
 	}
-	public void setTotalRows(int totalRows) {
-		this.totalRows = this.totalRows+totalRows;
-	}
+	
 	public String getType() {
 		return type;
 	}
@@ -41,6 +39,14 @@ public class TimeMetering {
 			this.endpoints.put(category, new ArrayList<>());
 			this.endpoints.get(category).add(endpoint);
 		}
+	}
+	public void addTotalRows(int totalRows) {
+		this.totalRows = this.totalRows+totalRows;
+	}
+	
+	public void setTotalRows(int rows) {
+		this.totalRows =rows;
+		
 	}
 
 	

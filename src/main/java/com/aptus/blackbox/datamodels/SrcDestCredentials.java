@@ -11,15 +11,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class SrcDestCredentials {
 
 	@Id
-	private String credentialId;
+	private String _id;
 	private List<Map<String,String>> credentials;
 	
 	public String getCredentialId() {
-		return credentialId;
+		return _id;
 	}
 
-	public void setCredentialId(String credentialId) {
-		this.credentialId = credentialId;
+	public void setCredentialId(String _id) {
+		this._id = _id;
 	}
 	
 	

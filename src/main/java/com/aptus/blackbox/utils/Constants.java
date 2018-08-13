@@ -33,6 +33,6 @@ public final class Constants {
 	public final static String COLLECTION_DESTINATIONCREDENTIALS = "destinationCredentials";
 	
 	//Collection Primary Key
-	public final static String SRCDESTCRED_ID="credentialId";
+	public final static String SRCDESTCRED_ID="_id";
 	
 }

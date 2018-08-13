@@ -187,7 +187,7 @@ public class DataSourceController extends RESTFetch {
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/validate")
-	private ResponseEntity<String> verifyUser1(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session,
+	private ResponseEntity<String> verifyUser(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session,
 			@RequestParam(value ="database_name",required=false) String database_name,
 			@RequestParam(value ="db_username",required=false) String db_username,
 			@RequestParam(value ="db_password",required=false) String db_password,
@@ -217,6 +217,18 @@ public class DataSourceController extends RESTFetch {
 				 * 	Check and sets if user src/dest exist						
 				 */
 				if (type.equalsIgnoreCase("source")) {
+					
+					System.out.println("Auth Req: "+credentials.getSrcObj().getAuthtype());
+					if( credentials.getSrcObj().getAuthtype().equalsIgnoreCase("NoAuth"))
+						{
+						System.out.println("No Authentication");
+						String url="/close.html";
+						URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+						headers.setLocation(uri);
+						
+						return new ResponseEntity<String>("",headers ,HttpStatus.MOVED_PERMANENTLY);
+						}
+					
 					credentialId += credentials.getCurrSrcName();
 					boolean usrSrcExist = srcDestCredentialsService.srcDestCredentialsExist(credentialId.toLowerCase(), Constants.COLLECTION_SOURCECREDENTIALS);
 					credentials.setUsrSrcExist(usrSrcExist);
@@ -253,7 +265,7 @@ public class DataSourceController extends RESTFetch {
 	 * 
 	 */
 	@RequestMapping(method = RequestMethod.GET, value = "/validateOld")
-	private ResponseEntity<String> verifyUser(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session,
+	private ResponseEntity<String> verifyUserOld(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session,
 			@RequestParam(value ="database_name",required=false) String database_name,
 			@RequestParam(value ="db_username",required=false) String db_username,
 			@RequestParam(value ="db_password",required=false) String db_password,
@@ -1083,6 +1095,8 @@ public class DataSourceController extends RESTFetch {
 //					String schedule = "true";
 //					String 
 					period = "30";
+					if(schedule.equalsIgnoreCase("false"))
+						period="0";
 					JsonArray temp2,endpoints = new JsonArray();
 					JsonObject temp1;
 					JsonElement temp = gson.fromJson(filteredEndpoints, JsonElement.class)
