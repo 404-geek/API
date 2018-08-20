@@ -25,6 +25,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONArray;
 import org.json.XML;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
@@ -46,11 +47,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
-import com.aptus.blackbox.dataInterfaces.SrcDestCredentialsDAO;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.dataServices.DestinationConfigService;
 import com.aptus.blackbox.dataServices.MeteringService;
+import com.aptus.blackbox.dataServices.SourceConfigService;
+import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
@@ -59,6 +62,7 @@ import com.aptus.blackbox.datamodels.Metering.TimeMetering;
 import com.aptus.blackbox.event.Metering;
 import com.aptus.blackbox.event.PushCredentials;
 import com.aptus.blackbox.event.ScheduleEventData;
+import com.aptus.blackbox.index.Parser;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
@@ -76,6 +80,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
+import com.sun.xml.bind.v2.runtime.reflect.opt.Const;
 
 
 @RestController
@@ -95,7 +100,11 @@ public class DataController extends RESTFetch {
 	@Autowired
 	private MeteringService meteringService;
 	@Autowired
-	private SrcDestCredentialsDAO srcDestCredentialsDAO;
+	private SrcDestCredentialsService srcDestCredentialsService;
+	@Autowired
+	private SourceConfigService sourceConfigService;
+	@Autowired
+	private DestinationConfigService destinationConfigService;
 	
 	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
 	 
@@ -518,6 +527,7 @@ public class DataController extends RESTFetch {
 		header.add("access-control-allow-origin", config.getRootUrl());
 		header.add("access-control-allow-credentials", "true");
 		try {
+			
 			SourceConfig obj = credentials.getSrcObj();
 			if (obj.getRefresh().equals("YES")) {
 				ret = Utilities.token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
@@ -1423,6 +1433,135 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 	}
 	
 	
+	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection1")
+	public ResponseEntity<String> checkConnection1(@RequestParam("choice") String choice,
+			@RequestParam("connId") String connId, HttpSession httpsession) {
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", config.getRootUrl());
+		headers.add("access-control-allow-credentials", "true");
+	
+	
+		try {
+			
+			JsonObject respBody = new JsonObject();
+			System.out.println(credentials.getCurrConnObj() + " "+ credentials.getDestObj()+" "+credentials.getSrcObj());
+			if (Utilities.isSessionValid(httpsession, applicationCredentials,credentials.getUserId())) {
+				
+				ResponseEntity<String> result = null;
+				
+				
+				ConnObj currConnObj = credentials.getConnectionIds(connId);
+			    credentials.setCurrConnObj(currConnObj);
+			    credentials.setCurrSrcValid(false);
+			    credentials.setCurrDestValid(false);
+			    
+			    // Fetch sourceConfig and destinationConfig
+			    SourceConfig srcConfig= sourceConfigService.getSourceConfig(currConnObj.getSourceName());
+			    DestinationConfig destConfig =destinationConfigService.getDestinationConfig(currConnObj.getDestName());
+			    
+			    // Set Configurations in credentials
+			    credentials.setSrcObj(srcConfig);
+			    credentials.setDestObj(destConfig);
+			    
+			    
+			    // Fetch sourceCredentials and destinationCredentials
+			    SrcDestCredentials srcCredentials = srcDestCredentialsService.getCredentials(currConnObj.getSourceId(),Constants.COLLECTION_SOURCECREDENTIALS);
+			    SrcDestCredentials destCredentials = srcDestCredentialsService.getCredentials(currConnObj.getDestinationId(), Constants.COLLECTION_DESTINATIONCREDENTIALS);
+			    
+			    // Parse tokens from List<Map<String,String>> to Map<String,String>
+			    
+			    Map<String,String> srcToken = new HashMap<>();
+			    List<Map<String,String>> srcTokenData = srcCredentials.getCredentials();
+			    srcTokenData.iterator().forEachRemaining(arg0->{
+			    	srcToken.put(arg0.get("key"), arg0.get("value"));
+			    });
+			    
+			    
+			    Map<String,String> destToken = new HashMap<>();
+			    List<Map<String,String>> destTokenData = destCredentials.getCredentials();
+			    destTokenData.iterator().forEachRemaining(arg0->{
+			    	destToken.put(arg0.get("key"), arg0.get("value"));
+			    });
+			    
+			    
+			    /////////////////////////////////////Source Validation/////////////////////////////////////
+			    
+			    //Fetch new access token using refresh token
+			    if(credentials.getSrcObj().getRefresh().equals("YES"))
+		    	{
+		    		result=Utilities.token(srcConfig.getRefreshToken(),srcToken, "checkconnection1");
+		    		if (result.getStatusCode().is2xxSuccessful()) {	
+	                	try {
+	        				srcToken.putAll(new Gson().fromJson(result.getBody().replace("\\", ""), HashMap.class));
+	        			} catch (Exception e) {
+	        				for (String s : result.getBody().toString().split("&")) {
+	        				srcToken.put(s.split("=")[0], s.split("=")[1]);
+	        				}
+	        			}
+	            	
+	                }
+		    	}
+			   	
+			    //Validate the access token
+			    result  = Utilities.token(srcConfig.getValidateCredentials(),srcToken,credentials.getUserId()+"DataController.checkconnection");
+				if(result.getStatusCode().is2xxSuccessful()) {
+				
+					credentials.setSrcToken(srcToken);
+					credentials.setCurrSrcValid(true);
+					// push credentials to database & set sourceValid(true)
+				}
+			    
+				
+			   /////////////////////////////////////Destination Validation/////////////////////////////////////
+			  
+				JsonObject checkDb  = Context.getBean(DataController.class).checkDB(destToken.get("database_name"), destToken,destConfig);
+				if(checkDb.get("status").getAsBoolean()) {
+				
+					credentials.setDestToken(destToken);
+					credentials.setCurrDestValid(true);
+				}
+			    
+				
+				//checking response
+				if(!credentials.isCurrSrcValid() && !credentials.isCurrDestValid()) {
+					respBody.addProperty(Constants.RESPONSE_CODE, Constants.SRC_DEST_INVALID);
+					respBody.addProperty(Constants.RESPONSE_MESSAGE, "Source and Destination Credentials are Invalid");
+					respBody.add(Constants.RESPONSE_DATA,null);
+				}
+				else if(!credentials.isCurrSrcValid()) {
+					respBody.addProperty(Constants.RESPONSE_CODE, Constants.SOURCE_INVALID);
+					respBody.addProperty(Constants.RESPONSE_MESSAGE, "Source Credentials is Invalid");
+					respBody.add(Constants.RESPONSE_DATA,null);
+				}
+				else if(!credentials.isCurrDestValid()) {
+					respBody.addProperty(Constants.RESPONSE_CODE, Constants.DESTINATION_INVALID);
+					respBody.addProperty(Constants.RESPONSE_MESSAGE, "Destination Credentials is Invalid");
+					respBody.add(Constants.RESPONSE_DATA,null);
+				}
+				else {
+					
+					if(choice!=)
+				}
+				
+				
+				
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			} else {
+				System.out.println("Session expired!");
+				respBody = new JsonObject();
+				respBody.getAsJsonObject().addProperty("message", "Sorry! Your session has expired");
+				respBody.getAsJsonObject().addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+	}	
+	
+	
+	
 	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection")
 	public ResponseEntity<String> checkConnection(@RequestParam("choice") String choice,
 			@RequestParam("connId") String connId, HttpSession httpsession) {
@@ -1507,6 +1646,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}	
 	
+	
 	@RequestMapping("/fetchdbs")
 	private ResponseEntity<String> fetchDBs(@RequestParam("destId") String destId, HttpSession session) {
 		ResponseEntity<String> out = null;
@@ -1520,7 +1660,7 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 			
 				
 				String _id =credentials.getUserId()+"_"+destId; 
-				List<SrcDestCredentials> destList =srcDestCredentialsDAO.getAllCredentialsByRegex(_id, Constants.COLLECTION_DESTINATIONCREDENTIALS);
+				List<SrcDestCredentials> destList =srcDestCredentialsService.getAllCredentialsByRegex(_id, Constants.COLLECTION_DESTINATIONCREDENTIALS);
 				System.out.println("DBS:: "+destList);
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("status", "200");
@@ -1591,5 +1731,36 @@ private Map<String,JsonElement> infoEndpointHelper(List<List<String>> infoEndpoi
 			e.printStackTrace();
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+	}
+	
+	
+
+	//use the func def  in datacontroller
+	public void srcDestId(String type, String srcdestId) {
+		
+		try {
+			srcdestId = srcdestId.toUpperCase();
+			System.out.println(type+ " "+srcdestId);
+			Parser parse = Context.getBean(Parser.class);
+			if (type.equalsIgnoreCase("source")) {	
+				    
+				if(parse.parsingJson("source",srcdestId.toUpperCase(),config.getMongoUrl()).getStatusCode().is2xxSuccessful());{
+					credentials.setSrcObj(parse.getSrcProp());
+					credentials.setCurrSrcName(srcdestId.toLowerCase());
+					credentials.setCurrSrcValid(false);
+				}
+				
+			} else {			
+				if(parse.parsingJson("destination",srcdestId.toUpperCase(),config.getMongoUrl()).getStatusCode().is2xxSuccessful());{
+					credentials.setDestObj(parse.getDestProp());
+					credentials.setCurrDestName(srcdestId.toLowerCase());
+					credentials.setCurrDestValid(false);
+				}
+			}
+		} catch (BeansException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return;
 	}
 }

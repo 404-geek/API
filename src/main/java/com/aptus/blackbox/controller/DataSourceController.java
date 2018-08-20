@@ -33,11 +33,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
-import com.aptus.blackbox.dataInterfaces.DestinationConfigDAO;
-import com.aptus.blackbox.dataInterfaces.SourceConfigDAO;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.dataServices.DestinationConfigService;
 import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SourceConfigService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
@@ -75,7 +74,7 @@ public class DataSourceController extends RESTFetch {
 	@Autowired
 	private SourceConfigService sourceConfigService;
 	@Autowired
-	private DestinationConfigDAO destinationConfigDAO;
+	private DestinationConfigService destinationConfigService;
 	@Autowired
 	private SrcDestCredentialsService srcDestCredentialsService;
 	@Autowired
@@ -111,7 +110,7 @@ public class DataSourceController extends RESTFetch {
 	@RequestMapping(value ="/dest",method= RequestMethod.POST)
 	public void addDestinationConfig(@RequestBody String conf) {
 		DestinationConfig conf1 = new Gson().fromJson(conf, DestinationConfig.class);
-		destinationConfigDAO.createDestinationConfig(conf1);
+		destinationConfigService.createDestinationConfig(conf1);
 	}
 	
 	
@@ -168,7 +167,7 @@ public class DataSourceController extends RESTFetch {
 						
 
 				} else {			
-						DestinationConfig destObj = destinationConfigDAO.getDestinationConfig(srcdestId);
+						DestinationConfig destObj = destinationConfigService.getDestinationConfig(srcdestId);
 						if(destObj == null) {
 					    	logger.error("Destination Config Object is null");
 					    }
@@ -217,10 +216,11 @@ public class DataSourceController extends RESTFetch {
 				 * 	Check and sets if user src/dest exist						
 				 */
 				if (type.equalsIgnoreCase("source")) {
-					
+					credentials.setCurrSrcId(credentials.getUserId().toLowerCase()+"_"+credentials.getCurrSrcName().toLowerCase());
 					System.out.println("Auth Req: "+credentials.getSrcObj().getAuthtype());
 					if( credentials.getSrcObj().getAuthtype().equalsIgnoreCase("NoAuth"))
 						{
+						
 						System.out.println("No Authentication");
 						String url="/close.html";
 						URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
@@ -235,6 +235,8 @@ public class DataSourceController extends RESTFetch {
 					System.out.println("User Source Exist : "+credentials.isUsrSrcExist());
 				}
 				else {
+					credentials.setCurrDestId(credentials.getUserId().toLowerCase() + "_" + credentials.getCurrDestName().toLowerCase()+"_"+database_name);
+							
 					credentialId += credentials.getCurrDestName();
 					boolean usrDestExist = srcDestCredentialsService.srcDestCredentialsExist(credentialId.toLowerCase(), Constants.COLLECTION_DESTINATIONCREDENTIALS);
 					credentials.setUsrDestExist(usrDestExist);
@@ -872,6 +874,8 @@ public class DataSourceController extends RESTFetch {
 					currobj.setDestName(destination.toLowerCase());
 					currobj.setPeriod(Integer.parseInt(period)*1000);
 					currobj.setScheduled(schedule);
+					currobj.setSourceId(credentials.getCurrSrcId());
+					currobj.setDestinationId(credentials.getCurrDestId());
 					
 					credentials.setCurrConnObj(currobj);
 					
@@ -890,7 +894,7 @@ public class DataSourceController extends RESTFetch {
 		return null;
 	}
 	
-	@RequestMapping(method = RequestMethod.GET, value = "/createdatasourceOld")
+	/*@RequestMapping(method = RequestMethod.GET, value = "/createdatasourceOld")
 	private ResponseEntity<String> createDataSource(@RequestParam(value = "filteredEndpoints", required=false) String filteredEndpoints,
 			@RequestParam(value="scheduled") String schedule,
 			@RequestParam(value="period",required=false) String period,
@@ -1047,7 +1051,7 @@ public class DataSourceController extends RESTFetch {
 		}
 		return ret;
 	}
-	
+	*/
 		
 	@RequestMapping(method = RequestMethod.GET, value = "/createdatasource")
 	private ResponseEntity<String> createDataSource1(@RequestParam(value = "filteredEndpoints", required=false) String filteredEndpoints,
@@ -1089,6 +1093,11 @@ public class DataSourceController extends RESTFetch {
 				else {
 					conId = credentials.getUserId() + "_" + credentials.getCurrSrcName() + "_" + destination.toLowerCase() + "_"
 							+ String.valueOf(ZonedDateTime.now().toInstant().toEpochMilli());
+					
+					 
+					
+					
+					
 					Gson gson = new Gson();
 //					String schedule = filteredEndpoints.get("scheduled");
 //					String period = filteredEndpoints.get("period");

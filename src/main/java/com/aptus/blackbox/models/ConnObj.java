@@ -5,7 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConnObj implements Serializable {
+	
 	private String sourceName,destName,connectionId,scheduled;
+	private String sourceId, destinationId;
+	
 	private long period;
 	private List<Endpoint> endPoints=new ArrayList<Endpoint>();
 	public String getSourceName() {
@@ -48,6 +51,18 @@ public class ConnObj implements Serializable {
 	}
 	public void setPeriod(long period) {
 		this.period = period;
+	}
+	public String getSourceId() {
+		return sourceId;
+	}
+	public void setSourceId(String sourceId) {
+		this.sourceId = sourceId;
+	}
+	public String getDestinationId() {
+		return destinationId;
+	}
+	public void setDestinationId(String destinationId) {
+		this.destinationId = destinationId;
 	}
 	
 }

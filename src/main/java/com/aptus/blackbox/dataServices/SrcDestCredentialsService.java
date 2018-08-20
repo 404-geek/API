@@ -23,9 +23,9 @@ public class SrcDestCredentialsService {
 		return srcDestCredentialDAO.updateCredentials(credentialId, credentials, collection);
 	}
 	
-	public SrcDestCredentials readCredentials(String credentialId,String collection) {
-		return srcDestCredentialDAO.getCredentials(credentialId, collection);
-	}
+//	public SrcDestCredentials readCredentials(String credentialId,String collection) {
+//		return srcDestCredentialDAO.getCredentials(credentialId, collection);
+//	}
 
 	public SrcDestCredentials getCredentials(String credentialId, String collection) {
 		return srcDestCredentialDAO.getCredentials(credentialId, collection);
@@ -33,6 +33,11 @@ public class SrcDestCredentialsService {
 
 	public boolean srcDestCredentialsExist(String credentialId, String collection) {
 		return srcDestCredentialDAO.srcDestCredentialsExist(credentialId, collection);
+	}
+
+	public List<SrcDestCredentials> getAllCredentialsByRegex(String _id, String collectionDestinationcredentials) {
+		
+		return srcDestCredentialDAO.getAllCredentialsByRegex(_id, collectionDestinationcredentials);
 	}
 
 	

@@ -21,6 +21,7 @@ import com.aptus.blackbox.models.ConnObj;
 public class Credentials implements Serializable {
 	
 	private String userId,currSrcName,currDestName;
+	private String currSrcId,currDestId;
 	private ConnObj currConnObj;
 	private Map<String,ConnObj>connectionIds=new HashMap<>();
 	
@@ -123,8 +124,20 @@ public class Credentials implements Serializable {
 	public ConnObj getCurrConnObj() {
 		return currConnObj;
 	}
-	public void setCurrConnObj(ConnObj currConnId) {
-		this.currConnObj = currConnId;
+	public void setCurrConnObj(ConnObj currConnObj) {
+		this.currConnObj = currConnObj;
+	}
+	public String getCurrDestId() {
+		return currDestId;
+	}
+	public void setCurrDestId(String currDestId) {
+		this.currDestId = currDestId;
+	}
+	public String getCurrSrcId() {
+		return currSrcId;
+	}
+	public void setCurrSrcId(String currSrcId) {
+		this.currSrcId = currSrcId;
 	}
 
 	

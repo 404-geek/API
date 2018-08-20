@@ -1,0 +1,10 @@
+1. change redirect url
+2. change period 18000 for schedule   //// DONE
+3. check metering totalrows           //// DONE
+4. fetchdbs database name not coming  //// DONE
+5. add noauth in scheduling           //// DONE
+6. auto start schedluling
+7. logging and remove print statements
+8. check all other databases/mongoDB
+9. write script for auto-deploy
+10.auto sign in

@@ -199,7 +199,12 @@ public class UITrigger {
 		     				connObj.setConnectionId(connId);
 		     				connObj.setDestName(credentials.getCurrDestName());
 		     				connObj.setSourceName(credentials.getCurrSrcName());
+		     				
+		     				connObj.setSourceId(credentials.getCurrSrcId());
+		     				connObj.setDestinationId(credentials.getCurrDestId());
+		     				
 		     				connObj.setPeriod(Integer.parseInt(period)*1000);
+		     				
 							SchedulingObjects schObj=new SchedulingObjects();
 		        			schObj.setDestObj(credentials.getDestObj());
 		        			schObj.setDestToken(credentials.getDestToken());
@@ -295,5 +300,7 @@ public class UITrigger {
 					.body(respBody.toString());
 		}
 	}
+
+
 
 }

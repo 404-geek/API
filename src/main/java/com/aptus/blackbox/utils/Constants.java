@@ -25,6 +25,11 @@ public final class Constants {
 	public final static String RESPONSE_CODE = "status";
 	public final static String RESPONSE_MESSAGE = "message";
 	public final static String RESPONSE_DATA = "data";
+	
+	public final static int SOURCE_INVALID = 450;
+	public final static int DESTINATION_INVALID = 451;
+	public final static int SRC_DEST_INVALID = 452;
+	
 
 	
 	//Collection Names
