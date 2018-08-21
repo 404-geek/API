@@ -114,46 +114,58 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 		
 		if(!scheduleObject.getstatus().contains("31")) {
 			if(!scheduleObject.getstatus().contains("32")) {
-				long time = ZonedDateTime.now().toInstant().toEpochMilli();
-				if(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getNextPush()==0) {
-					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("35");
-					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("User Stopped Scheduling");
+			long time = ZonedDateTime.now().toInstant().toEpochMilli();
+			
+			scheduleObject.setLastPushed(time);
+					
+			
+			//publish Metering Data
+			TimeMetering timeMetering = scheduleObject.getTimeMetering();
+			int totalRows = scheduleObject.getTotalRows();
+			meteringService.addTimeMetering(userId, connectionId, timeMetering, totalRows);
+			//OLDapplicationEventPublisher.publishEvent(scheduleObject.getMetering());
+			
+			
+			
+			if(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects()
+					.get(connectionId).getNextPush()==0)
+				{
+					System.out.println("-***Encountered delete datasource :" + connectionId);
+					return;
 				}
-				else {
-					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("33");
-					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("Completed Successfully");
-					applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
-					.setNextPush(time+scheduleObject.getPeriod());
-					ScheduleEventData scheduleEventData = new ScheduleEventData();
-					scheduleEventData.setData(userId, connectionId, scheduleObject.getPeriod(),false);
-					applicationEventPublisher.publishEvent(scheduleEventData);
-				}				
-				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId)
-				.setLastPushed(time);
-				applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
-				System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));			
 				
-				//publish Metering Data
-				TimeMetering timeMetering = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getTimeMetering();
-				int totalRows = applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getTotalRows();
 				
-				meteringService.addTimeMetering(userId, connectionId, timeMetering, totalRows);
-				//OLDapplicationEventPublisher.publishEvent(applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getMetering());
+			applicationEventPublisher.publishEvent(new PostExecutorComplete(userId,connectionId));
+			System.out.println("THREAD	EXECUTOR setResult"+new Date(new Timestamp(time).getTime()));	
 			
-				
-				this.scheduleObject.setTotalRows(0);
-				this.scheduleObject.getTimeMetering().setTotalRows(0);
 			
+		
+			
+			this.scheduleObject.setTotalRows(0);
+			this.scheduleObject.getTimeMetering().setTotalRows(0);
+			if(scheduleObject.getNextPush()==0) {
+				scheduleObject.setStatus("35");
+				scheduleObject.setMessage("User Stopped Scheduling");
 			}
 			else {
-				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("32");
-				applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setMessage("One or more endpoints encountered error");
-				applicationEventPublisher.publishEvent(new InterruptThread(scheduleObject.getThread(),false, userId, connectionId));
-			}
-			System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR setResult " + 
-			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).getEndPointStatus().keySet());
+				scheduleObject.setStatus("33");
+				scheduleObject.setMessage("Completed Successfully");
+				scheduleObject
+				.setNextPush(time+scheduleObject.getPeriod());
+				ScheduleEventData scheduleEventData = new ScheduleEventData();
+				scheduleEventData.setData(userId, connectionId, scheduleObject.getPeriod(),false);
+				applicationEventPublisher.publishEvent(scheduleEventData);
+			}				
 			
+		
 		}
+		else {
+			applicationCredentials.getApplicationCred().get(userId).getSchedulingObjects().get(connectionId).setStatus("32");
+			scheduleObject.setMessage("One or more endpoints encountered error");
+			applicationEventPublisher.publishEvent(new InterruptThread(scheduleObject.getThread(),false, userId, connectionId));
+		}
+		System.out.println(Thread.currentThread().getName()+"THREAD	EXECUTOR setResult " + 
+		scheduleObject.getEndPointStatus().keySet());}
 	}
 	
 	@Override

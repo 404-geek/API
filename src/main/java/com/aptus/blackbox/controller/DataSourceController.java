@@ -38,6 +38,7 @@ import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.dataServices.DestinationConfigService;
 import com.aptus.blackbox.dataServices.MeteringService;
+import com.aptus.blackbox.dataServices.SchedulingService;
 import com.aptus.blackbox.dataServices.SourceConfigService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.dataServices.SrcDestListService;
@@ -85,6 +86,9 @@ public class DataSourceController extends RESTFetch {
 	private MeteringService meteringService;
 	@Autowired
 	private SrcDestListService srcDestListService;
+	@Autowired
+	private SchedulingService schedulingService;
+	
 	
 	
 	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
@@ -121,7 +125,7 @@ public class DataSourceController extends RESTFetch {
 	}
 	
 	
-	public void srcDestId(String type, String srcdestId) {
+	/*public void srcDestIdOLD(String type, String srcdestId) {
 		//change return type to void
 		try {
 			srcdestId = srcdestId.toUpperCase();
@@ -147,17 +151,17 @@ public class DataSourceController extends RESTFetch {
 			e.printStackTrace();
 		}
 		return;
-	}
+	}*/
 	
-	public void srcDestId1(String type, String srcdestId) {
+	public void srcDestId(String type, String srcdestId) {
 		//change return type to void
 		
 			try {
-				srcdestId = srcdestId.toUpperCase();
+				
 				System.out.println(type+ " "+srcdestId);
 				
 				if (type.equalsIgnoreCase("source")) {	
-					    SourceConfig srcobj=  sourceConfigService.getSourceConfig(srcdestId.toUpperCase());
+					    SourceConfig srcobj=  sourceConfigService.getSourceConfig(srcdestId);
 					    if(srcobj == null) {
 					    	logger.error("Source Config Object is null");
 					    }
@@ -210,7 +214,7 @@ public class DataSourceController extends RESTFetch {
 				
 				credentials.setCurrConnObj(null);///check here
 				
-				srcDestId1(type,srcdestId);
+				srcDestId(type,srcdestId);
 				String credentialId = credentials.getUserId()+"_";
 				/*
 				 * 	Check and sets if user src/dest exist						
@@ -741,8 +745,73 @@ public class DataSourceController extends RESTFetch {
 		jobject.addProperty("isvalid",false);
 		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobject.toString());
 	}
+	
 	@RequestMapping(method = RequestMethod.GET, value = "/deletedatasource")
     private ResponseEntity<String> deleteDataSource(HttpSession session, @RequestParam("connId") String connId) {
+        ResponseEntity<String> out = null;
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Cache-Control", "no-cache");
+        headers.add("access-control-allow-origin", config.getRootUrl());
+        headers.add("access-control-allow-credentials", "true");
+        try {         
+            HttpEntity<?> httpEntity;
+            if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
+               
+            	boolean deleteUserConnector = userConnectorSerive.deleteConnectorObject(credentials.getUserId(), connId);
+                System.out.println("Delete user Connector: "+deleteUserConnector);
+                
+            	if (deleteUserConnector) { 
+                	
+                	applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
+                	
+                	System.out.println("UserID:"+applicationCredentials.getApplicationCred().get(credentials.getUserId()));
+                	System.out.println("ConnID:"+applicationCredentials.getApplicationCred().get(credentials
+            				.getUserId()).getSchedulingObjects().get(connId));
+                	
+                	if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
+                		if(applicationCredentials.getApplicationCred().get(credentials
+                				.getUserId()).getSchedulingObjects().get(connId)!=null) {
+                			System.out.println("--**PUBLISHING to INTERRUPT THREAD");
+                			applicationEventPublisher.publishEvent(new InterruptThread(applicationCredentials.getApplicationCred().get(credentials
+                    				.getUserId()).getSchedulingObjects().get(connId).getThread()
+                					, false
+                					, credentials.getUserId(), credentials.getCurrConnObj().getConnectionId()));
+                			System.out.println("--**CAlling delete connection");
+                			System.out.println("Delete user scheduleobj: "+schedulingService.deleteConnection(credentials.getUserId(), connId));
+                		}
+                	}
+                    System.out.println(connId + "***********Deleted!!!!**************");
+                    JsonObject respBody = new JsonObject();
+                    respBody.addProperty("data", "Sucessfully Deleted");
+                    respBody.addProperty("status", "200");
+                    return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+                }
+            }
+            else {
+				System.out.println("Session expired!");
+    			JsonObject respBody = new JsonObject();
+    			respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+            }
+        }
+        catch(HttpClientErrorException e) {
+            JsonObject respBody = new JsonObject();
+            respBody.addProperty("data", "Error");
+            respBody.addProperty("status", "404");
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }   
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+    }
+	
+	
+	
+	@RequestMapping(method = RequestMethod.GET, value = "/deletedatasourceOLD")
+    private ResponseEntity<String> deleteDataSourceOLD(HttpSession session, @RequestParam("connId") String connId) {
         ResponseEntity<String> out = null;
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache");

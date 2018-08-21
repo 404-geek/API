@@ -30,5 +30,9 @@ public class UserConnectorService {
 	public boolean addConnectorObj(String _id,ConnObj connectorObj) {
 		return userConnectorDAO.addConnectorObj(_id, connectorObj);
 	}
+
+	public boolean deleteConnectorObject(String _id,String connectionId) {
+		return userConnectorDAO.deleteConnectorObject(_id, connectionId);
+	}
 	
 }

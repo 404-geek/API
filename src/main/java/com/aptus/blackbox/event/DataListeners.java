@@ -152,14 +152,23 @@ public class DataListeners {
 			connectionsTaskScheduler.setConnectionsTaskScheduler(connId,userId);
 			long period = scheduleEventData.getPeriod();
 			ScheduledFuture<?> future;
+			System.out.println("NEXT PUSH::"+applicationCredentials.getApplicationCred().get(scheduleEventData.getUserId())
+			.getSchedulingObjects().get(scheduleEventData.getConnId()).getNextPush());
+			
+			if(applicationCredentials.getApplicationCred().get(scheduleEventData.getUserId()).getSchedulingObjects()
+			.get(scheduleEventData.getConnId()).getNextPush()!=0) {
 			if(!scheduleEventData.isFirst()) {
 				future = threadPoolTaskScheduler.schedule(connectionsTaskScheduler, new Date(ZonedDateTime.now().toInstant().toEpochMilli()+period));
 			}
 			else {
-				 future = threadPoolTaskScheduler.scheduleAtFixedRate(connectionsTaskScheduler,period);
+				 future = threadPoolTaskScheduler.schedule(connectionsTaskScheduler,new Date(ZonedDateTime.now().toInstant().toEpochMilli()));
 			}
 			applicationCredentials.getApplicationCred().get(userId).
 			getSchedulingObjects().get(connId).setThread(future);
+			}
+			/*else {
+				System.out.println("Delete user scheduleobj: "+schedulingService.deleteConnection(userId, connId));
+			}*/
 		} catch (BeansException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -181,12 +190,19 @@ public class DataListeners {
 	@EventListener
 	public void interruptScheduler(InterruptThread thread)
 	{
+		
 		try {
-			applicationCredentials.getApplicationCred().get(thread.getUserId()).getSchedulingObjects().get(thread.getConnectionId()).setNextPush(0);
-			 thread.getThread().cancel(false);
-			 if(thread.isUserInterrupted()) {
+			applicationCredentials.getApplicationCred().get(thread.getUserId()).getSchedulingObjects()
+			.get(thread.getConnectionId()).setNextPush(0);
+			
+	// thread.getThread().cancel(false);
+			System.out.println("*&&%% thread.isUserInterrupted() "+thread.isUserInterrupted());
+			
+			if(thread.isUserInterrupted()) {
 				 applicationCredentials.getApplicationCred().get(thread.getUserId()).getSchedulingObjects().get(thread.getConnectionId()).setStatus("35");
 				 applicationCredentials.getApplicationCred().get(thread.getUserId()).getSchedulingObjects().get(thread.getConnectionId()).setMessage("User Stopped Scheduling");
+				 System.out.println("$$$$ PUSH status before Stopped scheduling");
+				 System.out.println("--**CAlling push status frrom Interrupt scheduler");
 				 pushStatus(thread.getConnectionId(), thread.getUserId(), "User Stopped Scheduling");
 			 }
 		} catch (Exception e) {

@@ -1,19 +1,21 @@
 package com.aptus.blackbox.controller;
 
+import java.io.File;
 import java.net.URI;
+import java.text.NumberFormat;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.servlet.http.HttpSession;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -302,5 +304,66 @@ public class UITrigger {
 	}
 
 
+	@RequestMapping(method = RequestMethod.GET, value = "/resourceusage")
+	private ResponseEntity<String> getusage(HttpSession session){
+		HttpHeaders headers = new HttpHeaders();
+        headers.add("Cache-Control", "no-cache");
+        headers.add("access-control-allow-origin", config.getRootUrl());
+        headers.add("access-control-allow-credentials", "true");
+		
+		try {
+			JSONObject details = new JSONObject();
+			JSONObject disk = new JSONObject();
+			JSONObject os = new JSONObject();
+			JSONObject mem = new JSONObject();
+			JSONArray arr = new JSONArray();
+			File[] roots = File.listRoots();
+			Runtime runtime = Runtime.getRuntime();
+			NumberFormat format = NumberFormat.getInstance();
+			os.put("OS name: ", System.getProperty("os.name"));
+			os.put("OS version: ", System.getProperty("os.version"));
+			os.put("OS architecture: ", System.getProperty("os.arch"));
+			os.put("Available processors (cores): ", runtime.availableProcessors());
+			details.put("OS info: ", os);
+			
+			mem.put("Free memory: ", format.format(runtime.freeMemory() / 1024));
+			mem.put("Allocated memory: ", format.format(runtime.totalMemory() / 1024));
+			mem.put("Max memory: ", format.format(runtime.maxMemory() / 1024));
+			mem.put("Total free memory: ", format.format((runtime.freeMemory() + 
+					(runtime.maxMemory() - runtime.totalMemory())) / 1024));
+			details.put("Memory info: ", mem);
+			
+			for (File root : roots) {
+				disk.put("File system root: ",root.getAbsolutePath());
+				disk.put("Total space (bytes): ", root.getTotalSpace());
+				disk.put("Free space (bytes): ", root.getFreeSpace());
+				disk.put("Usable space (bytes): ", root.getUsableSpace());
+				arr.put(disk);						
+			}
+			
+			details.put("Disk info: ",arr);
+			
+			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(details.toString());
+			
+		} 
+		catch(HttpClientErrorException e) {
+            JsonObject respBody = new JsonObject();
+            respBody.addProperty("data", "Error");
+            respBody.addProperty("status", "404");
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+        }
+		
+		catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+		
+
+	}
+	
+	
 
 }

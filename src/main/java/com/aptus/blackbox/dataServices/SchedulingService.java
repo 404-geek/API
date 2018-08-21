@@ -25,5 +25,9 @@ public class SchedulingService {
 		
 		return schedulingDAO.addConnection(userId, connectionId, connection);
 	}
+
+	public boolean deleteConnection(String userId, String connectionId) {
+		return schedulingDAO.deleteConnection(userId, connectionId);
+	}
 	
 }

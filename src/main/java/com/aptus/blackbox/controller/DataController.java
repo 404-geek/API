@@ -1434,9 +1434,9 @@ public class DataController extends RESTFetch {
 				System.out.println(currConnObj.getDestinationId() + " ::ids:: " + currConnObj.getSourceId());
 				System.out.println(currConnObj.getDestName() + " ::names:: " + currConnObj.getSourceName());
 				// Fetch sourceConfig and destinationConfig
-				SourceConfig srcConfig = sourceConfigService.getSourceConfig(currConnObj.getSourceName().toUpperCase());
+				SourceConfig srcConfig = sourceConfigService.getSourceConfig(currConnObj.getSourceName());
 				DestinationConfig destConfig = destinationConfigService
-						.getDestinationConfig(currConnObj.getDestName().toUpperCase());
+						.getDestinationConfig(currConnObj.getDestName());
 
 				// Set Configurations in credentials
 				credentials.setSrcObj(srcConfig);
@@ -1448,26 +1448,28 @@ public class DataController extends RESTFetch {
 				SrcDestCredentials destCredentials = srcDestCredentialsService
 						.getCredentials(currConnObj.getDestinationId(), Constants.COLLECTION_DESTINATIONCREDENTIALS);
 
-				// Parse tokens from List<Map<String,String>> to Map<String,String>
+				
 
-				Map<String, String> srcToken = new HashMap<>();
-				List<Map<String, String>> srcTokenData = srcCredentials.getCredentials();
-				srcTokenData.iterator().forEachRemaining(arg0 -> {
-					srcToken.put(arg0.get("key"), arg0.get("value"));
-				});
-
-				Map<String, String> destToken = new HashMap<>();
-				List<Map<String, String>> destTokenData = destCredentials.getCredentials();
-				destTokenData.iterator().forEachRemaining(arg0 -> {
-					destToken.put(arg0.get("key"), arg0.get("value"));
-				});
+				
+				
+				
 
 				///////////////////////////////////// Source Validation/////////////////////////////////////
 
 				// Fetch new access token using refresh token
 				if (credentials.getSrcObj().getAuthtype().equalsIgnoreCase("NoAuth")) {
 					credentials.setCurrSrcValid(true);
+					
 				} else {
+					// Parse tokens from List<Map<String,String>> to Map<String,String>
+					Map<String, String> srcToken = new HashMap<>();
+					
+					List<Map<String, String>> srcTokenData = srcCredentials.getCredentials();
+					srcTokenData.iterator().forEachRemaining(arg0 -> {
+						srcToken.put(arg0.get("key"), arg0.get("value"));
+					});
+					
+					
 					if (credentials.getSrcObj().getRefresh().equals("YES")) {
 						result = Utilities.token(srcConfig.getRefreshToken(), srcToken, "checkconnection1");
 						if (result.getStatusCode().is2xxSuccessful()) {
@@ -1494,6 +1496,13 @@ public class DataController extends RESTFetch {
 				}
 
 				///////////////////////////////////// Destination Validation/////////////////////////////////////
+				
+				// Parse tokens from List<Map<String,String>> to Map<String,String>
+				Map<String, String> destToken = new HashMap<>();
+				List<Map<String, String>> destTokenData = destCredentials.getCredentials();
+				destTokenData.iterator().forEachRemaining(arg0 -> {
+					destToken.put(arg0.get("key"), arg0.get("value"));
+				});
 
 				JsonObject checkDb = Context.getBean(DataController.class).checkDB(destToken.get("database_name"),
 						destToken, destConfig);
@@ -1558,9 +1567,9 @@ public class DataController extends RESTFetch {
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
-
-	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection1")
-	public ResponseEntity<String> checkConnection1(@RequestParam("choice") String choice,
+/*
+	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection1OLD")
+	public ResponseEntity<String> checkConnection1OLD(@RequestParam("choice") String choice,
 			@RequestParam("connId") String connId, HttpSession httpsession) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
@@ -1646,7 +1655,7 @@ public class DataController extends RESTFetch {
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
-
+*/
 	@RequestMapping("/fetchdbs")
 	private ResponseEntity<String> fetchDBs(@RequestParam("destId") String destId, HttpSession session) {
 		ResponseEntity<String> out = null;
@@ -1731,38 +1740,5 @@ public class DataController extends RESTFetch {
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 
-	// use the func def in datacontroller
-	public void srcDestId(String type, String srcdestId) {
-
-		try {
-			srcdestId = srcdestId.toUpperCase();
-			System.out.println(type + " " + srcdestId);
-			Parser parse = Context.getBean(Parser.class);
-			if (type.equalsIgnoreCase("source")) {
-
-				if (parse.parsingJson("source", srcdestId.toUpperCase(), config.getMongoUrl()).getStatusCode()
-						.is2xxSuccessful())
-					;
-				{
-					credentials.setSrcObj(parse.getSrcProp());
-					credentials.setCurrSrcName(srcdestId.toLowerCase());
-					credentials.setCurrSrcValid(false);
-				}
-
-			} else {
-				if (parse.parsingJson("destination", srcdestId.toUpperCase(), config.getMongoUrl()).getStatusCode()
-						.is2xxSuccessful())
-					;
-				{
-					credentials.setDestObj(parse.getDestProp());
-					credentials.setCurrDestName(srcdestId.toLowerCase());
-					credentials.setCurrDestValid(false);
-				}
-			}
-		} catch (BeansException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return;
-	}
+	
 }

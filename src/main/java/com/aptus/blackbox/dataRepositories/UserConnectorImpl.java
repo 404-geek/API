@@ -12,6 +12,8 @@ import org.springframework.stereotype.Repository;
 import com.aptus.blackbox.dataInterfaces.UserConnectorDAO;
 import com.aptus.blackbox.datamodels.UserConnectors;
 import com.aptus.blackbox.models.ConnObj;
+import com.mongodb.BasicDBObject;
+import com.mongodb.WriteResult;
 
 @Repository
 public class UserConnectorImpl implements UserConnectorDAO{
@@ -39,11 +41,13 @@ public class UserConnectorImpl implements UserConnectorDAO{
 		// TODO Auto-generated method stub
 		return false;
 	}
-
 	@Override
 	public boolean deleteConnectorObject(String _id, String connectionId) {
-		// TODO Auto-generated method stub
-		return false;
+		Query query = new Query();
+		query.addCriteria(Criteria.where("_id").is(_id));
+		Update update = new Update().pull("srcdestId", new BasicDBObject("connectionId",connectionId));
+		WriteResult res = mongoTemplate.updateFirst(query, update, UserConnectors.class);
+		return res.wasAcknowledged();
 	}
 
 	@Override

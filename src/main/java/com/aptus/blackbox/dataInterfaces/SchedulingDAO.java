@@ -7,4 +7,6 @@ public interface SchedulingDAO {
 	public void createUser(ScheduleStatus scheduleStatus);
 
 	public boolean addConnection(String userId, String connectionId, Connection connection);
+
+	public boolean deleteConnection(String userId, String connectionId);
 }

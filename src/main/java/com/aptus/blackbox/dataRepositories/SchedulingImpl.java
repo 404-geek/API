@@ -34,5 +34,15 @@ public class SchedulingImpl implements SchedulingDAO{
 	}
 
 
+	@Override
+	public boolean deleteConnection(String userId, String connectionId) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("_id").is(userId));
+		Update update= new Update().unset("connection."+connectionId);
+		WriteResult result = mongoTemplate.updateFirst(query, update, ScheduleStatus.class); 
+		return result.wasAcknowledged();
+	}
+
+
 	
 }
