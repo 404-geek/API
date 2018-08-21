@@ -30,6 +30,10 @@ public final class Constants {
 	public final static int DESTINATION_INVALID = 451;
 	public final static int SRC_DEST_INVALID = 452;
 	
+	public final static int SOURCE_VALID = 460;
+	public final static int DESTINATION_VALID = 461;
+	public final static int SRC_DEST_VALID = 462;
+	
 
 	
 	//Collection Names

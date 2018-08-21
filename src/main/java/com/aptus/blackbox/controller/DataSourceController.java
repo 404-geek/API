@@ -186,7 +186,7 @@ public class DataSourceController extends RESTFetch {
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/validate")
-	private ResponseEntity<String> verifyUser(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session,
+	private ResponseEntity<String> validate(@RequestParam("type") String type,@RequestParam("srcdestId") String srcdestId,HttpSession session,
 			@RequestParam(value ="database_name",required=false) String database_name,
 			@RequestParam(value ="db_username",required=false) String db_username,
 			@RequestParam(value ="db_password",required=false) String db_password,
@@ -700,18 +700,26 @@ public class DataSourceController extends RESTFetch {
 					else {
 						ResponseEntity<String> out = Utilities.token(credentials.getSrcObj().getValidateCredentials(), credentials.getSrcToken(), "isvalid");
 						isvalid = out.getStatusCode().is2xxSuccessful();
-						Context.getBean(SourceController.class).saveValues(out);
+						if(isvalid)
+						{
+							Context.getBean(SourceController.class).saveValues(out);
+							applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), null, credentials.getSrcToken(), null, credentials.getCurrSrcName(), null,credentials.getCurrSrcId(),null, credentials.getUserId()));
+						}
 					}
 					//isvalid=credentials.isCurrSrcValid();
 					credentials.setCurrSrcValid(isvalid);
 				}
 				else if(type.equals("destination")) {
+					
 					if(!credentials.getCurrDestName().equalsIgnoreCase(srcDestId)) {
 						isvalid=false;
 					}
 					else
 						isvalid=Context.getBean(DataController.class).checkDB(credentials.getDestToken().get("database_name"), credentials.getDestToken(), credentials.getDestObj()).get("code").getAsString().equalsIgnoreCase("200");
 					//isvalid=credentials.isCurrDestValid();
+					if(isvalid) {
+						applicationEventPublisher.publishEvent(new PushCredentials(null, credentials.getDestObj(), null, credentials.getDestToken(), null, credentials.getCurrDestName(),null,credentials.getCurrDestId(), credentials.getUserId()));
+					}
 					credentials.setCurrDestValid(isvalid);
 				}
 				JsonObject jobject = new JsonObject();
@@ -1135,6 +1143,8 @@ public class DataSourceController extends RESTFetch {
 					currobj.setDestName(destination.toLowerCase());
 					currobj.setPeriod(Integer.parseInt(period)*1000);
 					currobj.setScheduled(schedule);
+					currobj.setSourceId(credentials.getCurrSrcId());
+					currobj.setDestinationId(credentials.getCurrDestId());
 					
 					credentials.setCurrConnObj(currobj);
 					System.out.println("DatasourceController:createdatasource\t"+credentials.getCurrConnObj().getConnectionId());
@@ -1152,11 +1162,11 @@ public class DataSourceController extends RESTFetch {
 					
 					applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
 					
-					//publish credentials
+				/*	//publish credentials
 					applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), credentials.getDestObj(),credentials.getSrcToken() , credentials.getDestToken(),
 							credentials.getCurrSrcName(), destination.toLowerCase(), credentials.getUserId()));				
 					System.out.println("Data Source credentials pushed");
-					
+					*/
 					credentials.setCurrConnObj(currobj);
 					
 					if(choice.equalsIgnoreCase("export")) {

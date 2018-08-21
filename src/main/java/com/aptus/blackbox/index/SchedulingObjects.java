@@ -14,6 +14,7 @@ import com.aptus.blackbox.event.Metering;
 
 public class SchedulingObjects implements Serializable{
 	private boolean SrcValid,DestValid;
+	private String sourceId,destinationId;
 	private String status,message,DestName,SrcName;
 	private long lastPushed,nextPush,period;
 	private Map<String,Map<String,Status>>endPointStatus = new HashMap<String,Map<String,Status>>();
@@ -157,6 +158,22 @@ public class SchedulingObjects implements Serializable{
 
 	public void setTotalRows(int totalRows) {
 		this.totalRows = totalRows;
+	}
+
+	public String getSourceId() {
+		return sourceId;
+	}
+
+	public void setSourceId(String sourceId) {
+		this.sourceId = sourceId;
+	}
+
+	public String getDestinationId() {
+		return destinationId;
+	}
+
+	public void setDestinationId(String destinationId) {
+		this.destinationId = destinationId;
 	}
 
 }

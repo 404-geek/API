@@ -41,14 +41,14 @@ import sun.misc.BASE64Encoder;
 public class Utilities {public static boolean isSessionValid(HttpSession session,ApplicationCredentials credentials,String UserID)
 {
 //	
-	System.out.println("==========SESSION===BEGIN========");
+/*	System.out.println("==========SESSION===BEGIN========");
 	System.out.println("SESSION\t"+session.getId().equals(credentials.getSessionId().get(UserID)));
 	System.out.println("SESSION ID\t"+session.getId());
 	System.out.println("SESSION USER\t"+UserID);
 	System.out.println("SESSION CRED SESSION ID\t"+credentials.getSessionId().get(UserID));
-//	System.out.println("SESSION" + credentials.getSessionId());
-	System.out.println("==========SESSION===END=======");
 
+	System.out.println("==========SESSION===END=======");
+*/
 
 	return session.getId().equals(credentials.getSessionId().get(UserID));		
 }	

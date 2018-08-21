@@ -11,9 +11,9 @@ public class PushCredentials {
 	private DestinationConfig destObj;
 	private Map<String,String> SrcToken=new HashMap<>();
 	private Map<String,String> DestToken=new HashMap<>();
-	private String srcName,destName,userId;
+	private String srcName,destName,sourceId,destinationId,userId;
 	public PushCredentials(SourceConfig srcObj, DestinationConfig destObj,Map<String,String> SrcToken
-			,Map<String,String> DestToken, String srcName,String destName,String userId) {
+			,Map<String,String> DestToken, String srcName,String destName,String sourceId,String destinationId,String userId) {
 		this.srcName = srcName;
 		this.srcObj = srcObj;
 		this.destName=destName;
@@ -21,6 +21,8 @@ public class PushCredentials {
 		this.userId=userId;
 		this.DestToken = DestToken;
 		this.SrcToken=SrcToken;
+		this.sourceId=sourceId;
+		this.destinationId=destinationId;
 	}
 	public SourceConfig getSrcObj() {
 		return srcObj;
