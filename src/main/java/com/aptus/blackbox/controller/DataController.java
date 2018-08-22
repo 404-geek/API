@@ -1421,6 +1421,8 @@ public class DataController extends RESTFetch {
 			if (Utilities.isSessionValid(httpsession, applicationCredentials, credentials.getUserId())) {
 
 				ResponseEntity<String> result = null;
+				credentials.setSrcToken(new HashMap<String,String>());
+				credentials.setDestToken(new HashMap<String,String>());
 
 				ConnObj currConnObj = credentials.getConnectionIds(connId);
 				credentials.setCurrConnObj(currConnObj);
@@ -1459,6 +1461,7 @@ public class DataController extends RESTFetch {
 				// Fetch new access token using refresh token
 				if (credentials.getSrcObj().getAuthtype().equalsIgnoreCase("NoAuth")) {
 					credentials.setCurrSrcValid(true);
+					
 					
 				} else {
 					// Parse tokens from List<Map<String,String>> to Map<String,String>
