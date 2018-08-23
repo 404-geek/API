@@ -3,6 +3,7 @@ package com.aptus.blackbox.controller;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -208,13 +209,14 @@ public class DataSourceController extends RESTFetch {
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
-			System.out.println("inside validate function");
+			
 			
 			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
 				
 				credentials.setCurrConnObj(null);///check here
 				
 				srcDestId(type,srcdestId);
+				System.out.println("inside validate function:"+credentials.getSrcObj());
 				String credentialId = credentials.getUserId()+"_";
 				/*
 				 * 	Check and sets if user src/dest exist						
@@ -692,9 +694,11 @@ public class DataSourceController extends RESTFetch {
 					if(credentials.getSrcObj().getAuthtype().equalsIgnoreCase("NoAuth")) {
 						isvalid = true;
 						credentials.setCurrSrcValid(isvalid);
-
+						credentials.setSrcToken(new HashMap<String, String>());
 						JsonObject jobject = new JsonObject();
 						jobject.addProperty("isvalid",isvalid);
+						//publish source credentials having no  authentication
+						applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), null, credentials.getSrcToken(), null, credentials.getCurrSrcName(), null,credentials.getCurrSrcId(),null, credentials.getUserId()));
 						return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobject.toString());
 					}
 					
@@ -707,6 +711,7 @@ public class DataSourceController extends RESTFetch {
 						if(isvalid)
 						{
 							Context.getBean(SourceController.class).saveValues(out);
+							//publish source credentials having authentication
 							applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), null, credentials.getSrcToken(), null, credentials.getCurrSrcName(), null,credentials.getCurrSrcId(),null, credentials.getUserId()));
 						}
 					}

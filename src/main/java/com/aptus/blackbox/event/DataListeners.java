@@ -232,6 +232,8 @@ public class DataListeners {
 				
 				List<Map<String,String>> mSrcDestCred;
 				SrcDestCredentials srcDestCredentials;
+				System.out.println("srcname: "+pushCredentials.getSrcName() + "srctoken: " +pushCredentials.getSrcToken()+
+						"srcobj: "+pushCredentials.getSrcObj());
 				
 				// sourceCredentials
 				if((pushCredentials.getSrcName()!=null)&&(pushCredentials.getSrcToken()!=null)&&(pushCredentials.getSrcObj()!=null))
@@ -262,7 +264,7 @@ public class DataListeners {
 					jsonObj.addProperty("_id",
 							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getSrcName().toLowerCase());
 					jsonObj.add("credentials", sourceBody);
-				//OLD	Utilities.postpatchMetaData(jsonObj, "source", "POST",pushCredentials.getUserId(),config.getMongoUrl());
+				
 					
 				}
 				// destCredentials
@@ -284,9 +286,7 @@ public class DataListeners {
 						tmp.addProperty("value", String.valueOf(mp.getValue()));
 						destBody.add(tmp);
 					}
-					jsonObj = new JsonObject();				
-					
-					
+					jsonObj = new JsonObject();	
 					srcDestCredentials  = new SrcDestCredentials();
 					srcDestCredentials.setCredentialId(pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase()+"_"+
 							pushCredentials.getDestToken().get("database_name"));
@@ -298,7 +298,6 @@ public class DataListeners {
 							pushCredentials.getUserId().toLowerCase() + "_" + pushCredentials.getDestName().toLowerCase() + "_"
 									+ pushCredentials.getDestToken().get("database_name"));
 					jsonObj.add("credentials", destBody);
-		//OLD			Utilities.postpatchMetaData(jsonObj, "destination", "POST",pushCredentials.getUserId(),config.getMongoUrl());
 					
 				}
 			} catch (Exception e) {
@@ -375,44 +374,7 @@ public class DataListeners {
 			System.out.println("PUSHING SCHEDULING TO DB");
 			schedulingService.addConnection(userId, connectionId, connection);
 			
-			//OLD
-			/*
-			connStatus.add(connectionId, temp);
-			ResponseEntity<String> out = null;
-			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-			String filter = "{\"_id\":\"" + userId.toLowerCase() + "\"}";
-			String url;
-			url = config.getMongoUrl()+"/credentials/scheduledStatus?filter=" + filter;
 			
-			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-			HttpHeaders headers = new HttpHeaders();
-			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-			
-			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
-			JsonObject jobj = jelem.getAsJsonObject();
-			Boolean isPost=false;
-			if(jobj.get("_returned").getAsInt() == 0) {
-				connStatus.addProperty("_id", userId);
-				isPost=true;
-			}
-			headers = new HttpHeaders();
-			headers.add("Content-Type", "application/json");
-			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-			httpEntity = new HttpEntity<Object>(connStatus.toString(),headers);
-			if(isPost) {
-				url = config.getMongoUrl()+"/credentials/scheduledStatus";
-				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity,String.class);
-			}
-			else {
-				url = config.getMongoUrl()+"/credentials/scheduledStatus/"+userId;
-				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
-			}
-			System.out.println(connStatus.toString());
-			System.out.println("url = "+url);*/
 			System.out.println("PUSHING SCHEDULING TO DB COMPLETED");
 		} 
 		catch(JsonSyntaxException e) {
@@ -427,124 +389,5 @@ public class DataListeners {
 		}
 	}
 	
-	
-//OLD
-	/*
-	@EventListener
-	private void pushMeteringInfo(Metering metering) {
-		HttpHeaders headers = new HttpHeaders();
-		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
-        headers.add("Content-Type", "application/json");
-        Gson gson = new Gson();
-		try {
-			System.out.println("-----------Pushing Metering Data--------started-------");
-			ResponseEntity<String> out = null;
-			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-			String filter = "{\"_id\":\"" + metering.getUserId() + "\"}";
-			String url;
-			url = config.getMongoUrl()+"/credentials/metering?filter=" + filter;
-			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();		
-			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-			
-			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
-			JsonObject jobj = jelem.getAsJsonObject();
-			JsonObject time = new JsonObject();
-			time.addProperty("Total Rows", metering.getTotalRowsFetched());
-			time.addProperty("Type", metering.getType());	
-			time.addProperty("Time", metering.getTime());
 
-			
-			
-			
-			
-			JsonObject endPoints = new JsonObject();
-			for(Entry<String, List<MeteredEndpoints>> temp:metering.getRowsFetched().entrySet()) {
-				JsonArray categoryData = new JsonArray();
-				for(MeteredEndpoints me:temp.getValue()){
-					JsonObject endPoint = new JsonObject();
-					endPoint.addProperty("name", me.getEndpoint());
-					endPoint.addProperty("rows", me.getNumRecords());
-					categoryData.add(endPoint);
-				}
-				endPoints.add(temp.getKey(), categoryData);
-
-			}
-			time.add("Endpoints", endPoints);
-			
-			if(jobj.get("_returned").getAsInt() == 0 ? false : true) {
-				url = config.getMongoUrl()+"/credentials/metering/"+metering.getUserId().toLowerCase();
-				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();		
-				httpEntity = new HttpEntity<Object>(headers);
-				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				
-				int TotalRows = gson.fromJson(out.getBody(), JsonObject.class).get("Total rows").getAsInt();
-				JsonObject addtoset=new JsonObject();
-				JsonArray each=new JsonArray();
-				each.add(time);
-				if(gson.fromJson(out.getBody(), JsonObject.class).get(metering.getConnId())!=null) {
-					int numRows = gson.fromJson(out.getBody(), JsonObject.class).get(metering.getConnId())
-							.getAsJsonObject().get("Total rows").getAsInt();
-					System.out.println(numRows);
-					numRows+=metering.getTotalRowsFetched();
-					
-					
-						
-					
-					
-					JsonObject e=new JsonObject();
-					e.add("$each", each);
-					
-					JsonObject f=new JsonObject();
-					f.add(metering.getConnId()+"."+"MeteringInfo", e);
-					System.out.println(f);
-					addtoset.add("$addToSet", f);
-					addtoset.addProperty(metering.getConnId()+"."+"Total rows", numRows);
-					addtoset.addProperty("Total rows", TotalRows+metering.getTotalRowsFetched());					
-				}
-				else {
-					JsonObject connId = new JsonObject();
-					connId.add("MeteringInfo", each);
-					connId.addProperty("Total rows", metering.getTotalRowsFetched());
-					addtoset.add(metering.getConnId(), connId);
-					addtoset.addProperty("Total rows",TotalRows+metering.getTotalRowsFetched());
-				}
-				System.out.println(addtoset);
-				url = config.getMongoUrl()+"/credentials/metering/"+metering.getUserId();
-				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				httpEntity = new HttpEntity<Object>(addtoset.toString(),headers);
-				out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
-			}
-			else {
-				
-				JsonArray meteringInfo=new JsonArray();
-				meteringInfo.add(time);				
-				JsonObject upper = new JsonObject();				
-				upper.addProperty("_id", metering.getUserId());				
-				JsonObject connId=new JsonObject();
-				connId.add("MeteringInfo", meteringInfo);
-				connId.addProperty("Total rows", metering.getTotalRowsFetched());
-				upper.add(metering.getConnId(), connId);
-				upper.addProperty("Total rows", metering.getTotalRowsFetched());
-				httpEntity = new HttpEntity<Object>(upper.toString(),headers);
-				url = config.getMongoUrl()+"/credentials/metering";
-				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();	
-				out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity,String.class);
-			}
-			System.out.println("-----------Pushing Metering Data--------ended-------");
-			applicationEventPublisher.publishEvent(new Socket(metering.getUserId()));
-		} catch (RestClientException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JsonSyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-	}*/
 }

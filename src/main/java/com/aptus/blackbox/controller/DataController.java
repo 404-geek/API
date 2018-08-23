@@ -456,11 +456,10 @@ public class DataController extends RESTFetch {
 		header.add("access-control-allow-origin", config.getRootUrl());
 		header.add("access-control-allow-credentials", "true");
 		try {
+			
 			if (Utilities.isSessionValid(httpsession, applicationCredentials, credentials.getUserId())) {
-
-				if (choice.equalsIgnoreCase("view")) {
-					return validateSourceCred(choice);
-				} else if (credentials.getCurrConnObj().getScheduled().equalsIgnoreCase("true")
+				SourceConfig obj = credentials.getSrcObj();
+				if (credentials.getCurrConnObj().getScheduled().equalsIgnoreCase("true")
 						&& choice.equalsIgnoreCase("export")) {
 					SchedulingObjects schObj = new SchedulingObjects();
 					schObj.setDestObj(credentials.getDestObj());
@@ -508,7 +507,7 @@ public class DataController extends RESTFetch {
 					respBody.addProperty("data", "published");
 					return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
 				} else {
-					return validateSourceCred(choice);
+					return fetchEndpointsData(obj.getDataEndPoints(), choice);
 
 				}
 			} else {
@@ -525,93 +524,7 @@ public class DataController extends RESTFetch {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
 	}
 
-	private ResponseEntity<String> validateSourceCred(String choice) {
-		ResponseEntity<String> ret = null;
-		HttpHeaders header = new HttpHeaders();
-		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", config.getRootUrl());
-		header.add("access-control-allow-credentials", "true");
-		try {
-
-			SourceConfig obj = credentials.getSrcObj();
-			if (obj.getRefresh().equals("YES")) {
-				ret = Utilities.token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
-						"DataController.validateSourceCred");
-				if (!ret.getStatusCode().is2xxSuccessful()) {
-					JsonObject respBody = new JsonObject();
-					respBody.addProperty("message", "Re-authorize");
-					respBody.addProperty("status", "51");
-					respBody.add("data", null);
-					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
-
-				} else {
-					// next piece of code is for saveValues
-					try {
-						credentials.getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
-					} catch (Exception e) {
-						for (String s : ret.getBody().toString().split("&")) {
-							System.out.println(s);
-							credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
-						}
-					}
-					applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(),
-							credentials.getDestObj(), credentials.getSrcToken(), credentials.getDestToken(),
-							credentials.getCurrSrcName(), credentials.getCurrDestName(), credentials.getCurrSrcId(),
-							credentials.getCurrDestId(), credentials.getUserId()));
-
-					ret = validateData(obj.getValidateCredentials(), obj.getDataEndPoints(), choice);
-					return ret;
-				}
-			} else {
-
-				if (credentials.getSrcObj().getAuthtype().equalsIgnoreCase("NoAuth")) {
-					ResponseEntity<String> response = null;
-					credentials.setCurrSrcValid(true);
-					if (choice.equalsIgnoreCase("export") || choice.equalsIgnoreCase("view")) {
-						response = fetchEndpointsData(obj.getDataEndPoints(), choice);
-					} else {
-						JsonObject respBody = new JsonObject();
-						respBody.addProperty("message", "Validated");
-						respBody.addProperty("status", "200");
-						return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
-					}
-					return response;
-
-				}
-
-				ret = Utilities.token(obj.getValidateCredentials(), credentials.getSrcToken(),
-						"DataController.validateSourceCred");
-				if (!ret.getStatusCode().is2xxSuccessful()) {
-					credentials.setCurrSrcValid(false);
-					JsonObject respBody = new JsonObject();
-					respBody.addProperty("message", "Re-authorize");
-					respBody.addProperty("status", "51");
-					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
-
-				} else {
-					credentials.setCurrSrcValid(true);
-					// ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
-					ResponseEntity<String> out = null;
-					if (choice.equalsIgnoreCase("export") || choice.equalsIgnoreCase("view")) {
-						out = fetchEndpointsData(obj.getDataEndPoints(), choice);
-					} else {
-						JsonObject respBody = new JsonObject();
-						respBody.addProperty("message", "Validated");
-						respBody.addProperty("status", "200");
-						return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
-					}
-
-					System.out.println("Headers Inside validateSourceCred " + out.getHeaders());
-					return out;
-				}
-			}
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
-	}
-
+	
 	private ResponseEntity<String> validateData(UrlObject valid, List<UrlObject> dataEndPoints, String choice) {
 		ResponseEntity<String> ret = null;
 		HttpHeaders header = new HttpHeaders();
@@ -1045,8 +958,8 @@ public class DataController extends RESTFetch {
 	}
 
 	@RequestMapping("/downloadData")
-	public ResponseEntity<byte[]> downloadData(@RequestParam("choice") String choice,
-			@RequestParam("endpoint") String endpoint, HttpSession session) {
+	public ResponseEntity<byte[]> downloadData(@RequestParam("connId") String connId,@RequestParam("choice") String choice,
+			@RequestParam("endpoint") String endpoint,  HttpSession session) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
@@ -1054,10 +967,9 @@ public class DataController extends RESTFetch {
 		byte[] check1;
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {
-				ResponseEntity<String> out = validateSourceCred(choice);
+				ResponseEntity<String> out = checkConnection(choice,connId,session);
 
-				if (new Gson().fromJson(out.getBody(), JsonObject.class).get("status").getAsString()
-						.equalsIgnoreCase("200")) {
+				if (new Gson().fromJson(out.getBody(), JsonObject.class).get("status").getAsInt()==Constants.SRC_DEST_VALID) {
 					System.out.println("inside If block");
 					List<UrlObject> endpoints = credentials.getSrcObj().getDataEndPoints();
 					int totalRows = 0;
@@ -1404,6 +1316,94 @@ public class DataController extends RESTFetch {
 		}
 		return false;
 	}
+	
+//	private ResponseEntity<String> validateSourceCred(String choice) {
+//		ResponseEntity<String> ret = null;
+//		HttpHeaders header = new HttpHeaders();
+//		header.add("Cache-Control", "no-cache");
+//		header.add("access-control-allow-origin", config.getRootUrl());
+//		header.add("access-control-allow-credentials", "true");
+//		try {
+//
+//			SourceConfig obj = credentials.getSrcObj();
+//			if (obj.getRefresh().equals("YES")) {
+//				ret = Utilities.token(credentials.getSrcObj().getRefreshToken(), credentials.getSrcToken(),
+//						"DataController.validateSourceCred");
+//				if (!ret.getStatusCode().is2xxSuccessful()) {
+//					JsonObject respBody = new JsonObject();
+//					respBody.addProperty("message", "Re-authorize");
+//					respBody.addProperty("status", "51");
+//					respBody.add("data", null);
+//					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
+//
+//				} else {
+//					// next piece of code is for saveValues
+//					try {
+//						credentials.getSrcToken().putAll(new Gson().fromJson(ret.getBody(), HashMap.class));
+//					} catch (Exception e) {
+//						for (String s : ret.getBody().toString().split("&")) {
+//							System.out.println(s);
+//							credentials.getSrcToken().put(s.split("=")[0], s.split("=")[1]);
+//						}
+//					}
+//					applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(),
+//							credentials.getDestObj(), credentials.getSrcToken(), credentials.getDestToken(),
+//							credentials.getCurrSrcName(), credentials.getCurrDestName(), credentials.getCurrSrcId(),
+//							credentials.getCurrDestId(), credentials.getUserId()));
+//
+//					ret = validateData(obj.getValidateCredentials(), obj.getDataEndPoints(), choice);
+//					return ret;
+//				}
+//			} else {
+//
+//				if (credentials.getSrcObj().getAuthtype().equalsIgnoreCase("NoAuth")) {
+//					ResponseEntity<String> response = null;
+//					credentials.setCurrSrcValid(true);
+//					if (choice.equalsIgnoreCase("export") || choice.equalsIgnoreCase("view")) {
+//       			response = fetchEndpointsData(obj.getDataEndPoints(), choice);
+//					} else {
+//						JsonObject respBody = new JsonObject();
+//						respBody.addProperty("message", "Validated");
+//						respBody.addProperty("status", "200");
+//						return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+//					}
+//					return response;
+//
+//				}
+//
+//				ret = Utilities.token(obj.getValidateCredentials(), credentials.getSrcToken(),
+//						"DataController.validateSourceCred");
+//				if (!ret.getStatusCode().is2xxSuccessful()) {
+//					credentials.setCurrSrcValid(false);
+//					JsonObject respBody = new JsonObject();
+//					respBody.addProperty("message", "Re-authorize");
+//					respBody.addProperty("status", "51");
+//					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(header).body(respBody.toString());
+//
+//				} else {
+//					credentials.setCurrSrcValid(true);
+//					// ret = Utilities.token(endPoints.get(0),credentials.getSrcToken());
+//					ResponseEntity<String> out = null;
+//					if (choice.equalsIgnoreCase("export") || choice.equalsIgnoreCase("view")) {
+//						out = fetchEndpointsData(obj.getDataEndPoints(), choice);
+//					} else {
+//						JsonObject respBody = new JsonObject();
+//						respBody.addProperty("message", "Validated");
+//						respBody.addProperty("status", "200");
+//						return ResponseEntity.status(HttpStatus.OK).headers(header).body(respBody.toString());
+//					}
+//
+//					System.out.println("Headers Inside validateSourceCred " + out.getHeaders());
+//					return out;
+//				}
+//			}
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(header).body(null);
+//	}
+
 
 	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection")
 	public ResponseEntity<String> checkConnection(@RequestParam("choice") String choice,
@@ -1412,16 +1412,16 @@ public class DataController extends RESTFetch {
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
-
 		try {
-
 			JsonElement respBody = new JsonObject();
 			System.out.println(
 					credentials.getCurrConnObj() + " " + credentials.getDestObj() + " " + credentials.getSrcObj());
 			if (Utilities.isSessionValid(httpsession, applicationCredentials, credentials.getUserId())) {
-
 				ResponseEntity<String> result = null;
+				credentials.setSrcToken(new HashMap<String,String>());
+				credentials.setDestToken(new HashMap<String,String>());
 
+				//Get connection Object
 				ConnObj currConnObj = credentials.getConnectionIds(connId);
 				credentials.setCurrConnObj(currConnObj);
 				credentials.setCurrSrcName(currConnObj.getSourceName());
@@ -1448,17 +1448,13 @@ public class DataController extends RESTFetch {
 				SrcDestCredentials destCredentials = srcDestCredentialsService
 						.getCredentials(currConnObj.getDestinationId(), Constants.COLLECTION_DESTINATIONCREDENTIALS);
 
-				
-
-				
-				
-				
 
 				///////////////////////////////////// Source Validation/////////////////////////////////////
 
 				// Fetch new access token using refresh token
 				if (credentials.getSrcObj().getAuthtype().equalsIgnoreCase("NoAuth")) {
 					credentials.setCurrSrcValid(true);
+					
 					
 				} else {
 					// Parse tokens from List<Map<String,String>> to Map<String,String>
@@ -1482,7 +1478,16 @@ public class DataController extends RESTFetch {
 									}
 
 						}
+						else
+							{
+							respBody.getAsJsonObject().addProperty("message", "Re-authorize");
+							respBody.getAsJsonObject().addProperty("status", "51");
+							respBody.getAsJsonObject().add("data", null);
+							return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+
+						}
 					}
+					
 
 					// Validate the access token
 					result = Utilities.token(srcConfig.getValidateCredentials(), srcToken,
@@ -1498,6 +1503,15 @@ public class DataController extends RESTFetch {
 				///////////////////////////////////// Destination Validation/////////////////////////////////////
 				
 				// Parse tokens from List<Map<String,String>> to Map<String,String>
+				
+				if (credentials.getCurrDestName().equals("csv") || credentials.getCurrDestName().equals("xml") || credentials.getCurrDestName().equals("json")) {
+					credentials.setCurrDestValid(true);
+					
+					
+				}
+				else {
+					
+				
 				Map<String, String> destToken = new HashMap<>();
 				List<Map<String, String>> destTokenData = destCredentials.getCredentials();
 				destTokenData.iterator().forEachRemaining(arg0 -> {
@@ -1511,8 +1525,9 @@ public class DataController extends RESTFetch {
 					credentials.setDestToken(destToken);
 					credentials.setCurrDestValid(true);
 				}
+				}
 
-				//////////////////////////////////// Publishing Credentials////////////////////////////////////////
+				//////////////////////////////////// Publishing New Credentials////////////////////////////////////////
 
 				applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(),
 						credentials.getDestObj(), credentials.getSrcToken(), credentials.getDestToken(),
@@ -1520,7 +1535,7 @@ public class DataController extends RESTFetch {
 						credentials.getCurrDestId(), credentials.getUserId()));
 				System.out.println("CheckConnection: Data Source credentials pushed");
 
-				////////////////////////////////////// Checking Response////////////////////////////////////////
+				///////////////checkconn//////////////////////// Checking Response////////////////////////////////////////
 				System.out.println("choice=" + choice + " Src Valid:" + credentials.isCurrSrcValid() + " Dest Valid:"
 						+ credentials.isCurrDestValid());
 
@@ -1540,7 +1555,7 @@ public class DataController extends RESTFetch {
 					respBody.getAsJsonObject().add(Constants.RESPONSE_DATA, null);
 				} else {
 					System.out.println(choice + "data0" + choice);
-					if (choice == "csv" || choice == "xml" || choice == "json") {
+					if (choice.equals("csv") || choice.equals("xml") || choice.equals("json")) {
 						System.out.println(choice + "data1" + choice);
 						respBody.getAsJsonObject().addProperty(Constants.RESPONSE_CODE, Constants.SRC_DEST_VALID);
 						respBody.getAsJsonObject().addProperty(Constants.RESPONSE_MESSAGE,
@@ -1567,95 +1582,7 @@ public class DataController extends RESTFetch {
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
-/*
-	@RequestMapping(method = RequestMethod.GET, value = "/checkconnection1OLD")
-	public ResponseEntity<String> checkConnection1OLD(@RequestParam("choice") String choice,
-			@RequestParam("connId") String connId, HttpSession httpsession) {
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
-		ResponseEntity<String> out = null;
-		Gson gson = new Gson();
-		try {
-			boolean selectAction = false;
-			JsonElement respBody = new JsonObject();
-			System.out.println(
-					credentials.getCurrConnObj() + " " + credentials.getDestObj() + " " + credentials.getSrcObj());
-			if (Utilities.isSessionValid(httpsession, applicationCredentials, credentials.getUserId())) {
 
-				if (credentials.getCurrConnObj() == null) {
-					System.out.println("currconId is null");
-					credentials.setCurrDestValid(false);
-					credentials.setCurrSrcValid(false);
-					respBody.getAsJsonObject().addProperty("data", "DifferentAll");
-					respBody.getAsJsonObject().addProperty("status", "13");
-					// return
-					// ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-				} else if (credentials.getCurrConnObj().getConnectionId().equalsIgnoreCase(connId)) {
-					out = selectAction(choice, httpsession);
-					respBody = gson.fromJson(out.getBody(), JsonElement.class);
-					selectAction = true;
-				} else {
-					if (credentials.getConnectionIds(connId).getSourceName()
-							.equalsIgnoreCase(credentials.getCurrConnObj().getSourceName())
-							&& credentials.getConnectionIds(connId).getDestName()
-									.equalsIgnoreCase(credentials.getCurrConnObj().getDestName())) {
-						out = selectAction(choice, httpsession);
-						respBody = gson.fromJson(out.getBody(), JsonElement.class);
-						selectAction = true;
-					} else if (credentials.getConnectionIds(connId).getSourceName()
-							.equalsIgnoreCase(credentials.getCurrConnObj().getSourceName())) {
-						credentials.setCurrDestValid(false);
-						respBody.getAsJsonObject().addProperty("data", "DifferentDestination");
-						respBody.getAsJsonObject().addProperty("status", "12");
-						// return
-						// ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-					} else if (credentials.getConnectionIds(connId).getDestName()
-							.equalsIgnoreCase(credentials.getCurrConnObj().getDestName())) {
-						credentials.setCurrSrcValid(false);
-						respBody.getAsJsonObject().addProperty("data", "DifferentSource");
-						respBody.getAsJsonObject().addProperty("status", "11");
-						// return
-						// ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-					} else {
-						credentials.setCurrDestValid(false);
-						credentials.setCurrSrcValid(false);
-						respBody.getAsJsonObject().addProperty("data", "DifferentAll");
-						respBody.getAsJsonObject().addProperty("status", "13");
-						// return
-						// ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-					}
-				}
-				ConnObj currConnId = new ConnObj();
-				currConnId.setDestName(credentials.getConnectionIds(connId).getDestName());
-				currConnId.setSourceName(credentials.getConnectionIds(connId).getSourceName());
-				currConnId.setEndPoints(credentials.getConnectionIds(connId).getEndPoints());
-				currConnId.setConnectionId(connId);
-				currConnId.setPeriod(credentials.getConnectionIds(connId).getPeriod());
-				currConnId.setScheduled(credentials.getConnectionIds(connId).getScheduled());
-				credentials.setConnectionIds(connId, currConnId);
-				credentials.setCurrConnObj(currConnId);
-				if (selectAction) {
-					if (!choice.equalsIgnoreCase("export"))
-						headers = out.getHeaders();
-
-					System.out.println(out.getHeaders().values() + "" + out.getHeaders().getContentLength() + "");
-				}
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			} else {
-				System.out.println("Session expired!");
-				respBody = new JsonObject();
-				respBody.getAsJsonObject().addProperty("message", "Sorry! Your session has expired");
-				respBody.getAsJsonObject().addProperty("status", "33");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-	}
-*/
 	@RequestMapping("/fetchdbs")
 	private ResponseEntity<String> fetchDBs(@RequestParam("destId") String destId, HttpSession session) {
 		ResponseEntity<String> out = null;
@@ -1674,51 +1601,6 @@ public class DataController extends RESTFetch {
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("status", "200");
 				respBody.add("data", new Gson().fromJson(new Gson().toJson(destList), JsonElement.class));
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			} else {
-				System.out.println("Session expired!");
-				JsonObject respBody = new JsonObject();
-				respBody.addProperty("message", "Sorry! Your session has expired");
-				respBody.addProperty("status", "33");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-			}
-		} catch (HttpClientErrorException e) {
-			JsonObject respBody = new JsonObject();
-			respBody.addProperty("data", "Error");
-			respBody.addProperty("status", "404");
-			System.out.println(e.getMessage());
-			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-	}
-
-	@RequestMapping("/fetchdbsOld")
-	private ResponseEntity<String> fetchDBsOld(@RequestParam("destId") String destId, HttpSession session) {
-		ResponseEntity<String> out = null;
-		HttpHeaders headers = new HttpHeaders();
-		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
-		try {
-			if (Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {
-
-				String name = destId;
-				String filter = "{\"_id\":{\"$regex\":\".*" + credentials.getUserId().toLowerCase() + "_"
-						+ name.toLowerCase() + ".*\"}}";
-				String url = config.getMongoUrl() + "/credentials/destinationCredentials?filter=" + filter;
-				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-
-				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-				RestTemplate restTemplate = new RestTemplate();
-				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-				JsonObject respBody = new JsonObject();
-				JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
-				respBody.addProperty("status", "200");
-				respBody.add("data", obj.get("_embedded").getAsJsonArray());
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			} else {
 				System.out.println("Session expired!");

@@ -3,3 +3,4 @@
 2018-08-23T10:44:19,354 [main]  [192.168.21.9] ERROR (BlackBoxReloadedApp.java:26) - error MSG
 2018-08-23T10:44:19,354 [main]  [] WARN  (BlackBoxReloadedApp.java:28) - warn MSG
 2018-08-23T10:44:19,355 [main]  [] TRACE (BlackBoxReloadedApp.java:29) - trac  msg
+
