@@ -1,6 +1,5 @@
 package com.aptus.blackbox.event;
 
-import java.net.URI;
 import java.sql.Timestamp;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -17,17 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
@@ -36,17 +28,13 @@ import com.aptus.blackbox.dataServices.SchedulingService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.datamodels.Scheduling.Connection;
-
 import com.aptus.blackbox.datamodels.Scheduling.StatusObj;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
-import com.aptus.blackbox.models.MeteredEndpoints;
 import com.aptus.blackbox.threading.ConnectionsTaskScheduler;
+import com.aptus.blackbox.threading.ResourceUsageScheduler;
 import com.aptus.blackbox.utils.Constants;
-import com.aptus.blackbox.utils.Utilities;
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 
@@ -75,6 +63,24 @@ public class DataListeners {
 	public DataListeners(SimpMessagingTemplate template) {
 		this.template = template;
 	}
+	
+	
+/*	
+	@EventListener
+	public void resourceUsage(ResourceUsageEvent resourceUsageEvent) {
+		System.out.println("Received ResourceUsage scheduler: "+resourceUsageEvent.getData());
+		System.out.println("Resource Usage Listener started---ResourceUageScheduler started");
+		ResourceUsageScheduler resourceusagescheduler = Context.getBean(ResourceUsageScheduler.class);
+		long period = 5000;
+		ScheduledFuture<?> future;
+		future= threadPoolTaskScheduler.schedule(resourceusagescheduler, 
+				new Date(ZonedDateTime.now().toInstant().toEpochMilli()+period));
+		
+	}*/
+	
+	
+	
+	
 	
 	@EventListener
 	public void changeSocket(Socket socket) {
@@ -190,7 +196,9 @@ public class DataListeners {
 	@EventListener
 	public void interruptScheduler(InterruptThread thread)
 	{
-		
+		System.err.println("zjdghkldfngkljdhflgn dfjgld.kjfkg.ldikfh gdf/kl*******************");
+		if(1==1)
+			return;
 		try {
 			applicationCredentials.getApplicationCred().get(thread.getUserId()).getSchedulingObjects()
 			.get(thread.getConnectionId()).setNextPush(0);
