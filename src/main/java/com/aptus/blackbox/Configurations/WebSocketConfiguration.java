@@ -1,4 +1,4 @@
-package com.aptus.blackbox.socketConfiguration;
+package com.aptus.blackbox.Configurations;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
