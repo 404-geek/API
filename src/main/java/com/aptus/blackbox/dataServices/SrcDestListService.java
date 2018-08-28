@@ -18,6 +18,7 @@ public class SrcDestListService {
 	public String getSrcDestList() {
 		SrcDestList response = srcdestDAO.getSrcDestList("srcdestlist");
 		String data = new Gson().toJson(response, SrcDestList.class); 
+		System.out.println("List:: "+data);
 		return data;
 	}
 

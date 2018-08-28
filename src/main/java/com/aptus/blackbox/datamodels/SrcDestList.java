@@ -13,14 +13,19 @@ import com.aptus.blackbox.models.srcdestObj;
 public class SrcDestList implements Serializable{
 	@Id
 	private  String _id ;
+	private List<String>  destCategories,srcCategories;
+    private List<srcdestObj> destinations,sources;
+    
+	
+	
+	
 	public String get_id() {
 		return _id;
 	}
 	public void set_id(String _id) {
 		this._id = _id;
 	}
-	private List<String>  destCategories,srcCategories;
-    private List<srcdestObj> destinations,sources;
+
 	
 	public List<String> getDestCategories() {
 		return destCategories;

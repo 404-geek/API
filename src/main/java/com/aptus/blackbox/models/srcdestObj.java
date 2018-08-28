@@ -5,7 +5,7 @@ import java.util.List;
 public class srcdestObj{
 	
 	private String id,name,logo;
-	private String refIndType ,refBPDType, refAnaMthd, refDStype;
+
 	public String getRefIndType() {
 		return refIndType;
 	}
@@ -30,7 +30,13 @@ public class srcdestObj{
 	public void setRefDStype(String refDStype) {
 		this.refDStype = refDStype;
 	}
+
+	private String refIndType,refBPDType,refAnaMthd,refDStype,SubscriptionType;
+
 	private List<String> categories;
+	
+	
+	
 	
 	
 	public String getId() {
@@ -56,6 +62,12 @@ public class srcdestObj{
 	}
 	public void setCategories(List<String> categories) {
 		this.categories = categories;
+	}
+	public String getSubscriptionType() {
+		return SubscriptionType;
+	}
+	public void setSubscriptionType(String subscriptionType) {
+		SubscriptionType = subscriptionType;
 	}
 
 }

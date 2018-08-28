@@ -8,6 +8,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.catalina.User;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -42,6 +44,7 @@ import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.dataServices.SrcDestListService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserInfoService;
+import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.datamodels.SrcDestList;
 import com.aptus.blackbox.datamodels.UserConnectors;
@@ -136,34 +139,42 @@ public class home extends RESTFetch{
 	@RequestMapping(value="/login")
 	private ResponseEntity<String> login(@RequestParam("userId") String _id,@RequestParam("password") String password,HttpSession session )
 	{
+		HttpHeaders headers = new HttpHeaders();
+		
 		System.out.println("/login session"+session.getId());
 		JsonObject response = new JsonObject();
 		
-		if(!userInfoService.userExist(_id)) {
-			response = new ResponseObject().Response(Constants.USER_NOT_FOUND_CODE, Constants.USER_NOT_FOUND_MSG, _id);
-		}
-		
-		else if(!userInfoService.userValid(_id,password)) {
-			response = new ResponseObject().Response(Constants.INVALID_CREDENTIALS_CODE, Constants.INVALID_CREDENTIALS_MSG, _id);
-		}
-		
-		else { 
+		try {
+			if(!userInfoService.userExist(_id)) {
+				response = new ResponseObject().Response(Constants.USER_NOT_FOUND_CODE, Constants.USER_NOT_FOUND_MSG, _id);
+			}
 			
-			response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
-			credentials.setUserId(_id);
-			applicationCredentials.setSessionId(_id, session.getId());
-			getConnectionIds(session);
+			else if(!userInfoService.userValid(_id,password)) {
+				response = new ResponseObject().Response(Constants.INVALID_CREDENTIALS_CODE, Constants.INVALID_CREDENTIALS_MSG, _id);
+			}
+			
+			else { 
+				
+				response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
+				credentials.setUserId(_id);
+				applicationCredentials.setSessionId(_id, session.getId());
+				getConnectionIds(session);
 //			
 //			ThreadContext.clearAll();
 //			 ThreadContext.put("id", "192.168.21.9");
 //			logger.info("User success login");
+			}
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
+		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response.toString());
 	}
 	
 	@RequestMapping(value="/activeUsers")
 	private ResponseEntity<String> getActiveUsers()
 	{
+		
 		ThreadContext.put("id", "poupopuop");
 		logger.error("Helllo worls");
 		JsonObject jobj;
@@ -278,8 +289,11 @@ public class home extends RESTFetch{
 	
 
 	@RequestMapping(value="/signup",method = RequestMethod.POST)
-	private ResponseEntity<String> signup(@RequestBody UserInfo user)
+	private ResponseEntity<String> signup(@RequestBody String data)//@RequestBody UserInfo user)
 	{
+		
+	  HttpHeaders headers = new HttpHeaders();
+	  UserInfo user = new Gson().fromJson(data, UserInfo.class);
 	  System.out.println(user);
 	  
 	  JsonObject response = null ;
@@ -305,7 +319,7 @@ public class home extends RESTFetch{
 	} catch (Exception e) {
 		e.printStackTrace();
 	}
-	  return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
+	  return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response.toString());
 	}
 	
 	
@@ -367,6 +381,7 @@ public class home extends RESTFetch{
 	@RequestMapping(value="/update1")
 	private ResponseEntity<String> update1(@RequestBody UserInfo user)
 	{
+		HttpHeaders headers  = new HttpHeaders();
 		JsonObject response = null ;
 		if(userInfoService.userExist(user.getUserId())) {
 			  System.out.println("User ID Exists "+user.getUserId());
@@ -380,7 +395,7 @@ public class home extends RESTFetch{
 			  response = new ResponseObject()
 					  .Response( Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, user.getUserId());
 		  }
-		return ResponseEntity.status(HttpStatus.OK).headers(null).body(response.toString());
+		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response.toString());
 	}
 	
 	@RequestMapping(value="/update")
@@ -513,8 +528,6 @@ public class home extends RESTFetch{
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 				String response = srcdestlistService.getSrcDestList();
