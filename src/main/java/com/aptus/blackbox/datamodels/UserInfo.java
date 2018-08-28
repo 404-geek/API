@@ -19,6 +19,7 @@ public class UserInfo {
 	private String userId;
 	private String userName;
 	private String userPassword;
+	private String company = "", email= "", contact= "";
 	private Date creationDate = new Date();
 	
 	
@@ -66,7 +67,7 @@ public class UserInfo {
 
 	
 	
-	@Override
+/*	@Override
 	public String toString() {
 		JsonObject jobj  = new JsonObject();
 		jobj.addProperty("email",this.userId);
@@ -74,7 +75,37 @@ public class UserInfo {
 		jobj.addProperty("creation Date", this.creationDate+"");
 		return jobj.toString();
 		
-		}
+		}*/
+
+
+	public String getCompany() {
+		return company;
+	}
+
+
+	public void setCompanyName(String company) {
+		this.company = company;
+	}
+
+
+	public String getEmail() {
+		return email;
+	}
+
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+
+	public String getContact() {
+		return contact;
+	}
+
+
+	public void setContact(String contact) {
+		this.contact = contact;
+	}
 
 	
 	

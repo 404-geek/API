@@ -7,6 +7,8 @@ import com.aptus.blackbox.dataInterfaces.MeteringDAO;
 import com.aptus.blackbox.datamodels.MeteringData;
 import com.aptus.blackbox.datamodels.Metering.ConnectionMetering;
 import com.aptus.blackbox.datamodels.Metering.TimeMetering;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 @Service
 public class MeteringService {
@@ -28,5 +30,8 @@ public class MeteringService {
 		return meteringDAO.addTimeMetering(userId, connectionId, timeMetering, totalRows);
 	}
 	
+	public long totalRows(String userId) {
+		return meteringDAO.getTotalRows(userId);
+	}
 	
 }

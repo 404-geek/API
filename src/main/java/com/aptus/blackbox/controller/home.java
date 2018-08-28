@@ -798,8 +798,8 @@ public class home extends RESTFetch{
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 	
-	@RequestMapping("/statistics")
-	private ResponseEntity<String> statistics(HttpSession session){
+	/*@RequestMapping("/OLDstatistics")
+	private ResponseEntity<String> OLDstatistics(HttpSession session){
 		
 		HttpHeaders headers = new HttpHeaders();			
 		headers.add("Cache-Control", "no-cache");
@@ -848,6 +848,6 @@ public class home extends RESTFetch{
 		
 		
 	}
-	
+*/	
 		
 }

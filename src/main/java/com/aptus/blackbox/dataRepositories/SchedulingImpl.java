@@ -43,6 +43,21 @@ public class SchedulingImpl implements SchedulingDAO{
 		return result.wasAcknowledged();
 	}
 
+	@Override
+	public long getScheduledConnCount(String userId) {
+		ScheduleStatus data = mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(userId)), ScheduleStatus.class);
+		
+		long a = data.getConnection().size();
+		System.out.println("Schedule status MAp Size: "+a);
+		return a;
+	}
+
+	@Override
+	public Connection getScheduledStatus(String userId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 
 	
 }

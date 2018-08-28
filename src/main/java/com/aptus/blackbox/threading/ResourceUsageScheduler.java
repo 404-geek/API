@@ -6,12 +6,12 @@ import java.text.NumberFormat;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 
 import com.google.gson.JsonObject;
 
+@Component
 public class ResourceUsageScheduler implements Runnable {
 	
 	 public ResourceUsageScheduler() {
@@ -56,7 +56,7 @@ public class ResourceUsageScheduler implements Runnable {
 			
 			details.put("Disk info: ",arr);
 			
-			System.out.println("USage data printing"+ details.toString());
+			//System.out.println("USage data printing"+ details.toString());
 			
 			
 		} 

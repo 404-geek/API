@@ -1,7 +1,5 @@
 package com.aptus.blackbox.dataRepositories;
 
-import java.util.ArrayList;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -13,6 +11,8 @@ import com.aptus.blackbox.dataInterfaces.MeteringDAO;
 import com.aptus.blackbox.datamodels.MeteringData;
 import com.aptus.blackbox.datamodels.Metering.ConnectionMetering;
 import com.aptus.blackbox.datamodels.Metering.TimeMetering;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mongodb.WriteResult;
 
 @Repository
@@ -26,7 +26,7 @@ public class MeteringImpl implements MeteringDAO{
 	public void createUser(MeteringData metering) {
 		mongoTemplate.save(metering);		
 	}
-
+	
 	@Override
 	public boolean updateMeteringData() {
 		// TODO Auto-generated method stub
@@ -56,6 +56,14 @@ public class MeteringImpl implements MeteringDAO{
 		WriteResult result= mongoTemplate.updateFirst(query, update, MeteringData.class);
 		return result.wasAcknowledged();
 	}
+
+	@Override
+	public long getTotalRows(String userId) {
+		MeteringData data=mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(userId)), MeteringData.class);
+		return data.getTotalRows();
+	}
+
+	
 
 	
 }

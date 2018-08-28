@@ -30,4 +30,7 @@ public class SchedulingService {
 		return schedulingDAO.deleteConnection(userId, connectionId);
 	}
 	
+	public long scheduleConnectionCount(String userId) {
+		return schedulingDAO.getScheduledConnCount(userId);
+	}
 }

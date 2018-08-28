@@ -18,8 +18,12 @@ public class MeteringData {
 	@Id
 	private String _id;
 	private long totalRows;
-	private Map<String,List<ConnectionMetering>> connection= new HashMap<>();
+	private Map<String, ArrayList<ConnectionMetering>> connection;
 	
+	public MeteringData() {
+		
+		connection = new HashMap<String,ArrayList<ConnectionMetering>>();
+	}
 	public String getId() {
 		return _id;
 	}
@@ -32,7 +36,7 @@ public class MeteringData {
 	public void setTotalRows(long totalRows) {
 		this.totalRows = totalRows;
 	}
-	public Map<String, List<ConnectionMetering>> getConnection() {
+	public Map<String, ArrayList<ConnectionMetering>> getConnection() {
 		return connection;
 	}
 	public void setConnection(String connId,ConnectionMetering connMetering) {

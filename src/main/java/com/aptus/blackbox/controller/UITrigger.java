@@ -32,6 +32,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.dataServices.MeteringService;
+import com.aptus.blackbox.dataServices.SchedulingService;
+import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.event.Socket;
@@ -59,19 +62,27 @@ public class UITrigger {
 	private ApplicationContext Context;
 	@Autowired
 	private Config config;
+	@Autowired
+	private UserConnectorService userConnectorService;
+	@Autowired
+	private MeteringService meteringservice;
+	@Autowired
+	private SchedulingService schedulingService;
 	
-	
+	//Functionality of below is unsure
 	@RequestMapping(method = RequestMethod.GET, value = "/clientscheduledstatus")
     private ResponseEntity<String> getstatus(HttpSession session, @RequestParam("connId") String connId) {
         ResponseEntity<String> out = null;
+        
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache");
         headers.add("access-control-allow-origin", config.getRootUrl());
         headers.add("access-control-allow-credentials", "true");
+        
         try {         
         	if(Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
         	String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
-			String url = config.getMongoUrl() + "/credentials/scheduledStatus?filter=" + filter;
+			String url = config.getMongoUrl() + "/credentials/scheduleStatus?filter=" + filter;
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
             System.out.println("clientscheduledstatus");
             System.out.println(uri);
@@ -80,6 +91,7 @@ public class UITrigger {
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
 			JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
 			JsonObject respBody = new JsonObject();
+			System.out.println("result:: "+obj);
             if(obj.get("_returned").getAsInt() == 0 ? false : true)
 			{	
            
@@ -127,7 +139,7 @@ public class UITrigger {
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				
 				String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
-				String url = config.getMongoUrl() + "/credentials/scheduledStatus?filter=" + filter;
+				String url = config.getMongoUrl() + "/credentials/scheduleStatus?filter=" + filter;
 
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				HttpHeaders header = new HttpHeaders();
@@ -164,10 +176,14 @@ public class UITrigger {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
 		// store in credentials
 	}
+	
+	
+	
 
 	@RequestMapping("/togglescheduling")
 	public ResponseEntity<String> toggleScheduling(@RequestParam("connid") String connId,
-			@RequestParam("toggle") String toggle,@RequestParam(value="period",required=false) String period,HttpSession session){
+			@RequestParam("toggle") String toggle,@RequestParam(value="period",required=false) String period,
+			HttpSession session){
 		HttpHeaders headers = new HttpHeaders();
 		JsonObject respBody = new JsonObject();
 		headers.add("Cache-Control", "no-cache");
@@ -303,6 +319,57 @@ public class UITrigger {
 		}
 	}
 
+	
+	
+	@RequestMapping(method = RequestMethod.GET, value = "/statistics")
+	private ResponseEntity<String> getstats(/*@RequestParam("userId") String userId,*/HttpSession session) {
+		
+		HttpHeaders headers = new HttpHeaders();
+        headers.add("Cache-Control", "no-cache");
+        headers.add("access-control-allow-origin", config.getRootUrl());
+        headers.add("access-control-allow-credentials", "true");
+        try{
+        	JsonObject statistics= new JsonObject();
+    		JsonObject obj = new JsonObject();
+    		
+        	if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
+        		
+        		System.out.println("=====datastats called");
+        		obj=userConnectorService.countDataSourcesCreated(credentials.getUserId());//fetches count of files and ds created
+        		obj.addProperty("RowsFetced", meteringservice.totalRows(credentials.getUserId()) );
+        		obj.addProperty("DatasourcesScheduled", schedulingService.scheduleConnectionCount(credentials.getUserId()));
+        		
+        		//sources.add("No of Data sources created: ", userConnectorService.countDataSourcesCreated(userId));
+        		//long a = meteringservice.totalRows(userId);
+			
+			
+			}
+        	else {
+				session.invalidate();
+					System.out.println("Session expired!");
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			}
+        	
+        	statistics.addProperty("code","200");
+    		statistics.addProperty("message", "Statistics data updated");
+    		statistics.add("data", obj);
+    		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(statistics.toString());
+					
+        }catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+		
+	}
+		
+	
+	
+	
+	
 
 	@RequestMapping(method = RequestMethod.GET, value = "/resourceusage")
 	private ResponseEntity<String> getusage(HttpSession session){

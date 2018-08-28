@@ -9,4 +9,8 @@ public interface SchedulingDAO {
 	public boolean addConnection(String userId, String connectionId, Connection connection);
 
 	public boolean deleteConnection(String userId, String connectionId);
+	
+	public long getScheduledConnCount(String userId);
+	
+	public Connection getScheduledStatus(String userId);
 }

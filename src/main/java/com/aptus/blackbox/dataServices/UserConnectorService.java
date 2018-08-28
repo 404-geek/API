@@ -1,13 +1,12 @@
 package com.aptus.blackbox.dataServices;
 
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.aptus.blackbox.dataInterfaces.UserConnectorDAO;
 import com.aptus.blackbox.datamodels.UserConnectors;
 import com.aptus.blackbox.models.ConnObj;
+import com.google.gson.JsonObject;
 
 @Service
 public class UserConnectorService {
@@ -35,4 +34,7 @@ public class UserConnectorService {
 		return userConnectorDAO.deleteConnectorObject(_id, connectionId);
 	}
 	
+	public  JsonObject countDataSourcesCreated(String _id){
+		return userConnectorDAO.countDataSourcesCreated(_id);
+	}
 }

@@ -5,6 +5,31 @@ import java.util.List;
 public class srcdestObj{
 	
 	private String id,name,logo;
+	private String refIndType ,refBPDType, refAnaMthd, refDStype;
+	public String getRefIndType() {
+		return refIndType;
+	}
+	public void setRefIndType(String refIndType) {
+		this.refIndType = refIndType;
+	}
+	public String getRefBPDType() {
+		return refBPDType;
+	}
+	public void setRefBPDType(String refBPDType) {
+		this.refBPDType = refBPDType;
+	}
+	public String getRefAnaMthd() {
+		return refAnaMthd;
+	}
+	public void setRefAnaMthd(String refAnaMthd) {
+		this.refAnaMthd = refAnaMthd;
+	}
+	public String getRefDStype() {
+		return refDStype;
+	}
+	public void setRefDStype(String refDStype) {
+		this.refDStype = refDStype;
+	}
 	private List<String> categories;
 	
 	
