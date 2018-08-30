@@ -141,6 +141,14 @@ public class home extends RESTFetch{
 	{
 		HttpHeaders headers = new HttpHeaders();
 		
+		logger.info("INFO MSG");
+		 logger.debug("debug MSG");
+		 logger.error("error MSG");
+		 //ThreadContext.clearAll();
+		 logger.warn("warn MSG");
+		 logger.trace("trac  msg");
+		 
+		 
 		System.out.println("/login session"+session.getId());
 		JsonObject response = new JsonObject();
 		
@@ -323,60 +331,60 @@ public class home extends RESTFetch{
 	}
 	
 	
-	
-	@RequestMapping(value="/signupOld")
-	private ResponseEntity<String> signupOld(@RequestParam HashMap<String,String> params)
-	{
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
-		try {			
-			System.out.println(params);	
-			String userId=params.get("_id");
-			JsonObject respBody = new JsonObject();			
-        	headers.add("Content-Type", "application/json");
-			if(existUser(userId,"userInfo").getBody().contains("200")){			
-				System.out.println("User ID Exists");
-				respBody.addProperty("id", userId);
-				respBody.addProperty("status", "61");
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			}
-			else{
-				System.out.println("User ID Not Exists");
-				JsonObject body = new JsonObject();
-				for(Map.Entry<String, String> entry : params.entrySet()) {
-				    body.addProperty(entry.getKey(),entry.getValue());
-				}				
-				ResponseEntity<String> out = null;
-				String url = "";				
-				RestTemplate restTemplate = new RestTemplate();
-				url = config.getMongoUrl() + "/credentials/userInfo";				
-				System.out.println(url);
-				HttpEntity<?> httpEntity = new HttpEntity<Object>(body.toString(),headers);
-				out = restTemplate.exchange(url, HttpMethod.POST , httpEntity, String.class);
-				if (out.getStatusCode().is2xxSuccessful()) {
-					System.out.println("Pushed successfully!");
-				}				
-				respBody.addProperty("id",userId);
-				respBody.addProperty("status", "200");
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			}
-		} 
-		catch(HttpClientErrorException e) {
-            JsonObject respBody = new JsonObject();
-            respBody.addProperty("data", "Error");
-            respBody.addProperty("status", "404");
-            System.out.println(e.getMessage());
-            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-        }
-		catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-		//store in credentials
-	}
+//	
+//	@RequestMapping(value="/signupOld")
+//	private ResponseEntity<String> signupOld(@RequestParam HashMap<String,String> params)
+//	{
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//        headers.add("access-control-allow-credentials", "true");
+//		try {			
+//			System.out.println(params);	
+//			String userId=params.get("_id");
+//			JsonObject respBody = new JsonObject();			
+//        	headers.add("Content-Type", "application/json");
+//			if(existUser(userId,"userInfo").getBody().contains("200")){			
+//				System.out.println("User ID Exists");
+//				respBody.addProperty("id", userId);
+//				respBody.addProperty("status", "61");
+//				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+//			}
+//			else{
+//				System.out.println("User ID Not Exists");
+//				JsonObject body = new JsonObject();
+//				for(Map.Entry<String, String> entry : params.entrySet()) {
+//				    body.addProperty(entry.getKey(),entry.getValue());
+//				}				
+//				ResponseEntity<String> out = null;
+//				String url = "";				
+//				RestTemplate restTemplate = new RestTemplate();
+//				url = config.getMongoUrl() + "/credentials/userInfo";				
+//				System.out.println(url);
+//				HttpEntity<?> httpEntity = new HttpEntity<Object>(body.toString(),headers);
+//				out = restTemplate.exchange(url, HttpMethod.POST , httpEntity, String.class);
+//				if (out.getStatusCode().is2xxSuccessful()) {
+//					System.out.println("Pushed successfully!");
+//				}				
+//				respBody.addProperty("id",userId);
+//				respBody.addProperty("status", "200");
+//				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+//			}
+//		} 
+//		catch(HttpClientErrorException e) {
+//            JsonObject respBody = new JsonObject();
+//            respBody.addProperty("data", "Error");
+//            respBody.addProperty("status", "404");
+//            System.out.println(e.getMessage());
+//            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+//        }
+//		catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+//		//store in credentials
+//	}
 	
 	@RequestMapping(value="/update1")
 	private ResponseEntity<String> update1(@RequestBody UserInfo user)
@@ -398,55 +406,55 @@ public class home extends RESTFetch{
 		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response.toString());
 	}
 	
-	@RequestMapping(value="/update")
-	private ResponseEntity<String> update(@RequestParam HashMap<String,String> params,HttpSession session)
-	{
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
-        headers.add("Content-Type", "application/json");
-		try {
-			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
-			System.out.println("updating" + params);			
-			JsonObject respBody = new JsonObject();
-			String userId=params.get("_id").toString();
-			String url = config.getMongoUrl()+"/credentials/userInfo/"+ userId;
-			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-			JsonObject body = new JsonObject();
-
-			for(Map.Entry<String, String> entry : params.entrySet()) {
-			    body.addProperty(entry.getKey(),entry.getValue());
-			}
-			HttpHeaders header = new HttpHeaders();
-			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-			HttpEntity<?> httpEntity = new HttpEntity<Object>(body.toString(),headers);
-			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-			ResponseEntity<String> out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
-				
-			JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
-			System.out.println(session.getId());
-			respBody.addProperty("id", userId);
-			respBody.addProperty("status", "200");
-			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			}
-			else{
-				session.invalidate();
-				System.out.println("Session expired!");
-				JsonObject respBody = new JsonObject();
-    			respBody.addProperty("message", "Sorry! Your session has expired");
-				respBody.addProperty("status", "33");
-				return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
-			}
-		
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-		//store in credentials
-	}
-	
+//	@RequestMapping(value="/update")
+//	private ResponseEntity<String> update(@RequestParam HashMap<String,String> params,HttpSession session)
+//	{
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//        headers.add("access-control-allow-credentials", "true");
+//        headers.add("Content-Type", "application/json");
+//		try {
+//			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
+//			System.out.println("updating" + params);			
+//			JsonObject respBody = new JsonObject();
+//			String userId=params.get("_id").toString();
+//			String url = config.getMongoUrl()+"/credentials/userInfo/"+ userId;
+//			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+//			JsonObject body = new JsonObject();
+//
+//			for(Map.Entry<String, String> entry : params.entrySet()) {
+//			    body.addProperty(entry.getKey(),entry.getValue());
+//			}
+//			HttpHeaders header = new HttpHeaders();
+//			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
+//			HttpEntity<?> httpEntity = new HttpEntity<Object>(body.toString(),headers);
+//			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
+//			ResponseEntity<String> out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
+//				
+//			JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
+//			System.out.println(session.getId());
+//			respBody.addProperty("id", userId);
+//			respBody.addProperty("status", "200");
+//			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+//			}
+//			else{
+//				session.invalidate();
+//				System.out.println("Session expired!");
+//				JsonObject respBody = new JsonObject();
+//    			respBody.addProperty("message", "Sorry! Your session has expired");
+//				respBody.addProperty("status", "33");
+//				return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
+//			}
+//		
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+//		//store in credentials
+//	}
+//	
 	
 	/* Input:user_id
 	 * Takes user_id as input, checks if user already exists and stores true/false accordingly in credentials.
@@ -551,7 +559,8 @@ public class home extends RESTFetch{
 			out = exceptionhandling.clientException(e);
 			
 			//System.out.println(out.getStatusCode().toString());
-			return out;
+			return out; //ThreadContext.clearAll();
+		//	 logger.warn("warn MSG");
 			//ResponseEntity.status(HttpStatus.OK).body(null);
 			
 		}

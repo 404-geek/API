@@ -24,7 +24,7 @@ public class BlackBoxReloadedApp extends SpringBootServletInitializer{
 		 logger.info("INFO MSG");
 		 logger.debug("debug MSG");
 		 logger.error("error MSG");
-		 ThreadContext.clearAll();
+		 //ThreadContext.clearAll();
 		 logger.warn("warn MSG");
 		 logger.trace("trac  msg");
 		
