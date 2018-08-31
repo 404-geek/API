@@ -24,9 +24,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
+import com.aptus.blackbox.dataServices.DestinationConfigService;
+import com.aptus.blackbox.dataServices.SourceConfigService;
 import com.aptus.blackbox.dataServices.SourceDestinationList;
 import com.aptus.blackbox.datamodels.Categories;
+import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.datamodels.Destinations;
+import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.datamodels.Sources;
 import com.aptus.blackbox.utils.Constants;
 import com.aptus.blackbox.utils.Utilities;
@@ -48,14 +52,20 @@ public class adminController {
 	@Autowired
 	private SourceDestinationList sourcedestinationService;
 	
+	@Autowired
+	private SourceConfigService sourceConfigService;
 	
-	@RequestMapping(value="insert/{type1}",method = RequestMethod.GET)
-	private ResponseEntity<String> addData(@PathVariable String type){//, @RequestBody String data){
+	@Autowired
+	private DestinationConfigService destinationConfigService;
+	
+	
+	@RequestMapping(method = RequestMethod.POST,value="/insert/{type}")
+	private ResponseEntity<String> addData(@PathVariable String type, @RequestBody String data,HttpSession session){
 		HttpHeaders headers = new HttpHeaders();
-	String data="";
+	
 		try {
-			//if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
-				
+			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
+	
 				
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("message",Constants.SUCCESS_MSG);
@@ -68,7 +78,6 @@ public class adminController {
 					break;
 					
 				}
-				
 				case "destination":{
 					Destinations destination = new Gson().fromJson(data, Destinations.class);
 					sourcedestinationService.insertDestination(destination);
@@ -82,10 +91,14 @@ public class adminController {
 				}
 				
 				case "sourceConfig":{
+					SourceConfig sourceConfig = new Gson().fromJson(data, SourceConfig.class);
+					sourceConfigService.createSourceConfig(sourceConfig);
 					break;
 				}
 				
 				case "destinationConfig":{
+					DestinationConfig destinationConfig = new Gson().fromJson(data, DestinationConfig.class);
+					destinationConfigService.createDestinationConfig(destinationConfig);
 					break;
 				}
 				default:{
@@ -100,17 +113,17 @@ public class adminController {
 				
 				
 				
-//			}else {
-//
-//				session.invalidate();
-//				System.out.println("Session expired!");
-//				JsonObject respBody = new JsonObject();
-//				respBody.addProperty("message", "Sorry! Your session has expired");
-//				respBody.addProperty("status", "33");
-//				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-//			
-//			
-//			}
+			}else {
+
+				session.invalidate();
+				System.out.println("Session expired!");
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+			
+			
+			}
 		}catch(Exception e){}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
@@ -123,45 +136,7 @@ public class adminController {
 		return ResponseEntity.status(HttpStatus.OK).headers(null).body(obj.toString().toString());
 	}
 	
-	@RequestMapping(method = RequestMethod.POST, value = "/addsrcdest")
-	private ResponseEntity<String> addSource(@RequestBody String body,@RequestParam("type") String type, @RequestParam("choice") String choice, @RequestParam("sourcename") String srcdestname)
-	{
-		ResponseEntity<String> out = null;
-		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
-		headers.add("Content-Type", "application/json");
-		String url;
-		HttpEntity<?> httpEntity ;
-		
-        RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-        if(choice.equals("add"))
-        	{url=config.getMongoUrl()+"/credentials/"+type;
-			httpEntity = new HttpEntity<String>(body,headers);
-			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-        	out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity, String.class);
-        	 JsonObject respBody = new JsonObject();
 
-     		respBody.addProperty("status", "200");
-     		respBody.addProperty("message", type +" successfully added");
-     		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-        	}
-        else if(choice.equals("update"))
-        {	url=config.getMongoUrl()+"/credentials/"+type+srcdestname;
-        httpEntity = new HttpEntity<String>(body,headers);
-        URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-        	out=restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity, String.class);
-        	 JsonObject respBody = new JsonObject();
-
-     		respBody.addProperty("status", "200");
-     		respBody.addProperty("message", type +" successfully updated");
-     		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-        }
-        
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-        }
-	
 	@RequestMapping(method =RequestMethod.GET,value="/viewdatasource" )
 	private ResponseEntity<String> viewDataSource(@RequestParam("userId") String userId)
 	{

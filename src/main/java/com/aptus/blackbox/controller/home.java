@@ -8,20 +8,15 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
-import org.apache.catalina.User;
-import org.apache.http.client.methods.HttpHead;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import org.apache.logging.log4j.ThreadContext;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,24 +27,23 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
-import com.aptus.blackbox.dataInterfaces.SrcDestListDAO;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SchedulingService;
+import com.aptus.blackbox.dataServices.SourceDestinationList;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.dataServices.SrcDestListService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserInfoService;
-import com.aptus.blackbox.datamodels.SourceConfig;
+import com.aptus.blackbox.datamodels.Categories;
+import com.aptus.blackbox.datamodels.Destinations;
+import com.aptus.blackbox.datamodels.Sources;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
-import com.aptus.blackbox.datamodels.SrcDestList;
 import com.aptus.blackbox.datamodels.UserConnectors;
 import com.aptus.blackbox.datamodels.UserInfo;
-import com.aptus.blackbox.datamodels.Metering.ConnectionMetering;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.ResponseObject;
@@ -58,10 +52,11 @@ import com.aptus.blackbox.security.ExceptionHandling;
 import com.aptus.blackbox.utils.Constants;
 import com.aptus.blackbox.utils.Utilities;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+
 
 /*
  * "pagination":[
@@ -104,6 +99,9 @@ public class home extends RESTFetch{
 	
 	@Autowired
 	private SchedulingService schedulingService;
+	
+	@Autowired 
+	private SourceDestinationList sourceDestinationService;
 	
 	
 	
@@ -538,8 +536,20 @@ public class home extends RESTFetch{
 		headers.add("Cache-Control", "no-cache");
 		try {
 			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
-				String response = srcdestlistService.getSrcDestList();
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response);
+				//String response = srcdestlistService.getSrcDestList();
+				List<String> categories = sourceDestinationService.getCategories("refIndType");
+				List<Sources> sources = sourceDestinationService.getSourceList();
+				List<Destinations> destinations = sourceDestinationService.getDestinationList();
+				
+				JsonObject respBody = new JsonObject();
+				Gson gson = new Gson();
+				
+				respBody.add("sources",gson.toJsonTree(sources));
+				respBody.add("destinations",gson.toJsonTree(destinations));
+				respBody.add("categories", gson.toJsonTree(categories));
+				
+				
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}else {
 				session.invalidate();
 				System.out.println("Session expired!");

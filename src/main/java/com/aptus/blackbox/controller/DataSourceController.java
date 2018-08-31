@@ -106,26 +106,7 @@ public class DataSourceController extends RESTFetch {
 	 * Parses its configuration file and stores it in credentials
 	 * output:void
 	 */
-	@RequestMapping(value ="/src",method= RequestMethod.POST)
-	public void addSourceConfig(@RequestBody String conf) {
-		SourceConfig conf1 = new Gson().fromJson(conf, SourceConfig.class);
-		sourceConfigService.createSourceConfig(conf1);
-	}
-	
-	@RequestMapping(value ="/dest",method= RequestMethod.POST)
-	public void addDestinationConfig(@RequestBody String conf) {
-		DestinationConfig conf1 = new Gson().fromJson(conf, DestinationConfig.class);
-		destinationConfigService.createDestinationConfig(conf1);
-	}
-	
-	
-	@RequestMapping(value="/sdlist",method=RequestMethod.POST)
-	public void addSrcDestList(@RequestBody String list) {
-		SrcDestList srcdestList = new Gson().fromJson(list, SrcDestList.class);
-		srcDestListService.insertData(srcdestList);
-	}
-	
-	
+
 	/*public void srcDestIdOLD(String type, String srcdestId) {
 		//change return type to void
 		try {

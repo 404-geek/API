@@ -3,11 +3,14 @@ package com.aptus.blackbox.datamodels;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
 public class Sources {
-	private String _id,name,logo;
+	@Id
+	private String _id;
+	private String name,logo;
 	private List<String> refIndType,refBPDType,refAnaMthd,refDStype;
 	private String SubscriptionType;
 	
