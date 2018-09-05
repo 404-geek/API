@@ -2,8 +2,10 @@ package com.aptus.blackbox.controller;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.http.HttpSession;
@@ -12,6 +14,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -25,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.RESTFetch;
@@ -38,12 +43,13 @@ import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.dataServices.SrcDestListService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserInfoService;
-import com.aptus.blackbox.datamodels.Categories;
 import com.aptus.blackbox.datamodels.Destinations;
 import com.aptus.blackbox.datamodels.Sources;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.datamodels.UserConnectors;
 import com.aptus.blackbox.datamodels.UserInfo;
+import com.aptus.blackbox.datamodels.VerificationToken;
+import com.aptus.blackbox.event.OnRegistrationCompleteEvent;
 import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.ResponseObject;
@@ -87,6 +93,9 @@ public class home extends RESTFetch{
 	
 	@Autowired
 	private UserConnectorService userConnectorService;
+	
+	@Autowired
+    private MessageSource messages;
 
 
 	final Logger logger = LogManager.getLogger(home.class.getPackage());
@@ -103,7 +112,8 @@ public class home extends RESTFetch{
 	@Autowired 
 	private SourceDestinationList sourceDestinationService;
 	
-	
+	@Autowired
+	private ApplicationEventPublisher applicationEventPublisher;
 	
 
 	
@@ -201,101 +211,39 @@ public class home extends RESTFetch{
 	}
 		
 
+
 	
-	@RequestMapping(value="/loginOld")
-	private ResponseEntity<String> loginOld(@RequestParam("userId") String user,@RequestParam("password") String pass,HttpSession session )
-	{
-		logger.info("-------  user login on process ------ ");
-		try {
-		
-			logger.info("User login success");
-			System.out.println(user);		
-			System.out.println("/inside login");		
-			HttpHeaders headers = new HttpHeaders();
-			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", config.getRootUrl());
-            headers.add("access-control-allow-credentials", "true");
-            headers.add("Authorization", "Basic YTph");
-			JsonObject respBody = new JsonObject();
-			ResponseEntity<String> ret=null;
-			ret = existUser(user,"userInfo");
- 			//System.out.println(new Gson().fromJson(existUser(user,"userInfo").getBody(),JsonObject.class).getAsJsonObject().get("code"));
-			if(new Gson().fromJson(ret.getBody(),JsonObject.class).getAsJsonObject().get("code").getAsString().equals("200")){
-				System.out.println("inside login");
-				String url = config.getMongoUrl()+"/credentials/userInfo/"+user;
-				System.out.println(url);
-				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				HttpHeaders header = new HttpHeaders();
-				// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-				RestTemplate restTemplate = new RestTemplate();
-				ResponseEntity<String> out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
-				applicationCredentials.setSessionId(user,session.getId());
-//				if(!obj.get("password").toString().equals(pass)) {
-//					respBody.addProperty("id", user);
-//					respBody.addProperty("status", "404");
-//					return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
-//				}
-				applicationCredentials.setApplicationCred(user, new ScheduleInfo());
-				applicationCredentials.getApplicationCred().get(user).setLastAccessTime(session.getLastAccessedTime());
+	
+	
+	
+	@RequestMapping(value = "/registrationConfirm", method = RequestMethod.GET)
+	public String confirmRegistration
+	  (WebRequest request, @RequestParam("token") String token) {
+	  
+	    Locale locale = request.getLocale();
+	     
+	    VerificationToken verificationToken = userInfoService.getVerificationToken(token);
+	    if (verificationToken == null) {
+	        String message = messages.getMessage("auth.message.invalidToken", null, locale);
 
-				if(new Gson().fromJson((existUser(user, "userCredentials").getBody()),JsonObject.class).getAsJsonObject().get("code").getAsString().equals("200"))
-					getConnectionIds(session);
-				
-				System.out.println(session.getId());
-				
-				respBody.addProperty("id", user);
-				respBody.addProperty("status", "200");
-				System.out.println("inside if");
-				//throw new Handling("Some Exception");
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			}
-			else{
-				
-				/*respBody.addProperty("id", user);
-				respBody.addProperty("status", "404");
-				System.out.println(respBody.toString());
-				*/
-				//return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-				return ret;
-			}
-		}
-		
-	/*	catch (Exception e) {
-			//ExceptionHandling exceptionHandling=new ExceptionHandling()
-			// TODO Auto-generated catch block
-			System.out.println("inside home handling catch");
-			System.out.println(e.getMessage());
-			e.printStackTrace();
-			return ResponseEntity.status(HttpStatus.OK).body(null);
-			
-		}*/
-		
-		catch (HttpStatusCodeException e) {
-			
-			System.out.println("Inside login catch");
-			ResponseEntity<String> out = null;
-			e.getStatusCode();
-			
-			ExceptionHandling exceptionhandling=new ExceptionHandling();
-			out = exceptionhandling.clientException(e);
-
-			//System.out.println(out.getStatusCode().toString());
-			return out;
-			//ResponseEntity.status(HttpStatus.OK).body(null);
-			
-		}
-		
-		
-		
-		//return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-		//store in credentials
+	        return "redirect:/badUser.html?lang=" + locale.getLanguage();
+	    }
+	     
+	    String userId = verificationToken.getUserId();
+	    Calendar cal = Calendar.getInstance();
+	    if ((verificationToken.getExpiryDate().getTime() - cal.getTime().getTime()) <= 0) {
+	        String messageValue = messages.getMessage("auth.message.expired", null, locale);
+	        
+	        return "redirect:/badUser.html?lang=" + locale.getLanguage();
+	    } 
+	     
+//	    userInfo.setEnabled(true); 
+//	    userInfoService.saveRegisteredUser(userInfo); 
+	    return "redirect:/index.html?lang=" + request.getLocale().getLanguage(); 
 	}
-	
 
 	@RequestMapping(value="/signup",method = RequestMethod.POST)
-	private ResponseEntity<String> signup(@RequestBody String data)//@RequestBody UserInfo user)
+	private ResponseEntity<String> signup(WebRequest request, @RequestBody String data)//@RequestBody UserInfo user)
 	{
 		
 	  HttpHeaders headers = new HttpHeaders();
@@ -311,78 +259,30 @@ public class home extends RESTFetch{
 					  .Response( Constants.USER_EXIST_CODE, Constants.USER_EXIST_MSG, user.getUserId());
 		  }
 		  else {
-			  applicationCredentials.setApplicationCred(user.getUserId(), new ScheduleInfo());
-			  System.out.println("User ID Not Exists "+user.getUserId());
-			  
-			  userInfoService.createUser(user);
-			  userConnectorService.createUser(user.getUserId());
-			  meteringService.createUser(user.getUserId());
-			  schedulingService.createUser(user.getUserId());
-			  
+//			  applicationCredentials.setApplicationCred(user.getUserId(), new ScheduleInfo());
+//			  System.out.println("User ID Not Exists "+user.getUserId());
+//			  
+//			  userInfoService.createUser(user);
+//			  userConnectorService.createUser(user.getUserId());
+//			  meteringService.createUser(user.getUserId());
+//			  schedulingService.createUser(user.getUserId());
 			  response = new ResponseObject()
 					  .Response( Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, user.getUserId());
+			  
+			  
+			  //send confirmation mail
+			  Locale locale = request.getLocale();
+			  String appUrl = request.getContextPath();
+			  OnRegistrationCompleteEvent event = new OnRegistrationCompleteEvent(user, locale, appUrl);
+			  applicationEventPublisher.publishEvent(event);
+			  
 		  }
 	} catch (Exception e) {
 		e.printStackTrace();
 	}
 	  return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response.toString());
 	}
-	
-	
-//	
-//	@RequestMapping(value="/signupOld")
-//	private ResponseEntity<String> signupOld(@RequestParam HashMap<String,String> params)
-//	{
-//		HttpHeaders headers = new HttpHeaders();
-//		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
-//        headers.add("access-control-allow-credentials", "true");
-//		try {			
-//			System.out.println(params);	
-//			String userId=params.get("_id");
-//			JsonObject respBody = new JsonObject();			
-//        	headers.add("Content-Type", "application/json");
-//			if(existUser(userId,"userInfo").getBody().contains("200")){			
-//				System.out.println("User ID Exists");
-//				respBody.addProperty("id", userId);
-//				respBody.addProperty("status", "61");
-//				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-//			}
-//			else{
-//				System.out.println("User ID Not Exists");
-//				JsonObject body = new JsonObject();
-//				for(Map.Entry<String, String> entry : params.entrySet()) {
-//				    body.addProperty(entry.getKey(),entry.getValue());
-//				}				
-//				ResponseEntity<String> out = null;
-//				String url = "";				
-//				RestTemplate restTemplate = new RestTemplate();
-//				url = config.getMongoUrl() + "/credentials/userInfo";				
-//				System.out.println(url);
-//				HttpEntity<?> httpEntity = new HttpEntity<Object>(body.toString(),headers);
-//				out = restTemplate.exchange(url, HttpMethod.POST , httpEntity, String.class);
-//				if (out.getStatusCode().is2xxSuccessful()) {
-//					System.out.println("Pushed successfully!");
-//				}				
-//				respBody.addProperty("id",userId);
-//				respBody.addProperty("status", "200");
-//				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-//			}
-//		} 
-//		catch(HttpClientErrorException e) {
-//            JsonObject respBody = new JsonObject();
-//            respBody.addProperty("data", "Error");
-//            respBody.addProperty("status", "404");
-//            System.out.println(e.getMessage());
-//            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-//        }
-//		catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-//		//store in credentials
-//	}
+
 	
 	@RequestMapping(value="/update1")
 	private ResponseEntity<String> update1(@RequestBody UserInfo user)
@@ -403,56 +303,7 @@ public class home extends RESTFetch{
 		  }
 		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response.toString());
 	}
-	
-//	@RequestMapping(value="/update")
-//	private ResponseEntity<String> update(@RequestParam HashMap<String,String> params,HttpSession session)
-//	{
-//		HttpHeaders headers = new HttpHeaders();
-//		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
-//        headers.add("access-control-allow-credentials", "true");
-//        headers.add("Content-Type", "application/json");
-//		try {
-//			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
-//			System.out.println("updating" + params);			
-//			JsonObject respBody = new JsonObject();
-//			String userId=params.get("_id").toString();
-//			String url = config.getMongoUrl()+"/credentials/userInfo/"+ userId;
-//			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-//			JsonObject body = new JsonObject();
-//
-//			for(Map.Entry<String, String> entry : params.entrySet()) {
-//			    body.addProperty(entry.getKey(),entry.getValue());
-//			}
-//			HttpHeaders header = new HttpHeaders();
-//			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-//			HttpEntity<?> httpEntity = new HttpEntity<Object>(body.toString(),headers);
-//			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-//			ResponseEntity<String> out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
-//				
-//			JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
-//			System.out.println(session.getId());
-//			respBody.addProperty("id", userId);
-//			respBody.addProperty("status", "200");
-//			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-//			}
-//			else{
-//				session.invalidate();
-//				System.out.println("Session expired!");
-//				JsonObject respBody = new JsonObject();
-//    			respBody.addProperty("message", "Sorry! Your session has expired");
-//				respBody.addProperty("status", "33");
-//				return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers).body(respBody.toString());
-//			}
-//		
-//		} catch (Exception e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
-//		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-//		//store in credentials
-//	}
-//	
+
 	
 	/* Input:user_id
 	 * Takes user_id as input, checks if user already exists and stores true/false accordingly in credentials.
@@ -551,7 +402,7 @@ public class home extends RESTFetch{
 				
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}else {
-				session.invalidate();
+				//session.invalidate();
 				System.out.println("Session expired!");
     			JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Sorry! Your session has expired");
@@ -807,7 +658,7 @@ public class home extends RESTFetch{
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
 			}
 			else {
-				session.invalidate();
+				//session.invalidate();
    				System.out.println("Session expired!");
     			JsonObject respBody = new JsonObject();
     			respBody.addProperty("message", "Sorry! Your session has expired");
@@ -830,56 +681,6 @@ public class home extends RESTFetch{
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 	
-	/*@RequestMapping("/OLDstatistics")
-	private ResponseEntity<String> OLDstatistics(HttpSession session){
-		
-		HttpHeaders headers = new HttpHeaders();			
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
-        JsonObject jobj = new JsonObject();
-		try {
-			JsonObject jobj1 = new JsonObject();
-			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
-			    long n;
-				if(session.getAttribute("ss")==null)
-					{
-						n=(long)(Math.random()*(9999-1000))+6000;
-						session.setAttribute("ss", n);
-					}
-				else
-					{
-						n = Long.parseLong(session.getAttribute("ss").toString());
-						session.setAttribute("ss", n+37 );
-					}
-			
-			jobj1.addProperty("DataSources Created",n);
-			jobj1.addProperty("DataSources Scheduled", n-1279);
-			jobj1.addProperty("Files Downloaded", n-3570);
-			jobj1.addProperty("Rows Fetched", n+1236789);
-			
-				
-			}else {
-				session.invalidate();
-					System.out.println("Session expired!");
-				JsonObject respBody = new JsonObject();
-				respBody.addProperty("message", "Sorry! Your session has expired");
-				respBody.addProperty("status", "33");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-			}
-			
-			jobj.addProperty("code", "200");
-			jobj.addProperty("message", "Statistics data updated");
-			jobj.add("data",jobj1);
-			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(jobj.toString());
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}	
-		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-		
-		
-	}
-*/	
+	
 		
 }

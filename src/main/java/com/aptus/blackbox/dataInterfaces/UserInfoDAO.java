@@ -16,4 +16,5 @@ public interface UserInfoDAO {
 	boolean matchSingleField(String _id, String key, String value);
 	boolean matchMultipleField(String _id, Map<String, String> fields);
 	
+	
 }

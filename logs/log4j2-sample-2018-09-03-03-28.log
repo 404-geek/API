@@ -1,0 +1,5 @@
+2018-09-03T15:28:43,014 [main]  [707cf2d0-5904-4375-ab3c-3719f333e6dc] INFO  (BlackBoxReloadedApp.java:25) - INFO MSG
+2018-09-03T15:28:43,020 [main]  [707cf2d0-5904-4375-ab3c-3719f333e6dc] DEBUG (BlackBoxReloadedApp.java:26) - debug MSG
+2018-09-03T15:28:43,020 [main]  [707cf2d0-5904-4375-ab3c-3719f333e6dc] ERROR (BlackBoxReloadedApp.java:27) - error MSG
+2018-09-03T15:28:43,020 [main]  [707cf2d0-5904-4375-ab3c-3719f333e6dc] WARN  (BlackBoxReloadedApp.java:29) - warn MSG
+2018-09-03T15:28:43,020 [main]  [707cf2d0-5904-4375-ab3c-3719f333e6dc] TRACE (BlackBoxReloadedApp.java:30) - trac  msg

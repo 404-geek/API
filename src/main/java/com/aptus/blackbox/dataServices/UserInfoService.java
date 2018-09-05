@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.aptus.blackbox.dataInterfaces.UserInfoDAO;
+import com.aptus.blackbox.dataInterfaces.VerificationTokenDAO;
 import com.aptus.blackbox.datamodels.UserInfo;
+import com.aptus.blackbox.datamodels.VerificationToken;
 
 
 @Service
@@ -15,6 +17,9 @@ public class UserInfoService {
 
 	@Autowired
 	private UserInfoDAO userInfoDAO;
+	
+	@Autowired
+	private VerificationTokenDAO verificationTokenDAO;
 
 	public List<UserInfo> getAllUsers(){
 		return userInfoDAO.getAllUsers();
@@ -49,5 +54,12 @@ public class UserInfoService {
 			return null;
 	    return userInfoDAO.updateUser(_id, key, value);
 	}
+	
+	public void createVerificationToken(String userId, String token) {
+		verificationTokenDAO.createVerificationToken(userId, token);
+	}
 
+	public VerificationToken getVerificationToken(String token) {
+		return verificationTokenDAO.getVerificationToken(token);
+	}
 }
