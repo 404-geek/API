@@ -30,7 +30,7 @@ import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SchedulingService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
-import com.aptus.blackbox.dataServices.UserInfoService;
+import com.aptus.blackbox.dataServices.UserService;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.datamodels.UserInfo;
 import com.aptus.blackbox.datamodels.Scheduling.Connection;
@@ -61,7 +61,7 @@ public class DataListeners {
 	private MeteringService meteringService;
 	
 	@Autowired
-	private UserInfoService userInfoService;
+	private UserService userInfoService;
 	
 	@Autowired
 	private SchedulingService schedulingService;
@@ -442,7 +442,7 @@ public class DataListeners {
 	
 	  @EventListener
 	  private void confirmRegistration(OnRegistrationCompleteEvent event) {
-		  System.out.println("mail event");
+		  //System.out.println("mail event");
 	        UserInfo user = event.getUserInfo();
 	        String token = UUID.randomUUID().toString();
 	        userInfoService.createVerificationToken(user.getUserId(), token);
@@ -450,7 +450,7 @@ public class DataListeners {
 	        String recipientAddress = user.getEmail();
 	        String subject = "Registration Confirmation";
 	        String confirmationUrl 
-	          = event.getAppUrl() + "/regitrationConfirm.html?token=" + token;
+	          = event.getAppUrl() + "/registrationConfirm.html?token=" + token;
 	    //    String message = messages.getMessage("message.regSucc", null, event.getLocale());
 	         
 	        SimpleMailMessage email = new SimpleMailMessage();

@@ -26,10 +26,10 @@ public class VerificationToken {
 	private boolean isValid;
 
 	public VerificationToken(String token, String userId) {
-		this.id = UUID.randomUUID().toString();
+		//this.id = UUID.randomUUID().toString();
 		this.token = token;
 		this.userId = userId;
-		this.isValid = true;
+		this.setValid(true);
 		this.expiryDate = calculateExpiryDate(EXPIRATION);
 	}
 	
@@ -72,6 +72,14 @@ public class VerificationToken {
 		cal.setTime(new Timestamp(cal.getTime().getTime()));
 		cal.add(Calendar.MINUTE, expiryTimeInMinutes);
 		return new Date(cal.getTime().getTime());
+	}
+
+	public boolean isValid() {
+		return isValid;
+	}
+
+	public void setValid(boolean isValid) {
+		this.isValid = isValid;
 	}
 
 	

@@ -7,12 +7,14 @@ import org.springframework.stereotype.Service;
 
 import com.aptus.blackbox.dataInterfaces.UserInfoDAO;
 import com.aptus.blackbox.dataInterfaces.VerificationTokenDAO;
+import com.aptus.blackbox.dataService.ApplicationCredentials;
 import com.aptus.blackbox.datamodels.UserInfo;
 import com.aptus.blackbox.datamodels.VerificationToken;
+import com.aptus.blackbox.index.ScheduleInfo;
 
 
 @Service
-public class UserInfoService {
+public class UserService {
 
 
 	@Autowired
@@ -20,6 +22,28 @@ public class UserInfoService {
 	
 	@Autowired
 	private VerificationTokenDAO verificationTokenDAO;
+	
+	@Autowired
+	private ApplicationCredentials applicationCredentials;
+	
+	@Autowired
+	private UserConnectorService  userConnectorService;
+	
+	@Autowired
+	private MeteringService meteringService;
+	
+	@Autowired
+	private SchedulingService schedulingService;
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	public List<UserInfo> getAllUsers(){
 		return userInfoDAO.getAllUsers();
@@ -37,7 +61,7 @@ public class UserInfoService {
 		return userInfoDAO.getUserById(_id);
 	}
 	
-	//public boolean isValidUser
+	
 	
 	public UserInfo createUser(UserInfo userInfo) {
 		return userInfoDAO.createUser(userInfo);
@@ -49,7 +73,7 @@ public class UserInfoService {
 	}
 
 	
-	public UserInfo updateUser(String _id, String key, String value) {
+	public UserInfo updateUser(String _id, String key, Object value) {
 		if(userInfoDAO.getUserById(_id)==null)
 			return null;
 	    return userInfoDAO.updateUser(_id, key, value);
@@ -61,5 +85,26 @@ public class UserInfoService {
 
 	public VerificationToken getVerificationToken(String token) {
 		return verificationTokenDAO.getVerificationToken(token);
+	}
+	
+	/*
+	 * Initializing meta-data tables on email confirmation
+	 * Creating object in applicationCred for User
+	 */
+	public void registerUser(String token,String userId) {
+		
+		applicationCredentials.setApplicationCred(userId, new ScheduleInfo());
+		userConnectorService.createUser(userId);
+		meteringService.createUser(userId);
+		schedulingService.createUser(userId);
+		
+		// invalidate token
+		verificationTokenDAO.invalidateToken(token);
+		
+		// validate user
+		updateUser(userId, "isEnabled", true);
+		
+		
+		
 	}
 }
