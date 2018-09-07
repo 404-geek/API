@@ -9,13 +9,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.concurrent.ScheduledFuture;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.MessageSource;
 import org.springframework.context.event.EventListener;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
@@ -26,13 +30,14 @@ import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SchedulingService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
+import com.aptus.blackbox.dataServices.UserService;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
+import com.aptus.blackbox.datamodels.UserInfo;
 import com.aptus.blackbox.datamodels.Scheduling.Connection;
 import com.aptus.blackbox.datamodels.Scheduling.StatusObj;
 import com.aptus.blackbox.index.SchedulingObjects;
 import com.aptus.blackbox.index.Status;
 import com.aptus.blackbox.threading.ConnectionsTaskScheduler;
-import com.aptus.blackbox.threading.ResourceUsageScheduler;
 import com.aptus.blackbox.utils.Constants;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -56,9 +61,22 @@ public class DataListeners {
 	private MeteringService meteringService;
 	
 	@Autowired
+	private UserService userInfoService;
+	
+	@Autowired
 	private SchedulingService schedulingService;
+	
+	@Autowired
+	private SrcDestCredentialsService srcDestCredentialsService;
 
 	private SimpMessagingTemplate template;
+	
+	@Autowired
+    private MessageSource messages;
+	
+	 @Autowired
+	 private JavaMailSender mailSender;
+	
 	@Autowired
 	public DataListeners(SimpMessagingTemplate template) {
 		this.template = template;
@@ -215,8 +233,7 @@ public class DataListeners {
 		}
 	}
 	
-	@Autowired
-	private SrcDestCredentialsService srcDestCredentialsService;
+
 	
 	
 	@EventListener
@@ -423,124 +440,23 @@ public class DataListeners {
 		}
 	}
 	
-	
-//OLD
-	/*
-	@EventListener
-	private void pushMeteringInfo(Metering metering) {
-		HttpHeaders headers = new HttpHeaders();
-		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
-        headers.add("Content-Type", "application/json");
-        Gson gson = new Gson();
-		try {
-			System.out.println("-----------Pushing Metering Data--------started-------");
-			ResponseEntity<String> out = null;
-			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-			String filter = "{\"_id\":\"" + metering.getUserId() + "\"}";
-			String url;
-			url = config.getMongoUrl()+"/credentials/metering?filter=" + filter;
-			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();		
-			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-			
-			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
-			JsonObject jobj = jelem.getAsJsonObject();
-			JsonObject time = new JsonObject();
-			time.addProperty("Total Rows", metering.getTotalRowsFetched());
-			time.addProperty("Type", metering.getType());	
-			time.addProperty("Time", metering.getTime());
-
-			
-			
-			
-			
-			JsonObject endPoints = new JsonObject();
-			for(Entry<String, List<MeteredEndpoints>> temp:metering.getRowsFetched().entrySet()) {
-				JsonArray categoryData = new JsonArray();
-				for(MeteredEndpoints me:temp.getValue()){
-					JsonObject endPoint = new JsonObject();
-					endPoint.addProperty("name", me.getEndpoint());
-					endPoint.addProperty("rows", me.getNumRecords());
-					categoryData.add(endPoint);
-				}
-				endPoints.add(temp.getKey(), categoryData);
-
-			}
-			time.add("Endpoints", endPoints);
-			
-			if(jobj.get("_returned").getAsInt() == 0 ? false : true) {
-				url = config.getMongoUrl()+"/credentials/metering/"+metering.getUserId().toLowerCase();
-				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();		
-				httpEntity = new HttpEntity<Object>(headers);
-				out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-				
-				int TotalRows = gson.fromJson(out.getBody(), JsonObject.class).get("Total rows").getAsInt();
-				JsonObject addtoset=new JsonObject();
-				JsonArray each=new JsonArray();
-				each.add(time);
-				if(gson.fromJson(out.getBody(), JsonObject.class).get(metering.getConnId())!=null) {
-					int numRows = gson.fromJson(out.getBody(), JsonObject.class).get(metering.getConnId())
-							.getAsJsonObject().get("Total rows").getAsInt();
-					System.out.println(numRows);
-					numRows+=metering.getTotalRowsFetched();
-					
-					
-						
-					
-					
-					JsonObject e=new JsonObject();
-					e.add("$each", each);
-					
-					JsonObject f=new JsonObject();
-					f.add(metering.getConnId()+"."+"MeteringInfo", e);
-					System.out.println(f);
-					addtoset.add("$addToSet", f);
-					addtoset.addProperty(metering.getConnId()+"."+"Total rows", numRows);
-					addtoset.addProperty("Total rows", TotalRows+metering.getTotalRowsFetched());					
-				}
-				else {
-					JsonObject connId = new JsonObject();
-					connId.add("MeteringInfo", each);
-					connId.addProperty("Total rows", metering.getTotalRowsFetched());
-					addtoset.add(metering.getConnId(), connId);
-					addtoset.addProperty("Total rows",TotalRows+metering.getTotalRowsFetched());
-				}
-				System.out.println(addtoset);
-				url = config.getMongoUrl()+"/credentials/metering/"+metering.getUserId();
-				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				httpEntity = new HttpEntity<Object>(addtoset.toString(),headers);
-				out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
-			}
-			else {
-				
-				JsonArray meteringInfo=new JsonArray();
-				meteringInfo.add(time);				
-				JsonObject upper = new JsonObject();				
-				upper.addProperty("_id", metering.getUserId());				
-				JsonObject connId=new JsonObject();
-				connId.add("MeteringInfo", meteringInfo);
-				connId.addProperty("Total rows", metering.getTotalRowsFetched());
-				upper.add(metering.getConnId(), connId);
-				upper.addProperty("Total rows", metering.getTotalRowsFetched());
-				httpEntity = new HttpEntity<Object>(upper.toString(),headers);
-				url = config.getMongoUrl()+"/credentials/metering";
-				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();	
-				out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity,String.class);
-			}
-			System.out.println("-----------Pushing Metering Data--------ended-------");
-			applicationEventPublisher.publishEvent(new Socket(metering.getUserId()));
-		} catch (RestClientException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JsonSyntaxException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		catch(Exception e) {
-			e.printStackTrace();
-		}
-	}*/
+	  @EventListener
+	  private void confirmRegistration(OnRegistrationCompleteEvent event) {
+		  //System.out.println("mail event");
+	        UserInfo user = event.getUserInfo();
+	        String token = UUID.randomUUID().toString();
+	        userInfoService.createVerificationToken(user.getUserId(), token);
+	         
+	        String recipientAddress = user.getEmail();
+	        String subject = "Registration Confirmation";
+	        String confirmationUrl 
+	          = event.getAppUrl() + "/registrationConfirm.html?token=" + token;
+	    //    String message = messages.getMessage("message.regSucc", null, event.getLocale());
+	         
+	        SimpleMailMessage email = new SimpleMailMessage();
+	        email.setTo(recipientAddress);
+	        email.setSubject(subject);//message + " rn" +
+	        email.setText( "http://localhost:8080" + confirmationUrl);
+	        mailSender.send(email);
+	    }
 }

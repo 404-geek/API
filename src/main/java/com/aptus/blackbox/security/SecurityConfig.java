@@ -27,8 +27,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     	http.csrf().disable();
         http.sessionManagement()
             .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED);
-        http.sessionManagement().invalidSessionUrl("/index.html");
-        http.sessionManagement().sessionFixation().migrateSession();	
+        http.sessionManagement().invalidSessionUrl("/index.html").maximumSessions(1).expiredUrl("/close.html");
+       http.sessionManagement().sessionFixation().migrateSession();	
         http.sessionManagement().enableSessionUrlRewriting(false);
        
     }

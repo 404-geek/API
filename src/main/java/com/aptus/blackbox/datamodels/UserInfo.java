@@ -22,8 +22,11 @@ public class UserInfo {
 	private String company = "", email= "", contact= "";
 	private Date creationDate = new Date();
 	
-	
+	private boolean isEnabled;
 
+	public UserInfo() {
+		isEnabled = false;
+	}
 
 	public String getUserId() {
 		return userId;
@@ -105,6 +108,16 @@ public class UserInfo {
 
 	public void setContact(String contact) {
 		this.contact = contact;
+	}
+
+
+	public boolean isEnabled() {
+		return isEnabled;
+	}
+
+
+	public void setEnabled(boolean isEnabled) {
+		this.isEnabled = isEnabled;
 	}
 
 	

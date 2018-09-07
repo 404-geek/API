@@ -67,9 +67,9 @@ public class UserInfoImpl implements UserInfoDAO{
 	}
 
 	@Override
-	public UserInfo updateUser(String _id, String key, String value) {
+	public UserInfo updateUser(String _id, String key, Object value) {
 		Query query = new Query();
-		query.addCriteria(Criteria.where("email").is(_id));
+		query.addCriteria(Criteria.where("_id").is(_id));
 		WriteResult result = mongoTemplate.updateFirst(query, Update.update(key, value), UserInfo.class);
 		if(result.wasAcknowledged())
 			return mongoTemplate.findOne(query, UserInfo.class);

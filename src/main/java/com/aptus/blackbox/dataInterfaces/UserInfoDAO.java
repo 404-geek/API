@@ -12,8 +12,9 @@ public interface UserInfoDAO {
 	List<UserInfo> getAllUsers();
 	UserInfo createUser(UserInfo userInfo);
 	boolean deleteUser(String email);
-	UserInfo updateUser(String email, String field, String value);
+	UserInfo updateUser(String _id, String field, Object value);
 	boolean matchSingleField(String _id, String key, String value);
 	boolean matchMultipleField(String _id, Map<String, String> fields);
+	
 	
 }

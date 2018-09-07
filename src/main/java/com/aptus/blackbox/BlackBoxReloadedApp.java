@@ -1,6 +1,7 @@
 package com.aptus.blackbox;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,10 +22,11 @@ public class BlackBoxReloadedApp extends SpringBootServletInitializer{
 	
 		
 	     ThreadContext.put("id", "192.168.21.9");
+	     //System.out.println(UUID.randomUUID().nameUUIDFromBytes(name)+" \n"+UUID.randomUUID().nameUUIDFromBytes("chandan".getBytes()));
 		 logger.info("INFO MSG");
 		 logger.debug("debug MSG");
 		 logger.error("error MSG");
-		 ThreadContext.clearAll();
+		 //ThreadContext.clearAll();
 		 logger.warn("warn MSG");
 		 logger.trace("trac  msg");
 		
