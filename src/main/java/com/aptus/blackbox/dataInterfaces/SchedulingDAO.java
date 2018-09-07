@@ -12,5 +12,5 @@ public interface SchedulingDAO {
 	
 	public long getScheduledConnCount(String userId);
 	
-	public Connection getScheduledStatus(String userId);
+	public ScheduleStatus getUserSchedulerData(String userId);
 }

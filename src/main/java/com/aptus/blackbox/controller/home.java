@@ -42,6 +42,7 @@ import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SchedulingService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.dataServices.SrcDestListService;
+import com.aptus.blackbox.dataServices.SubscriptionService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserInfoService;
 import com.aptus.blackbox.datamodels.SourceConfig;
@@ -105,6 +106,8 @@ public class home extends RESTFetch{
 	@Autowired
 	private SchedulingService schedulingService;
 	
+	@Autowired
+	private SubscriptionService subscriptionService;
 	
 	
 
@@ -312,6 +315,7 @@ public class home extends RESTFetch{
 			  userConnectorService.createUser(user.getUserId());
 			  meteringService.createUser(user.getUserId());
 			  schedulingService.createUser(user.getUserId());
+			  subscriptionService.createSubscription(user.getUserId());
 			  
 			  response = new ResponseObject()
 					  .Response( Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, user.getUserId());

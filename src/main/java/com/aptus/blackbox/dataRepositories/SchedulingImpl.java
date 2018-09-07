@@ -53,11 +53,8 @@ public class SchedulingImpl implements SchedulingDAO{
 	}
 
 	@Override
-	public Connection getScheduledStatus(String userId) {
-		// TODO Auto-generated method stub
-		return null;
+	public ScheduleStatus getUserSchedulerData(String userId) {
+		return mongoTemplate.findOne(new Query().addCriteria(Criteria.where("_id").is(userId)), ScheduleStatus.class);		
 	}
-
-
 	
 }

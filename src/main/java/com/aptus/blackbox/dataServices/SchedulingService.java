@@ -33,4 +33,7 @@ public class SchedulingService {
 	public long scheduleConnectionCount(String userId) {
 		return schedulingDAO.getScheduledConnCount(userId);
 	}
+	public ScheduleStatus fetchUserSchedulerData(String userId) {
+		return schedulingDAO.getUserSchedulerData(userId);
+	}
 }

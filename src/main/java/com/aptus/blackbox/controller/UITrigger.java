@@ -69,100 +69,33 @@ public class UITrigger {
 	@Autowired
 	private SchedulingService schedulingService;
 	
-	//Functionality of below is unsure
-	@RequestMapping(method = RequestMethod.GET, value = "/clientscheduledstatus")
-    private ResponseEntity<String> getstatus(HttpSession session, @RequestParam("connId") String connId) {
-        ResponseEntity<String> out = null;
-        
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Cache-Control", "no-cache");
-        headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
-        
-        try {         
-        	if(Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
-        	String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
-			String url = config.getMongoUrl() + "/credentials/scheduleStatus?filter=" + filter;
-			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-            System.out.println("clientscheduledstatus");
-            System.out.println(uri);
-            HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-			RestTemplate restTemplate = new RestTemplate();
-			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-			JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
-			JsonObject respBody = new JsonObject();
-			System.out.println("result:: "+obj);
-            if(obj.get("_returned").getAsInt() == 0 ? false : true)
-			{	
-           
-            JsonObject status= obj.getAsJsonObject().get(connId).getAsJsonObject();
-            System.out.println(status);
-				respBody.add("data",status);
-				respBody.addProperty("status", "200");
-				respBody.addProperty("message", "Scheduled Data Exist");
-			}else {
-				respBody.addProperty("data","null");
-				respBody.addProperty("status", "200");
-				respBody.addProperty("message", "Scheduled Data Not Exist");
-			}
-			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-            
-           
-        	}
-        }
-        catch(HttpClientErrorException e) {
-            JsonObject respBody = new JsonObject();
-            respBody.addProperty("data", "Error");
-            respBody.addProperty("status", "404");
-            System.out.println(e.getMessage());
-            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }   
-		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-    }
 	
-	
-	
-	
-	
-	
-	
-	@RequestMapping("/getScheduledStatus")
-	public ResponseEntity<Object> getScheduledStatus(HttpSession session) {
+	@RequestMapping("/getSchedulerData")
+	public ResponseEntity<Object> getScheduledStatus(HttpSession session){
+		
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
-				
-				String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
-				String url = config.getMongoUrl() + "/credentials/scheduleStatus?filter=" + filter;
-
-				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				HttpHeaders header = new HttpHeaders();
-
-				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
-				RestTemplate restTemplate = new RestTemplate();
-				ResponseEntity<String> out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-				JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
 				JsonObject respBody = new JsonObject();
-				
-				if(obj.get("_returned").getAsInt() == 0 ? false : true)
-				{	
-					respBody.add("data",obj);
-					respBody.addProperty("status", "200");
-					respBody.addProperty("message", "Scheduled Data Exist");
-				}else {
-					respBody.addProperty("data","null");
-					respBody.addProperty("status", "200");
-					respBody.addProperty("message", "Scheduled Data Not Exist");
-				}
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			} else {
-				System.out.println("Session expired!");
+				Gson gson = new Gson();
+			if(schedulingService.scheduleConnectionCount(credentials.getUserId()) != 0) {
+				respBody.addProperty("data",gson.toJson(schedulingService.fetchUserSchedulerData(credentials.getUserId())));
+				respBody.addProperty("status", "200");
+				respBody.addProperty("message", "Scheduled Data Exist");
+			}
+			else {
+				respBody.addProperty("data","null");
+				respBody.addProperty("status", "200");
+				respBody.addProperty("message", "Scheduled Data Not Exist");				
+			}
+			
+			return ResponseEntity.status(HttpStatus.OK).headers(headers)
+					.body(respBody.toString());
+		}
+			else {
 				JsonObject respBody = new JsonObject();
 				respBody.addProperty("message", "Sorry! Your session has expired");
 				respBody.addProperty("status", "33");
@@ -170,17 +103,13 @@ public class UITrigger {
 						.body(respBody.toString());
 			}
 		}catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-		// store in credentials
 	}
 	
 	
-	
-
-	@RequestMapping("/togglescheduling")
+	/*@RequestMapping("/togglescheduling")
 	public ResponseEntity<String> toggleScheduling(@RequestParam("connid") String connId,
 			@RequestParam("toggle") String toggle,@RequestParam(value="period",required=false) String period,
 			HttpSession session){
@@ -189,30 +118,106 @@ public class UITrigger {
 		headers.add("Cache-Control", "no-cache");
 		headers.add("access-control-allow-origin", config.getRootUrl());
 		headers.add("access-control-allow-credentials", "true");
+		
+		ConnObj currConnObj = credentials.getConnectionIds(connId);
+		credentials.setCurrConnObj(currConnObj);
+		credentials.setCurrSrcName(currConnObj.getSourceName());
+		credentials.setCurrDestName(currConnObj.getDestName());
+		credentials.setCurrSrcId(currConnObj.getSourceId());
+		credentials.setCurrDestId(currConnObj.getDestinationId());
+		credentials.setCurrSrcValid(false);
+		credentials.setCurrDestValid(false);
+		
+		
 		if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
+			System.out.println("The connObj"+credentials.getCurrConnObj().getSourceName());
+			
+			
+			if(credentials.getConnectionIds(connId).getSourceName().
+					equalsIgnoreCase(credentials.getCurrConnObj().getSourceName()) &&
+			   credentials.getConnectionIds(connId).getDestName().
+					equalsIgnoreCase(credentials.getCurrConnObj().getDestName())) {
+				
+				if(toggle.equalsIgnoreCase("on")) {
+					
+				}
+				else if(toggle.equalsIgnoreCase("off")) {
+					
+				}
+				else if(toggle.equalsIgnoreCase("period")) {
+					
+				}
+			}
+		}
+		else {
+			System.out.println("Session expired!");
+			respBody = new JsonObject();
+			respBody.addProperty("message", "Sorry! Your session has expired");
+			respBody.addProperty("status", "33");
+			return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers)
+					.body(respBody.toString());
+		}
+	}*/
+	
+	
+/////////////////////////////////////////////////////////////////////////
+	@RequestMapping("/OLDtogglescheduling")
+	public ResponseEntity<String> OLDtoggleScheduling(@RequestParam("connId") String connId,
+			@RequestParam("toggle") String toggle,@RequestParam(value="period",required=false) String period,
+			HttpSession session){
+		HttpHeaders headers = new HttpHeaders();
+		JsonObject respBody = new JsonObject();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", config.getRootUrl());
+		headers.add("access-control-allow-credentials", "true");
+		
+		ConnObj currConnObj = credentials.getConnectionIds(connId);
+		
+		
+		
+		credentials.setCurrConnObj(currConnObj);
+		credentials.setCurrSrcName(currConnObj.getSourceName());
+		credentials.setCurrDestName(currConnObj.getDestName());
+		credentials.setCurrSrcId(currConnObj.getSourceId());
+		credentials.setCurrDestId(currConnObj.getDestinationId());
+		credentials.setCurrSrcValid(false);
+		credentials.setCurrDestValid(false);
+		
+		////////1
+		if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
+			
+			System.out.println("The connObj"+credentials.getCurrConnObj().getSourceName());
+			
 			if(credentials.getConnectionIds(connId).getSourceName().
 						equalsIgnoreCase(credentials.getCurrConnObj().getSourceName()) &&
 				   credentials.getConnectionIds(connId).getDestName().
-						equalsIgnoreCase(credentials.getCurrConnObj().getDestName())) {				
-				if(toggle.equalsIgnoreCase("on")) {
+						equalsIgnoreCase(credentials.getCurrConnObj().getDestName())) {	/////2			
+				if(toggle.equalsIgnoreCase("on")) {/////3
 					boolean ret=false;
+					
+					
+					
 					ResponseEntity<String> out = null;
 					RestTemplate restTemplate = new RestTemplate();
 					//restTemplate.getMessageConverters().add(0, new StringHttpMessageConverter(Charset.forName("UTF-8")));
 					String filter = "filter={\"_id\":\""+credentials.getUserId()+"\"}&filter={\""+connId+"\":{\"$exists\":true,\"$ne\":null}}";
-					String url = config.getMongoUrl()+"/credentials/scheduledStatus?" + filter;
+					System.out.println("Filter is "+filter);
+					String url = config.getMongoUrl()+"/credentials/s"+ "" + filter;
 					URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 					HttpHeaders header = new HttpHeaders();
 					// header.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 					HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-					out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-					System.out.println("UITrigger togglescheduling "+out.getBody());
+					
+					out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);//out
+					
+					System.out.println("UITrigger togglescheduling The out variable   "+out.getBody());
 					JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
-					JsonObject jobj = jelem.getAsJsonObject();
-					if(jobj.get("_returned").getAsInt() != 0) {
+					JsonObject jobj = jelem.getAsJsonObject();/////jobj
+					////
+					if(jobj.get("_returned").getAsInt() != 0) {//////4// it is the count
 						JsonObject scheduledData = jobj.get("_embedded").getAsJsonArray()
-								.get(0).getAsJsonObject().get(connId).getAsJsonObject();
-						if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
+								.get(0).getAsJsonObject().get(connId).getAsJsonObject();//scheduledDAta is the target
+						if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {////5
 							ConnObj connObj = new ConnObj();
 		     				connObj.setConnectionId(connId);
 		     				connObj.setDestName(credentials.getCurrDestName());
@@ -234,6 +239,11 @@ public class UITrigger {
 		        			schObj.setSrcName(credentials.getCurrSrcName());
 		        			schObj.setNextPush(ZonedDateTime.now().toInstant().toEpochMilli());
 		        			schObj.setLastPushed(ZonedDateTime.now().toInstant().toEpochMilli());
+		        			
+		        			
+		        			
+		        			
+		        			
 		        			for(Entry<String, JsonElement> endpoint:scheduledData.entrySet()) {
 		        				if(endpoint.getValue().isJsonObject()) {
 		        					Map<String,Status> mp = new HashMap<>();
@@ -257,9 +267,9 @@ public class UITrigger {
 		        			 scheduleEventData.setData(credentials.getUserId(), connId,Integer.parseInt(period)*1000,true);
 		        			 System.out.println(applicationCredentials.getApplicationCred().get(credentials.getUserId()).getSchedulingObjects().get(connId));
 		        			 applicationEventPublisher.publishEvent(scheduleEventData);
-						}
-					}
-				}
+						}//////5
+					}///////////4
+				}//////3
 				else if(toggle.equalsIgnoreCase("off")) {
 						if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
 		            		if(applicationCredentials.getApplicationCred().get(credentials
@@ -288,7 +298,7 @@ public class UITrigger {
             	}
 				}
 				applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));	
-			}
+			} /////2
 				else if(credentials.getConnectionIds(connId).getSourceName().
 						equalsIgnoreCase(credentials.getCurrConnObj().getSourceName())) {
 					credentials.setCurrDestValid(false);
@@ -308,7 +318,7 @@ public class UITrigger {
 					respBody.addProperty("status", "13");
 				}
 			return null;			
-		}
+		}/////1
 		else {
 			System.out.println("Session expired!");
 			respBody = new JsonObject();
@@ -318,11 +328,9 @@ public class UITrigger {
 					.body(respBody.toString());
 		}
 	}
-
-	
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/statistics")
-	private ResponseEntity<String> getstats(/*@RequestParam("userId") String userId,*/HttpSession session) {
+	private ResponseEntity<String> getstats(HttpSession session) {
 		
 		HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache");
@@ -338,11 +346,6 @@ public class UITrigger {
         		obj=userConnectorService.countDataSourcesCreated(credentials.getUserId());//fetches count of files and ds created
         		obj.addProperty("RowsFetced", meteringservice.totalRows(credentials.getUserId()) );
         		obj.addProperty("DatasourcesScheduled", schedulingService.scheduleConnectionCount(credentials.getUserId()));
-        		
-        		//sources.add("No of Data sources created: ", userConnectorService.countDataSourcesCreated(userId));
-        		//long a = meteringservice.totalRows(userId);
-			
-			
 			}
         	else {
 				session.invalidate();
@@ -359,18 +362,11 @@ public class UITrigger {
     		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(statistics.toString());
 					
         }catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 		
 	}
-		
-	
-	
-	
-	
-
 	@RequestMapping(method = RequestMethod.GET, value = "/resourceusage")
 	private ResponseEntity<String> getusage(HttpSession session){
 		HttpHeaders headers = new HttpHeaders();
@@ -431,6 +427,106 @@ public class UITrigger {
 
 	}
 	
-	
+	/*
+	@RequestMapping("/OLDgetScheduledStatus")
+	public ResponseEntity<Object> OLDgetScheduledStatus(HttpSession session) {
+		HttpHeaders headers = new HttpHeaders();
+		headers.add("Cache-Control", "no-cache");
+		headers.add("access-control-allow-origin", config.getRootUrl());
+		headers.add("access-control-allow-credentials", "true");
+		try {
+			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
+				
+				String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
+				String url = config.getMongoUrl() + "/credentials/scheduleStatus?filter=" + filter;
 
+				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+				HttpHeaders header = new HttpHeaders();
+
+				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
+				RestTemplate restTemplate = new RestTemplate();
+				ResponseEntity<String> out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
+				JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
+				JsonObject respBody = new JsonObject();
+				
+				if(obj.get("_returned").getAsInt() == 0 ? false : true)
+				{	
+					respBody.add("data",obj);
+					respBody.addProperty("status", "200");
+					respBody.addProperty("message", "Scheduled Data Exist");
+				}else {
+					respBody.addProperty("data","null");
+					respBody.addProperty("status", "200");
+					respBody.addProperty("message", "Scheduled Data Not Exist");
+				}
+				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+			} else {
+				System.out.println("Session expired!");
+				JsonObject respBody = new JsonObject();
+				respBody.addProperty("message", "Sorry! Your session has expired");
+				respBody.addProperty("status", "33");
+				return ResponseEntity.status(HttpStatus.NON_AUTHORITATIVE_INFORMATION).headers(headers)
+						.body(respBody.toString());
+			}
+		}catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+		// store in credentials
+	}*/
+	
+	/*@RequestMapping(method = RequestMethod.GET, value = "/clientscheduledstatus")
+    private ResponseEntity<String> getstatus(HttpSession session, @RequestParam("connId") String connId) {
+        ResponseEntity<String> out = null;
+        
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Cache-Control", "no-cache");
+        headers.add("access-control-allow-origin", config.getRootUrl());
+        headers.add("access-control-allow-credentials", "true");
+        
+        try {         
+        	if(Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
+        	String filter = "{\"_id\":\"" + credentials.getUserId().toLowerCase() + "\"}";
+			String url = config.getMongoUrl() + "/credentials/scheduleStatus?filter=" + filter;
+			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
+            System.out.println("clientscheduledstatus");
+            System.out.println(uri);
+            HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
+			RestTemplate restTemplate = new RestTemplate();
+			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
+			JsonObject obj = new Gson().fromJson(out.getBody(), JsonObject.class);
+			JsonObject respBody = new JsonObject();
+			System.out.println("result:: "+obj);
+            if(obj.get("_returned").getAsInt() == 0 ? false : true)
+			{	
+           
+            JsonObject status= obj.getAsJsonObject().get(connId).getAsJsonObject();
+            System.out.println(status);
+				respBody.add("data",status);
+				respBody.addProperty("status", "200");
+				respBody.addProperty("message", "Scheduled Data Exist");
+			}else {
+				respBody.addProperty("data","null");
+				respBody.addProperty("status", "200");
+				respBody.addProperty("message", "Scheduled Data Not Exist");
+			}
+			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+            
+           
+        	}
+        }
+        catch(HttpClientErrorException e) {
+            JsonObject respBody = new JsonObject();
+            respBody.addProperty("data", "Error");
+            respBody.addProperty("status", "404");
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }   
+		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
+    }
+	*/
 }
