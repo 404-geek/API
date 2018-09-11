@@ -158,7 +158,7 @@ public class home extends RESTFetch {
 				
 				credentials.setUserId(_id);
 				applicationCredentials.setSessionId(_id, session.getId());
-				socketService.sendUserStatistics();
+				
 				getConnectionIds(session);
 				response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
 				//
@@ -265,9 +265,17 @@ public class home extends RESTFetch {
 		}
 		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response.toString());
 	}
+	
+	
+	
+	
+	
+	
+	
+	
 
-	@RequestMapping(value = "/update1")
-	private ResponseEntity<String> update1(@RequestBody UserInfo user) {
+	@RequestMapping(value = "/update")
+	private ResponseEntity<String> update(@RequestBody UserInfo user) {
 		HttpHeaders headers = new HttpHeaders();
 		JsonObject response = null;
 		if (userService.userExist(user.getUserId())) {
@@ -282,6 +290,11 @@ public class home extends RESTFetch {
 		}
 		return ResponseEntity.status(HttpStatus.OK).headers(headers).body(response.toString());
 	}
+	
+	
+	
+	
+	
 
 	/*
 	 * Input:user_id Takes user_id as input, checks if user already exists and
@@ -350,14 +363,14 @@ public class home extends RESTFetch {
 	}
 
 	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdest")
-	private ResponseEntity<String> getSrcDest1(HttpSession session) {
-		System.out.println("/getsrcdest session" + session.getId());
+	private ResponseEntity<String> getSrcDest() {
+		//System.out.println("/getsrcdest session" + session.getId());
 		ResponseEntity<String> s = null;
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 		headers.add("Cache-Control", "no-cache");
 		try {
-			if (Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {
+		//	if (Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {
 				// String response = srcdestlistService.getSrcDestList();
 				List<String> categories = sourceDestinationService.getCategories("refIndType");
 				List<Sources> sources = sourceDestinationService.getSourceList();
@@ -371,14 +384,14 @@ public class home extends RESTFetch {
 				respBody.add("categories", gson.toJsonTree(categories));
 
 				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody.toString());
-			} else {
-				// session.invalidate();
-				System.out.println("Session expired!");
-				JsonObject respBody = new JsonObject();
-				respBody.addProperty("message", "Sorry! Your session has expired");
-				respBody.addProperty("status", "33");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-			}
+//			} else {
+//				// session.invalidate();
+//				System.out.println("Session expired!");
+//				JsonObject respBody = new JsonObject();
+//				respBody.addProperty("message", "Sorry! Your session has expired");
+//				respBody.addProperty("status", "33");
+//				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
+//			}
 		} catch (HttpStatusCodeException e) {
 
 			System.out.println("Inside getsrcdest catch");
@@ -391,60 +404,6 @@ public class home extends RESTFetch {
 			// System.out.println(out.getStatusCode().toString());
 			return out; // ThreadContext.clearAll();
 			// logger.warn("warn MSG");
-			// ResponseEntity.status(HttpStatus.OK).body(null);
-
-		}
-
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-	}
-
-	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdestOld")
-	private ResponseEntity<String> getSrcDestOld(HttpSession session) {
-		System.out.println("INSIDE /getsrcdst");
-		ResponseEntity<String> s = null;
-		HttpHeaders headers = new HttpHeaders();
-		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
-		headers.add("Authorization", "Basic YTph");
-		try {
-
-			System.out.println(session.getId());
-			if (session.getId() == applicationCredentials.getSessionId(credentials.getUserId())) {
-				String name;
-				RestTemplate restTemplate = new RestTemplate();
-				String url = config.getMongoUrl() + "/copy_credentials/SrcDstlist/srcdestlist";
-				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				HttpHeaders header = new HttpHeaders();
-				HttpEntity<?> httpEntity = new HttpEntity<Object>(header);
-				s = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
-
-				return ResponseEntity.status(HttpStatus.OK).headers(headers).body(s.getBody().toString());
-			} else {
-				session.invalidate();
-				System.out.println("Session expired!");
-				JsonObject respBody = new JsonObject();
-				respBody.addProperty("message", "Sorry! Your session has expired");
-				respBody.addProperty("status", "33");
-				return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers).body(respBody.toString());
-			}
-		}
-
-		catch (HttpStatusCodeException e) {
-
-			System.out.println("Inside getsrcdest catch");
-			ResponseEntity<String> out = null;
-			e.getStatusCode();
-
-			ExceptionHandling exceptionhandling = new ExceptionHandling();
-			out = exceptionhandling.clientException(e);
-
-			// System.out.println(out.getStatusCode().toString());
-			return out;
 			// ResponseEntity.status(HttpStatus.OK).body(null);
 
 		}

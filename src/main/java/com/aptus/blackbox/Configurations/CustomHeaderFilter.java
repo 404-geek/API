@@ -14,6 +14,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 	public class CustomHeaderFilter  implements Filter{
+
+	
 	/*@Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurerAdapter() {
@@ -27,12 +29,20 @@ import org.springframework.context.annotation.Configuration;
 
 
 
+	
+	/*
+	 * (non-Javadoc)
+	 * @see javax.servlet.Filter#doFilter(javax.servlet.ServletRequest, javax.servlet.ServletResponse, javax.servlet.FilterChain)
+	 * Filter chaining for passing headers to all HttpResponse and HttpRequests
+	 */
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, 
       FilterChain chain) throws IOException, ServletException {
+    	
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
         httpServletResponse.setHeader("Access-Control-Allow-Origin", "http://localhost:4200");
         httpServletResponse.setHeader("access-control-allow-credentials", "true");
+        httpServletResponse.setHeader("Cache-Control", "no-cache");
         chain.doFilter(request, response);
     }
  

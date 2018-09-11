@@ -35,6 +35,7 @@ import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SchedulingService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
+import com.aptus.blackbox.dataServices.WebSocketService;
 import com.aptus.blackbox.event.InterruptThread;
 import com.aptus.blackbox.event.ScheduleEventData;
 import com.aptus.blackbox.event.Socket;
@@ -68,6 +69,8 @@ public class UITrigger {
 	private MeteringService meteringservice;
 	@Autowired
 	private SchedulingService schedulingService;
+	@Autowired
+	private WebSocketService socketService;
 	
 	
 	@RequestMapping("/getSchedulerData")
@@ -297,7 +300,9 @@ public class UITrigger {
             		}            		
             	}
 				}
-				applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));	
+				
+				socketService.sendUserStatistics();
+				//applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));	
 			} /////2
 				else if(credentials.getConnectionIds(connId).getSourceName().
 						equalsIgnoreCase(credentials.getCurrConnObj().getSourceName())) {

@@ -22,7 +22,7 @@ public class SrcDestCredentialsImpl implements SrcDestCredentialsDAO{
 	@Autowired
 	MongoTemplate mongoTemplate;
 	
-	String documentId = Constants.SRCDESTCRED_ID;
+	String documentId = Constants._ID;
 	
 	@Override
 	public void insertCredentials(SrcDestCredentials credential, String collection) {

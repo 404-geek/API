@@ -172,12 +172,13 @@ public class SourceController extends RESTFetch {
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			out = restTemplate.exchange(uri, method, httpEntity, String.class);
 			saveValues(out);
+	
 			out = Utilities.token(validateCredentials,credentials.getSrcToken(),credentials.getUserId()+"SourceController.handlefooo");
 
 			headers = new HttpHeaders();
-			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", config.getRootUrl());
-			headers.add("access-control-allow-credentials", "true");
+//			headers.add("Cache-Control", "no-cache");
+//			headers.add("access-control-allow-origin", config.getRootUrl());
+//			headers.add("access-control-allow-credentials", "true");
 			if (!out.getStatusCode().is2xxSuccessful()) {
 				System.out.println("invalid access token");
 				Utilities.invalid();

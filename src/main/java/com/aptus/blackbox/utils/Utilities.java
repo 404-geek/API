@@ -264,16 +264,19 @@ public static ResponseEntity<String> token(UrlObject object,Map<String, String> 
 	try {
 		RestTemplate restTemplate = new RestTemplate();
 
-		System.out.println("Build Url Started");
+		System.out.println("Token called from "+message);
+		System.out.println("***************Build Url Started***************");
 		String url = Utilities.buildUrl(object, values,message);
-		System.out.println("Build Url Stopped");
-		System.out.println(message+" "+object.getLabel() + " = " + url);
-
-		System.out.println("Build Header Started");
-		HttpHeaders headers = Utilities.buildHeader(object, values,message);
-		System.out.println("Build Header Stopped");
+		System.out.println(object.getLabel()+" Url:"+url);		
+		System.out.println("***************Build Url Stopped***************");
 		
-		System.out.println("Build Body Started");
+		
+
+		System.out.println("***************Build Header Started***************");
+		HttpHeaders headers = Utilities.buildHeader(object, values,message);
+		System.out.println("***************Build Header Stopped***************");
+		
+		System.out.println("***************Build Body Started***************");
 		HttpEntity<?> httpEntity;
 		if (!object.getResponseBody().isEmpty()) {
 			MultiValueMap<String, String> preBody = Utilities.buildBody(object, values,"");
@@ -289,7 +292,7 @@ public static ResponseEntity<String> token(UrlObject object,Map<String, String> 
 		} else {
 			httpEntity = new HttpEntity<Object>(headers);
 		}
-		System.out.println("Build Body Stopped");
+		System.out.println("***************Build Body Stopped***************");
 //		if (object.getResponseString()!=null&&!object.getResponseString().isEmpty()) {
 //			httpEntity = new HttpEntity<Object>(object.getResponseString(), headers);
 //		} else if (!object.getResponseBody().isEmpty()) {

@@ -44,6 +44,7 @@ import com.aptus.blackbox.dataServices.SourceConfigService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.dataServices.SrcDestListService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
+import com.aptus.blackbox.dataServices.WebSocketService;
 import com.aptus.blackbox.datamodels.DestinationConfig;
 import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.datamodels.SrcDestCredentials;
@@ -89,6 +90,8 @@ public class DataSourceController extends RESTFetch {
 	private SrcDestListService srcDestListService;
 	@Autowired
 	private SchedulingService schedulingService;
+	@Autowired
+	private WebSocketService socketService;
 	
 	
 	
@@ -485,11 +488,24 @@ public class DataSourceController extends RESTFetch {
 		
 			SrcDestCredentials srcDestCredential = srcDestCredentialsService.
 					getCredentials(credentialId, Constants.COLLECTION_SOURCECREDENTIALS);
+			
+			
 			for(Map<String,String> hm:srcDestCredential.getCredentials()) {
-				for(Map.Entry<String, String> map : hm.entrySet())
-					credentials.addSrcToken(map.getKey(), map.getValue());
+				String k = null,v = null;
+						for(Map.Entry<String, String> map : hm.entrySet()) {
+							if(map.getKey().equals("key")) 
+								k = map.getValue();
+							else if(map.getKey().equals("value")) 
+								v = map.getValue();
+						}
+				System.out.println("Key = "+k);
+				System.out.println("Val = "+v+"\n");
+				
+				credentials.addSrcToken(k,v);
+					
 			}
-			logger.debug("Keys: "+credentials.getSrcToken().keySet()+" \nValues: "+credentials.getSrcToken().values());
+			
+			
 		} 
 		
 		catch (HttpStatusCodeException e) {
@@ -566,9 +582,9 @@ public class DataSourceController extends RESTFetch {
 	private ResponseEntity<String> isValid(@RequestParam("type") String type,
 			@RequestParam("srcdestId") String srcDestId, HttpSession session) {
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 				boolean isvalid = false;
@@ -591,7 +607,12 @@ public class DataSourceController extends RESTFetch {
 						isvalid=false;
 					}
 					else {
-						ResponseEntity<String> out = Utilities.token(credentials.getSrcObj().getValidateCredentials(), credentials.getSrcToken(), "isvalid");
+						System.out.println("ISVALID");
+						credentials.getSrcToken().entrySet().iterator().forEachRemaining(a->{
+							System.out.println("key :: "+a.getKey());
+							System.out.println("val :: "+a.getValue()+"\n");
+						});
+						ResponseEntity<String> out = Utilities.token(credentials.getSrcObj().getValidateCredentials(), credentials.getSrcToken(), "DataSourceController.isvalid");
 						isvalid = out.getStatusCode().is2xxSuccessful();
 						if(isvalid)
 						{
@@ -652,7 +673,8 @@ public class DataSourceController extends RESTFetch {
                 
             	if (deleteUserConnector) { 
                 	
-                	applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
+            		socketService.sendUserStatistics();
+                	//applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
                 	
                 	System.out.println("UserID:"+applicationCredentials.getApplicationCred().get(credentials.getUserId()));
                 	System.out.println("ConnID:"+applicationCredentials.getApplicationCred().get(credentials
@@ -726,8 +748,8 @@ public class DataSourceController extends RESTFetch {
                 URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
                 out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity, String.class);
                 if (out.getStatusCode().is2xxSuccessful()) { 
-                	
-                	applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
+                	socketService.sendUserStatistics();
+                	//applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
                 	
                 	if(applicationCredentials.getApplicationCred().get(credentials.getUserId())!=null) {
                 		if(applicationCredentials.getApplicationCred().get(credentials
@@ -1119,7 +1141,6 @@ public class DataSourceController extends RESTFetch {
 					meteringService.addConnection(credentials.getUserId(), conId, new ConnectionMetering());
 					System.out.println("Metering Data pushed");
 					
-					applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
 					
 				/*	//publish credentials
 					applicationEventPublisher.publishEvent(new PushCredentials(credentials.getSrcObj(), credentials.getDestObj(),credentials.getSrcToken() , credentials.getDestToken(),
@@ -1127,6 +1148,10 @@ public class DataSourceController extends RESTFetch {
 					System.out.println("Data Source credentials pushed");
 					*/
 					credentials.setCurrConnObj(currobj);
+					
+					
+					//applicationEventPublisher.publishEvent(new Socket(credentials.getUserId()));
+					socketService.sendUserStatistics();
 					
 					if(choice.equalsIgnoreCase("export")) {
 						String out = Context.getBean(DataController.class).checkConnection("export", credentials.getCurrConnObj().getConnectionId(), session).getBody();

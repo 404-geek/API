@@ -42,17 +42,23 @@ public class WebSocketService {
 		
 		JsonObject statistics= new JsonObject();
 		JsonObject obj = new JsonObject();
+		String userId = credentials.getUserId();
 		
-		obj=userConnectorService.countDataSourcesCreated(credentials.getUserId());//fetches count of files and ds created
-		obj.addProperty("RowsFetced", meteringService.getTotalRows(credentials.getUserId()) );
-		obj.addProperty("DatasourcesScheduled", schedulingService.scheduleConnectionCount(credentials.getUserId()));
+		obj=userConnectorService.countDataSourcesCreated(userId);//fetches count of files and ds created
+		obj.addProperty("RowsFetced", meteringService.getTotalRows(userId) );
+		obj.addProperty("DatasourcesScheduled", schedulingService.scheduleConnectionCount(userId));
 		
 		statistics.addProperty("code","200");
 		statistics.addProperty("message", "Statistics data updated");
 		statistics.add("data", obj);
+		System.out.println("Socket data sended: "+statistics);
+		
 		
 		template.convertAndSend("/chat", statistics.toString());
 	}
+	
+
+	
 	
 
 }
