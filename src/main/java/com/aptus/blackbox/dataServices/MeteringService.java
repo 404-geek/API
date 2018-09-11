@@ -30,7 +30,7 @@ public class MeteringService {
 		return meteringDAO.addTimeMetering(userId, connectionId, timeMetering, totalRows);
 	}
 	
-	public long totalRows(String userId) {
+	public long getTotalRows(String userId) {
 		return meteringDAO.getTotalRows(userId);
 	}
 	

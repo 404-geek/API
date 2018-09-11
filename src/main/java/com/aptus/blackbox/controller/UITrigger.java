@@ -344,7 +344,7 @@ public class UITrigger {
         		
         		System.out.println("=====datastats called");
         		obj=userConnectorService.countDataSourcesCreated(credentials.getUserId());//fetches count of files and ds created
-        		obj.addProperty("RowsFetced", meteringservice.totalRows(credentials.getUserId()) );
+        		obj.addProperty("RowsFetced", meteringservice.getTotalRows(credentials.getUserId()) );
         		obj.addProperty("DatasourcesScheduled", schedulingService.scheduleConnectionCount(credentials.getUserId()));
 			}
         	else {

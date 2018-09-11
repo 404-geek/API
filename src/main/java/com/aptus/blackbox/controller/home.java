@@ -3,10 +3,8 @@ package com.aptus.blackbox.controller;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
@@ -21,6 +19,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,15 +43,13 @@ import com.aptus.blackbox.dataServices.SrcDestListService;
 import com.aptus.blackbox.dataServices.SubscriptionService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserService;
-import com.aptus.blackbox.dataServices.UserService;
+import com.aptus.blackbox.dataServices.WebSocketService;
 import com.aptus.blackbox.datamodels.Destinations;
 import com.aptus.blackbox.datamodels.Sources;
-import com.aptus.blackbox.datamodels.SrcDestCredentials;
 import com.aptus.blackbox.datamodels.UserConnectors;
 import com.aptus.blackbox.datamodels.UserInfo;
 import com.aptus.blackbox.datamodels.VerificationToken;
 import com.aptus.blackbox.event.OnRegistrationCompleteEvent;
-import com.aptus.blackbox.index.ScheduleInfo;
 import com.aptus.blackbox.models.ConnObj;
 import com.aptus.blackbox.models.ResponseObject;
 import com.aptus.blackbox.models.UrlObject;
@@ -81,74 +78,61 @@ public class home extends RESTFetch {
 	private SrcDestListService srcdestlistService;
 	@Autowired
 	private Credentials credentials;
-
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
-
 	@Autowired
 	private Config config;
-
 	@Autowired
 	private UserService userService;
-
 	@Autowired
 	private UserConnectorService userConnectorService;
-
 	@Autowired
-	private MessageSource messages;
+	private SourceDestinationList sourceDestinationService;
+	@Autowired
+	private ApplicationEventPublisher applicationEventPublisher;
+	@Autowired
+	private WebSocketService socketService;
+	
 
+	private SimpMessagingTemplate template;
 	final Logger logger = LogManager.getLogger(home.class.getPackage());
 
 	@Autowired
-	private MeteringService meteringService;
+	public home(SimpMessagingTemplate template) {
 
-	@Autowired
-	private SrcDestCredentialsService srcDestCredentialsService;
+		System.out.println("SimpleMessaging Constructer called");
 
-	@Autowired
-	private SchedulingService schedulingService;
-
-	
-	@Autowired
-	private SubscriptionService subscriptionService;
-	
-
-
-	@Autowired
-	private SourceDestinationList sourceDestinationService;
-
-	@Autowired
-	private ApplicationEventPublisher applicationEventPublisher;
-
-	@RequestMapping("/log")
-	private ResponseEntity<String> dfs() {
-
-		System.out.println(credentials.getSrcObj() + " TOKEN == " + credentials.getSrcToken());
-		List<Map<String, String>> mcred = new ArrayList<Map<String, String>>();
-
-		for (Map.Entry<String, String> mp : credentials.getSrcToken().entrySet()) {
-
-			Map<String, String> map = new HashMap<String, String>();
-			map.put("key", String.valueOf(mp.getKey()));
-			map.put("value", String.valueOf(mp.getValue()));
-			mcred.add(map);
-
-		}
-		SrcDestCredentials srcCredentials = new SrcDestCredentials();
-		srcCredentials.setCredentialId(
-				credentials.getUserId().toLowerCase() + "_" + credentials.getCurrSrcName().toLowerCase());
-		srcCredentials.setCredentials(mcred);
-		System.out.println(srcCredentials);
-		srcDestCredentialsService.insertCredentials(srcCredentials, "sourceCredentials");
-
-		return null;
+		/* Initialize messaging template */
+		this.template = template;
 	}
+
+//	public void fun() {
+//		Thread th = new Thread(new Runnable() {
+//
+//			@Override
+//			public void run() {
+//				while (true) {
+//					System.out.println("hello");
+//					template.convertAndSend("/chat",
+//							"{\"code\":\"200\",\"message\":\"Statistics data updated\",\"data\":{\"DatasourcesCreated\":7,\"FilesDownloaded\":0,\"RowsFetced\":1631,\"DatasourcesScheduled\":2}}");
+//					System.out.println("hello");
+//					try {
+//						Thread.sleep(10000);
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
+//				}
+//			}
+//		});
+//		th.start();
+//	}
 
 	@RequestMapping(value = "/login")
 	private ResponseEntity<String> login(@RequestParam("userId") String _id, @RequestParam("password") String password,
 			HttpSession session) {
 		HttpHeaders headers = new HttpHeaders();
 
+		
 		logger.info("INFO MSG");
 		logger.debug("debug MSG");
 		logger.error("error MSG");
@@ -171,11 +155,12 @@ public class home extends RESTFetch {
 			}
 
 			else {
-
-				response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
+				
 				credentials.setUserId(_id);
 				applicationCredentials.setSessionId(_id, session.getId());
+				socketService.sendUserStatistics();
 				getConnectionIds(session);
+				response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
 				//
 				// ThreadContext.clearAll();
 				// ThreadContext.put("id", "192.168.21.9");
@@ -210,11 +195,6 @@ public class home extends RESTFetch {
 
 	}
 
-	
-	
-	
-	
-	
 	/*
 	 * Calls upon use clicking registration confirmation link Input :: Verification
 	 * token
@@ -226,11 +206,10 @@ public class home extends RESTFetch {
 		Locale locale = request.getLocale();
 
 		VerificationToken verificationToken = userService.getVerificationToken(token);
-		if (verificationToken == null ) {			
-			String message = messages.getMessage("auth.message.invalidToken", null, locale);
+		if (verificationToken == null) {
+	//		String message = messages.getMessage("auth.message.invalidToken", null, locale);
 			return "redirect:/badUser.html?lang=" + locale.getLanguage() + "&msg=invalidtoken";
-		}
-		else if(!verificationToken.isValid()) {
+		} else if (!verificationToken.isValid()) {
 			return "redirect:/badUser.html?lang=" + locale.getLanguage() + "&msg=tokenalreadyused";
 		}
 
@@ -238,49 +217,43 @@ public class home extends RESTFetch {
 		Calendar cal = Calendar.getInstance();
 
 		if ((verificationToken.getExpiryDate().getTime() - cal.getTime().getTime()) <= 0) {
-			String messageValue = messages.getMessage("auth.message.expired", null, locale);
+	//		String messageValue = messages.getMessage("auth.message.expired", null, locale);
 			return "redirect:/badUser.html?lang=" + locale.getLanguage() + "&msg=tokenexpired";
 		}
 
 		/* Register Confirmed User */
 		userService.registerUser(token, userId);
-		
 
 		return "redirect:/index.html?lang=" + request.getLocale().getLanguage();
 
 	}
 
-	
-	
-	
-	
-	
-	
 	@RequestMapping(value = "/signup", method = RequestMethod.POST)
 	private ResponseEntity<String> signup(WebRequest request, @RequestBody String data)// @RequestBody UserInfo user)
 	{
 
 		HttpHeaders headers = new HttpHeaders();
-		UserInfo user = new Gson().fromJson(data, UserInfo.class);
-		System.out.println(user);
+		JsonObject response = new JsonObject();
 
-		JsonObject response = null;
 		try {
-			if (userService.userExist(user.getUserId())) {
-				System.out.println("User ID Exists " + user.getUserId());
+			/* Parse JsonResponse string to UserInfo type */
+			UserInfo user = new Gson().fromJson(data, UserInfo.class);
 
+			if (userService.userExist(user.getUserId())) {
+
+				/* UserId already registered */
+				System.out.println("User ID Exists " + user.getUserId());
 				response = new ResponseObject().Response(Constants.USER_EXIST_CODE, Constants.USER_EXIST_MSG,
 						user.getUserId());
 			} else {
 
-				System.out.println("New User ID Registration" + user.getUserId());
-
 				/* Insert User record to UserInfo Collection */
+				System.out.println("New User ID Registration" + user.getUserId());
 				userService.createUser(user);
 				response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG,
 						user.getUserId());
 
-				/* Publish event for sending confirmation mail*/
+				/* Publish event for sending confirmation mail */
 				Locale locale = request.getLocale();
 				String appUrl = request.getContextPath();
 				OnRegistrationCompleteEvent event = new OnRegistrationCompleteEvent(user, locale, appUrl);

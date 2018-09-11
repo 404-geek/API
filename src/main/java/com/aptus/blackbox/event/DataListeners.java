@@ -384,48 +384,10 @@ public class DataListeners {
 			
 			
 			
-		///////////////////   push to database     //////////////////////////
+			///////////////////   push to database     //////////////////////////
 			System.out.println("PUSHING SCHEDULING TO DB");
 			schedulingService.addConnection(userId, connectionId, connection);
 			
-			//OLD
-			/*
-			connStatus.add(connectionId, temp);
-			ResponseEntity<String> out = null;
-			RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory());
-			String filter = "{\"_id\":\"" + userId.toLowerCase() + "\"}";
-			String url;
-			url = config.getMongoUrl()+"/credentials/scheduledStatus?filter=" + filter;
-			
-			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-			HttpHeaders headers = new HttpHeaders();
-			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
-			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity,String.class);
-			
-			JsonElement jelem = new Gson().fromJson(out.getBody(), JsonElement.class);
-			JsonObject jobj = jelem.getAsJsonObject();
-			Boolean isPost=false;
-			if(jobj.get("_returned").getAsInt() == 0) {
-				connStatus.addProperty("_id", userId);
-				isPost=true;
-			}
-			headers = new HttpHeaders();
-			headers.add("Content-Type", "application/json");
-			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-			httpEntity = new HttpEntity<Object>(connStatus.toString(),headers);
-			if(isPost) {
-				url = config.getMongoUrl()+"/credentials/scheduledStatus";
-				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				out = restTemplate.exchange(uri, HttpMethod.POST, httpEntity,String.class);
-			}
-			else {
-				url = config.getMongoUrl()+"/credentials/scheduledStatus/"+userId;
-				uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
-				out = restTemplate.exchange(uri, HttpMethod.PATCH, httpEntity,String.class);
-			}
-			System.out.println(connStatus.toString());
-			System.out.println("url = "+url);*/
 			System.out.println("PUSHING SCHEDULING TO DB COMPLETED");
 		} 
 		catch(JsonSyntaxException e) {
