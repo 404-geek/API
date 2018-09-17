@@ -128,23 +128,16 @@ public class adminController {
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 	
-	@RequestMapping("/mongoPath")
-	private ResponseEntity<String> modifyMongoPath(@RequestParam("mongoPath") String mongoPath) {
-		config.setMongoUrl(mongoPath);
-		JsonObject obj=new JsonObject();
-		obj.addProperty("MongoPath", config.getMongoUrl());
-		return ResponseEntity.status(HttpStatus.OK).headers(null).body(obj.toString().toString());
-	}
-	
 
+/*
 	@RequestMapping(method =RequestMethod.GET,value="/viewdatasource" )
 	private ResponseEntity<String> viewDataSource(@RequestParam("userId") String userId)
 	{
 		  ResponseEntity<String> out = null;
 	        HttpHeaders headers = new HttpHeaders();
-	        headers.add("Cache-Control", "no-cache");
-	        headers.add("access-control-allow-origin", config.getRootUrl());
-	        headers.add("access-control-allow-credentials", "true");
+//	        headers.add("Cache-Control", "no-cache");
+//	        headers.add("access-control-allow-origin", config.getRootUrl());
+//	        headers.add("access-control-allow-credentials", "true");
 	        try {         
 	        	
 	        	String filter = "{\"_id\":\"" + userId.toLowerCase() + "\"}";
@@ -184,15 +177,15 @@ public class adminController {
 	        }   
 			return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
-
-	@RequestMapping(method =RequestMethod.GET,value="/getmeteringinfo" )
+*/
+/*	@RequestMapping(method =RequestMethod.GET,value="/getmeteringinfo" )
 	private ResponseEntity<String> getMeteringInfo(@RequestParam("userId") String userId)
 	{
 		  ResponseEntity<String> out = null;
 	        HttpHeaders headers = new HttpHeaders();
-	        headers.add("Cache-Control", "no-cache");
-	        headers.add("access-control-allow-origin", config.getRootUrl());
-	        headers.add("access-control-allow-credentials", "true");
+//	        headers.add("Cache-Control", "no-cache");
+//	        headers.add("access-control-allow-origin", config.getRootUrl());
+//	        headers.add("access-control-allow-credentials", "true");
 	        try {         
 	        	
 	        	String filter = "{\"_id\":\"" + userId.toLowerCase() + "\"}";
@@ -235,5 +228,5 @@ public class adminController {
 	            e.printStackTrace();
 	        }   
 			return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-	}
+	}*/
 }

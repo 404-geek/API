@@ -412,13 +412,13 @@ public class DataListeners {
 	        String recipientAddress = user.getEmail();
 	        String subject = "Registration Confirmation";
 	        String confirmationUrl 
-	          = event.getAppUrl() + "/registrationConfirm.html?token=" + token;
+	          = event.getAppUrl() + "/registrationConfirm.html?token=" + token + "&lang=" + event.getLocale();
 	    //    String message = messages.getMessage("message.regSucc", null, event.getLocale());
 	         
 	        SimpleMailMessage email = new SimpleMailMessage();
 	        email.setTo(recipientAddress);
-	        email.setSubject(subject);//message + " rn" +
-	        email.setText( "http://localhost:8080" + confirmationUrl);
+	        email.setSubject(subject);
+	        email.setText(confirmationUrl);
 	        mailSender.send(email);
 	    }
 }

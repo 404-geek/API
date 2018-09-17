@@ -12,23 +12,23 @@ public class Config {
 	private String mongoUrl;
 	@Value("${app.mode}")
 	private String appMode;
-	@Value("${access.control.allow.origin}")
-	private String rootUrl;
+//	@Value("${access.control.allow.origin}")
+//	private String rootUrl;
 	
 	
 	public  String getAppMode() {
 		return appMode;
 	}
-	public String getMongoUrl() {
-		return mongoUrl;
-	}
+//	public String getMongoUrl() {
+//		return mongoUrl;
+//	}
 	
 	public void setMongoUrl(String mongoUrl) {
 		this.mongoUrl= mongoUrl;
 	}
 	
-	public String getRootUrl() {
-		return rootUrl;
-	}
+//	public String getRootUrl() {
+//		return rootUrl;
+//	}
 	
 }

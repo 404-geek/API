@@ -77,9 +77,9 @@ public class UITrigger {
 	public ResponseEntity<Object> getScheduledStatus(HttpSession session){
 		
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				JsonObject respBody = new JsonObject();
@@ -164,15 +164,15 @@ public class UITrigger {
 	
 	
 /////////////////////////////////////////////////////////////////////////
-	@RequestMapping("/OLDtogglescheduling")
+	/*@RequestMapping("/OLDtogglescheduling")
 	public ResponseEntity<String> OLDtoggleScheduling(@RequestParam("connId") String connId,
 			@RequestParam("toggle") String toggle,@RequestParam(value="period",required=false) String period,
 			HttpSession session){
 		HttpHeaders headers = new HttpHeaders();
 		JsonObject respBody = new JsonObject();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
 		
 		ConnObj currConnObj = credentials.getConnectionIds(connId);
 		
@@ -333,14 +333,14 @@ public class UITrigger {
 					.body(respBody.toString());
 		}
 	}
-	
+	*/
 	@RequestMapping(method = RequestMethod.GET, value = "/statistics")
 	private ResponseEntity<String> getstats(HttpSession session) {
 		
 		HttpHeaders headers = new HttpHeaders();
-        headers.add("Cache-Control", "no-cache");
-        headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
+//        headers.add("Cache-Control", "no-cache");
+//        headers.add("access-control-allow-origin", config.getRootUrl());
+//        headers.add("access-control-allow-credentials", "true");
         try{
         	JsonObject statistics= new JsonObject();
     		JsonObject obj = new JsonObject();
@@ -375,9 +375,9 @@ public class UITrigger {
 	@RequestMapping(method = RequestMethod.GET, value = "/resourceusage")
 	private ResponseEntity<String> getusage(HttpSession session){
 		HttpHeaders headers = new HttpHeaders();
-        headers.add("Cache-Control", "no-cache");
-        headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
+//        headers.add("Cache-Control", "no-cache");
+//        headers.add("access-control-allow-origin", config.getRootUrl());
+//        headers.add("access-control-allow-credentials", "true");
 		
 		try {
 			JSONObject details = new JSONObject();

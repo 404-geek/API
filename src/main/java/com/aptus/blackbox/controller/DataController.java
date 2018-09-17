@@ -87,8 +87,7 @@ import com.sun.xml.bind.v2.runtime.reflect.opt.Const;
 public class DataController extends RESTFetch {
 	private Connection con = null;
 
-	@Autowired
-	private Config config;
+
 	@Autowired
 	private Credentials credentials;
 	@Autowired
@@ -125,9 +124,9 @@ public class DataController extends RESTFetch {
 		// // Map<String,String> data
 		credentials.setCurrDestValid(false);
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
 		logger.info("auth destination");
 		try {
 			// if (Utilities.isSessionValid(session, credentials)) {
@@ -369,13 +368,13 @@ public class DataController extends RESTFetch {
 	@RequestMapping(value = "/graph")
 	public ResponseEntity<String> graph(@RequestParam("user") String user, HttpSession httpsession) {
 		HttpHeaders header = new HttpHeaders();
-		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", config.getRootUrl());
-		header.add("access-control-allow-credentials", "true");
+//		header.add("Cache-Control", "no-cache");
+//		header.add("access-control-allow-origin", config.getRootUrl());
+//		header.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(httpsession, applicationCredentials, credentials.getUserId())) {
 				RestTemplate restTemplate = new RestTemplate();
-				String url = config.getMongoUrl() + "/credentials/metering/" + user.toLowerCase();
+				String url = "";//config.getMongoUrl() + "/credentials/metering/" + user.toLowerCase();
 				URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 				HttpHeaders headers = new HttpHeaders();
 				HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
@@ -452,9 +451,9 @@ public class DataController extends RESTFetch {
 	public ResponseEntity<String> selectAction(@RequestParam("choice") String choice, HttpSession httpsession) {
 		ResponseEntity<String> ret = null;
 		HttpHeaders header = new HttpHeaders();
-		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", config.getRootUrl());
-		header.add("access-control-allow-credentials", "true");
+//		header.add("Cache-Control", "no-cache");
+//		header.add("access-control-allow-origin", config.getRootUrl());
+//		header.add("access-control-allow-credentials", "true");
 		try {
 			
 			if (Utilities.isSessionValid(httpsession, applicationCredentials, credentials.getUserId())) {
@@ -528,9 +527,9 @@ public class DataController extends RESTFetch {
 	private ResponseEntity<String> validateData(UrlObject valid, List<UrlObject> dataEndPoints, String choice) {
 		ResponseEntity<String> ret = null;
 		HttpHeaders header = new HttpHeaders();
-		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", config.getRootUrl());
-		header.add("access-control-allow-credentials", "true");
+//		header.add("Cache-Control", "no-cache");
+//		header.add("access-control-allow-origin", config.getRootUrl());
+//		header.add("access-control-allow-credentials", "true");
 		try {
 			ret = Utilities.token(valid, credentials.getSrcToken(), "DataController.validateData");
 			if (!ret.getStatusCode().is2xxSuccessful()) {
@@ -559,9 +558,9 @@ public class DataController extends RESTFetch {
 
 	private ResponseEntity<String> fetchEndpointsData(List<UrlObject> dataEndpoints, String choice) {
 		HttpHeaders header = new HttpHeaders();
-		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", config.getRootUrl());
-		header.add("access-control-allow-credentials", "true");
+//		header.add("Cache-Control", "no-cache");
+//		header.add("access-control-allow-origin", config.getRootUrl());
+//		header.add("access-control-allow-credentials", "true");
 		ResponseEntity<String> out = null;
 		try {
 			Gson gson = new Gson();
@@ -795,9 +794,9 @@ public class DataController extends RESTFetch {
 	private Map<JsonElement, Integer> getInfoEndpoints(List<String> endpoints, String choice) {
 
 		HttpHeaders header = new HttpHeaders();
-		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", config.getRootUrl());
-		header.add("access-control-allow-credentials", "true");
+//		header.add("Cache-Control", "no-cache");
+//		header.add("access-control-allow-origin", config.getRootUrl());
+//		header.add("access-control-allow-credentials", "true");
 
 		try {
 			List<String> endpoins = new ArrayList<>(endpoints);
@@ -943,9 +942,9 @@ public class DataController extends RESTFetch {
 				}
 			}
 			HttpHeaders headers = new HttpHeaders();
-			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", config.getRootUrl());
-			headers.add("access-control-allow-credentials", "true");
+//			headers.add("Cache-Control", "no-cache");
+//			headers.add("access-control-allow-origin", config.getRootUrl());
+//			headers.add("access-control-allow-credentials", "true");
 			JsonObject respBody = new JsonObject();
 			respBody.add("data", arr);
 			respBody.addProperty("status", "200");
@@ -961,9 +960,9 @@ public class DataController extends RESTFetch {
 	public ResponseEntity<byte[]> downloadData(@RequestParam("connId") String connId,@RequestParam("choice") String choice,
 			@RequestParam("endpoint") String endpoint,  HttpSession session) {
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
 		byte[] check1;
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {
@@ -1058,9 +1057,9 @@ public class DataController extends RESTFetch {
 						}
 						}
 						check1 = sheet.getBytes();
-						headers.add("Cache-Control", "no-cache");
-						headers.add("access-control-allow-origin", config.getRootUrl());
-						headers.add("access-control-allow-credentials", "true");
+//						headers.add("Cache-Control", "no-cache");
+//						headers.add("access-control-allow-origin", config.getRootUrl());
+//						headers.add("access-control-allow-credentials", "true");
 						headers.add("charset", "utf-8");
 						headers.add("content-disposition", "attachment; filename=" + credentials.getCurrSrcName() + "_"
 								+ object.getLabel() + "." + choice);
@@ -1409,9 +1408,9 @@ public class DataController extends RESTFetch {
 	public ResponseEntity<String> checkConnection(@RequestParam("choice") String choice,
 			@RequestParam("connId") String connId, HttpSession httpsession) {
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
 		try {
 			JsonElement respBody = new JsonObject();
 			System.out.println(
@@ -1588,9 +1587,9 @@ public class DataController extends RESTFetch {
 		ResponseEntity<String> out = null;
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {
 

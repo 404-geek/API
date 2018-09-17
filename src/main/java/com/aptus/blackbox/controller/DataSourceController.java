@@ -72,8 +72,7 @@ public class DataSourceController extends RESTFetch {
 	private ApplicationCredentials applicationCredentials;
 	@Autowired
 	private ApplicationEventPublisher applicationEventPublisher;
-	@Autowired
-	private Config config;
+
 	@Autowired
 	private SourceConfigService sourceConfigService;
 	@Autowired
@@ -190,8 +189,8 @@ public class DataSourceController extends RESTFetch {
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
 		try {
 			
 			
@@ -261,9 +260,9 @@ public class DataSourceController extends RESTFetch {
 		
 
 		headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
 
 		try {			
 			if (credentials.isUsrSrcExist() || credentials.isUsrDestExist()) {				
@@ -365,7 +364,7 @@ public class DataSourceController extends RESTFetch {
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
-	private ResponseEntity<String> initialiser(String type,String database_name,String db_username,String db_password,String server_host,String server_port) {
+	/*private ResponseEntity<String> initialiser(String type,String database_name,String db_username,String db_password,String server_host,String server_port) {
 		//add destination fetch and validation
 		System.out.println("inside initialiser function");
 		ResponseEntity<String> out = null;
@@ -374,8 +373,8 @@ public class DataSourceController extends RESTFetch {
 
 		headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
 		System.out.println("srcExist:"+credentials.isUsrSrcExist() +"\ndestExist:"+ credentials.isUsrDestExist()+" type:"+type);
 
 		try {			
@@ -476,7 +475,7 @@ public class DataSourceController extends RESTFetch {
 			logger.debug("home.init");
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
-	}
+	}*/
 
 	private void fetchSrcCred1() {
 		ResponseEntity<String> out = null;
@@ -527,7 +526,7 @@ public class DataSourceController extends RESTFetch {
 			System.out.println("home.fetch");
 		}
 	}
-	private void fetchSrcCred() {
+/*	private void fetchSrcCred() {
 		ResponseEntity<String> out = null;
 		int res = 0;
 		System.out.println("inside fetchSrcCred");
@@ -538,8 +537,8 @@ public class DataSourceController extends RESTFetch {
 			String url = config.getMongoUrl()+"/credentials/sourceCredentials/" + userid.toLowerCase()+"_"+appId.toLowerCase();
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", config.getRootUrl());
-            headers.add("access-control-allow-credentials", "true");
+			//headers.add("access-control-allow-origin", config.getRootUrl());
+            //headers.add("access-control-allow-credentials", "true");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
@@ -576,7 +575,7 @@ public class DataSourceController extends RESTFetch {
 			e.printStackTrace();
 			System.out.println("home.fetch");
 		}
-	}
+	}*/
 	
 	@RequestMapping(method = RequestMethod.GET, value = "/isvalid")
 	private ResponseEntity<String> isValid(@RequestParam("type") String type,
@@ -662,8 +661,8 @@ public class DataSourceController extends RESTFetch {
         ResponseEntity<String> out = null;
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache");
-        headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
+//        headers.add("access-control-allow-origin", config.getRootUrl());
+//        headers.add("access-control-allow-credentials", "true");
         try {         
             HttpEntity<?> httpEntity;
             if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
@@ -721,14 +720,14 @@ public class DataSourceController extends RESTFetch {
     }
 	
 	
-	
+	/*
 	@RequestMapping(method = RequestMethod.GET, value = "/deletedatasourceOLD")
     private ResponseEntity<String> deleteDataSourceOLD(HttpSession session, @RequestParam("connId") String connId) {
         ResponseEntity<String> out = null;
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache");
-        headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
+//        headers.add("access-control-allow-origin", config.getRootUrl());
+//        headers.add("access-control-allow-credentials", "true");
         try {         
             HttpEntity<?> httpEntity;
             if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
@@ -799,7 +798,7 @@ public class DataSourceController extends RESTFetch {
         }   
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
     }
-	
+	*/
 	@RequestMapping(method = RequestMethod.GET, value = "/view")
 	private ResponseEntity<String> view(@RequestParam(value = "filteredEndpoints", required=false) String filteredEndpoints,
 			@RequestParam(value="scheduled") String schedule,
@@ -870,9 +869,9 @@ public class DataSourceController extends RESTFetch {
 					
 					ResponseEntity<String> str = Context.getBean(DataController.class).selectAction("view", session);
 					HttpHeaders headers = new HttpHeaders();
-					headers.add("Cache-Control", "no-cache");
-					headers.add("access-control-allow-origin", config.getRootUrl());
-					headers.add("access-control-allow-credentials", "true");
+//					headers.add("Cache-Control", "no-cache");
+//					headers.add("access-control-allow-origin", config.getRootUrl());
+//					headers.add("access-control-allow-credentials", "true");
 					return ResponseEntity.status(HttpStatus.OK).headers(headers).body(str.getBody());
 				}
 			}
@@ -1054,9 +1053,9 @@ public class DataSourceController extends RESTFetch {
 			System.out.println(filteredEndpoints.getClass());
 			System.out.println(filteredEndpoints + " ");
 			HttpHeaders headers = new HttpHeaders();
-			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", config.getRootUrl());
-			headers.add("access-control-allow-credentials", "true");
+//			headers.add("Cache-Control", "no-cache");
+//			headers.add("access-control-allow-origin", config.getRootUrl());
+//			headers.add("access-control-allow-credentials", "true");
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				// if(validateCredentials==null||endPoints==null||refreshToken==null) {
 				// init();

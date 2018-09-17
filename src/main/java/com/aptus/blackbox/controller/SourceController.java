@@ -58,9 +58,9 @@ public class SourceController extends RESTFetch {
 		credentials.setCurrSrcValid(false);
 		ResponseEntity<String> ret = null;
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-        headers.add("access-control-allow-credentials", "true");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//        headers.add("access-control-allow-credentials", "true");
 		try {			
 			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
 				SourceConfig obj = init();

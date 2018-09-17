@@ -1,6 +1,6 @@
 package com.aptus.blackbox.controller;
 
-import java.net.URI;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -13,10 +13,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.MessageSource;
-import org.springframework.http.HttpEntity;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -27,20 +25,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
-import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
-import com.aptus.blackbox.dataServices.MeteringService;
-import com.aptus.blackbox.dataServices.SchedulingService;
 import com.aptus.blackbox.dataServices.SourceDestinationList;
-import com.aptus.blackbox.dataServices.SrcDestCredentialsService;
 import com.aptus.blackbox.dataServices.SrcDestListService;
-import com.aptus.blackbox.dataServices.SubscriptionService;
 import com.aptus.blackbox.dataServices.UserConnectorService;
 import com.aptus.blackbox.dataServices.UserService;
 import com.aptus.blackbox.dataServices.WebSocketService;
@@ -80,8 +71,7 @@ public class home extends RESTFetch {
 	private Credentials credentials;
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
-	@Autowired
-	private Config config;
+
 	@Autowired
 	private UserService userService;
 	@Autowired
@@ -92,7 +82,8 @@ public class home extends RESTFetch {
 	private ApplicationEventPublisher applicationEventPublisher;
 	@Autowired
 	private WebSocketService socketService;
-	
+	@Autowired
+	private Environment env;
 
 	private SimpMessagingTemplate template;
 	final Logger logger = LogManager.getLogger(home.class.getPackage());
@@ -139,11 +130,15 @@ public class home extends RESTFetch {
 		// ThreadContext.clearAll();
 		logger.warn("warn MSG");
 		logger.trace("trac  msg");
+		
+		
 
 		System.out.println("/login session" + session.getId());
 		JsonObject response = new JsonObject();
 
 		try {
+			System.out.println(InetAddress.getLocalHost().getHostName());
+			System.out.println(InetAddress.getLocalHost().getHostAddress());
 			if (!userService.userExist(_id)) {
 				response = new ResponseObject().Response(Constants.USER_NOT_FOUND_CODE, Constants.USER_NOT_FOUND_MSG,
 						_id);
@@ -238,6 +233,9 @@ public class home extends RESTFetch {
 		try {
 			/* Parse JsonResponse string to UserInfo type */
 			UserInfo user = new Gson().fromJson(data, UserInfo.class);
+			System.out.println(InetAddress.getLocalHost().getHostName());
+			System.out.println(InetAddress.getLocalHost().getHostAddress());
+			
 
 			if (userService.userExist(user.getUserId())) {
 
@@ -254,8 +252,14 @@ public class home extends RESTFetch {
 						user.getUserId());
 
 				/* Publish event for sending confirmation mail */
+				
+				String protocol = env.getProperty("uapi.mail.protocol");
+				String hostname = InetAddress.getLocalHost().getHostName();
+				String port = env.getProperty("server.port");
 				Locale locale = request.getLocale();
-				String appUrl = request.getContextPath();
+				
+				String appUrl = protocol+"://"+hostname+":"+port;	//request.getContextPath();
+				
 				OnRegistrationCompleteEvent event = new OnRegistrationCompleteEvent(user, locale, appUrl);
 				applicationEventPublisher.publishEvent(event);
 
@@ -300,7 +304,7 @@ public class home extends RESTFetch {
 	 * Input:user_id Takes user_id as input, checks if user already exists and
 	 * stores true/false accordingly in credentials. Return type: void
 	 */
-	private ResponseEntity<String> existUser(String userId, String type) {
+	/*private ResponseEntity<String> existUser(String userId, String type) {
 		ResponseEntity<String> out = null;
 		try {
 			boolean ret = false;
@@ -320,10 +324,10 @@ public class home extends RESTFetch {
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
 			HttpHeaders headers = new HttpHeaders();
 			// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
-			headers.add("Cache-Control", "no-cache");
-			headers.add("Authorization", "Basic YTph");
-			headers.add("access-control-allow-origin", config.getRootUrl());
-			headers.add("access-control-allow-credentials", "true");
+//			headers.add("Cache-Control", "no-cache");
+//			headers.add("Authorization", "Basic YTph");
+//			headers.add("access-control-allow-origin", config.getRootUrl());
+//			headers.add("access-control-allow-credentials", "true");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			out = restTemplate.exchange(uri, HttpMethod.GET, httpEntity, String.class);
 			System.out.println("inside existuser");
@@ -360,7 +364,7 @@ public class home extends RESTFetch {
 
 		}
 
-	}
+	}*/
 
 	@RequestMapping(method = RequestMethod.GET, value = "/getsrcdest")
 	private ResponseEntity<String> getSrcDest() {
@@ -419,9 +423,9 @@ public class home extends RESTFetch {
 
 		System.out.println("INSIDE /filterendpoints");
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {
 
@@ -478,16 +482,16 @@ public class home extends RESTFetch {
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
 
-	@RequestMapping(value = "/getconnectionidsOld")
+/*	@RequestMapping(value = "/getconnectionidsOld")
 	private ResponseEntity<String> getConnectionIdsOld(HttpSession session) {
 		System.out.println(applicationCredentials.getSessionId(credentials.getUserId()) + "INSIDE /getconnectionids:"
 				+ session.getId());
 		String dataSource = null;
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
-		headers.add("Authorization", "Basic YTph");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
+//		headers.add("Authorization", "Basic YTph");
 		try {
 
 			if (Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {
@@ -543,15 +547,15 @@ public class home extends RESTFetch {
 		}
 		return ResponseEntity.status(HttpStatus.BAD_GATEWAY).headers(headers).body(null);
 	}
-
+*/
 	@RequestMapping(value = "/getconnectionids")
 	private ResponseEntity<String> getConnectionIds(HttpSession session) {
 		String dataSource = null;
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
-		headers.add("access-control-allow-credentials", "true");
-		headers.add("Authorization", "Basic YTph");
+//		headers.add("Cache-Control", "no-cache");
+//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		headers.add("access-control-allow-credentials", "true");
+//		headers.add("Authorization", "Basic YTph");
 		try {
 
 			if (Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {
