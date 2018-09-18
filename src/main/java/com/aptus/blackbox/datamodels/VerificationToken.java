@@ -19,16 +19,16 @@ public class VerificationToken {
 	
 	private String token;
 
-	private String userId;
+	private String email;
 
 	private Date expiryDate;
 	
 	private boolean isValid;
 
-	public VerificationToken(String token, String userId) {
+	public VerificationToken(String token, String email) {
 		//this.id = UUID.randomUUID().toString();
 		this.token = token;
-		this.userId = userId;
+		this.email = email;
 		this.setValid(true);
 		this.expiryDate = calculateExpiryDate(EXPIRATION);
 	}
@@ -57,12 +57,12 @@ public class VerificationToken {
 		this.expiryDate = expiryDate;
 	}
 
-	public String getUserId() {
-		return userId;
+	public String getEmail() {
+		return email;
 	}
 
-	public void setUserId(String userId) {
-		this.userId = userId;
+	public void setUserId(String email) {
+		this.email = email;
 	}
 	
 
