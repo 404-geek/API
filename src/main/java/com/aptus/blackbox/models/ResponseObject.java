@@ -14,6 +14,8 @@ public class ResponseObject {
 	public JsonObject Response(int code,String message, String data) {
 		this.obj.addProperty(Constants.RESPONSE_CODE,code );
 		this.obj.addProperty(Constants.RESPONSE_MESSAGE, message);
+		
+		if(data.length()!=0)
 		this.obj.addProperty(Constants.RESPONSE_DATA, data);
 		return this.obj;
 		

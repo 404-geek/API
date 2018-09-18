@@ -407,10 +407,10 @@ public class DataListeners {
 		  //System.out.println("mail event");
 	        UserInfo user = event.getUserInfo();
 	        String token = UUID.randomUUID().toString();
-	        userInfoService.createVerificationToken(user.getUserId(), token);
+	        userInfoService.createVerificationToken(user.getEmail(), token);
 	         
 	        String recipientAddress = user.getEmail();
-	        String subject = "Registration Confirmation";
+	        String subject = "UAPI Registration Confirmation";
 	        String confirmationUrl 
 	          = event.getAppUrl() + "/registrationConfirm.html?token=" + token + "&lang=" + event.getLocale();
 	    //    String message = messages.getMessage("message.regSucc", null, event.getLocale());

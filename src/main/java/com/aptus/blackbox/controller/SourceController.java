@@ -52,6 +52,13 @@ public class SourceController extends RESTFetch {
 	private UrlObject accessCode, accessToken, requestToken, refreshToken, validateCredentials;
 	private List<UrlObject> endPoints;
 
+	
+	
+	public SourceController() {
+		System.out.println("SourceController Constructor");
+	}
+	
+	
 	@RequestMapping(method = RequestMethod.GET, value = "/authsource")
 	private ResponseEntity<String> source(HttpSession session) {
 		System.out.println("inside authsource");

@@ -24,7 +24,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 @RestController
-public class marketingController {
+public class MarketingController {
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
 	
@@ -33,6 +33,12 @@ public class marketingController {
 	
 	@Autowired
 	private SubscriptionService subscriptionService;
+	
+	
+	public MarketingController() {
+		System.out.println("MarkettingController Constructor");
+		
+	}
 	
 	
 	@RequestMapping(method = RequestMethod.POST, value = "/marketing/update/{type}")

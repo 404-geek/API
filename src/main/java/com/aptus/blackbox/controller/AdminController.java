@@ -38,7 +38,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
 @RestController
-public class adminController {
+public class AdminController {
 
 	@Autowired
 	private Config config;
@@ -58,6 +58,10 @@ public class adminController {
 	@Autowired
 	private DestinationConfigService destinationConfigService;
 	
+	
+	public  AdminController() {
+		System.out.println("Admin Controller Constructor");
+	}
 	
 	@RequestMapping(method = RequestMethod.POST,value="/insert/{type}")
 	private ResponseEntity<String> addData(@PathVariable String type, @RequestBody String data,HttpSession session){

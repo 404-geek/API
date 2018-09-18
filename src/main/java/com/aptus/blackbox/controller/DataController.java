@@ -107,9 +107,10 @@ public class DataController extends RESTFetch {
 
 	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
 
-	/*
-	 * 
-	 */
+	
+	public DataController() {
+		System.out.println("DataController Constructor");
+	}
 
 	// @RequestMapping(method = RequestMethod.GET, value = "/authdestination")
 	public ResponseEntity<String> destination(String database_name, String db_username, String db_password,

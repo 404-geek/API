@@ -1,5 +1,6 @@
 package com.aptus.blackbox.datamodels;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,7 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import com.aptus.blackbox.models.ConnObj;
 
 @Document
-public class UserConnectors {
+public class UserConnectors implements Serializable{
 
 	@Id
 	private String _id;

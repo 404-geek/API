@@ -97,6 +97,10 @@ public class DataSourceController extends RESTFetch {
 	final Logger logger = LogManager.getLogger(BlackBoxReloadedApp.class.getPackage());
 
 	
+	public DataSourceController() {
+		System.out.println("DataSourceController Constructor");
+	}
+	
 //	private SrcObject srcObj;
 //	private DestObject destObj;
 	/*
@@ -183,7 +187,7 @@ public class DataSourceController extends RESTFetch {
 		
 		
 		ResponseEntity<String> out = null;
-		System.out.println("inside validate");
+		System.out.println("Inside validate()");
 		
 		int res = 0;
 		HttpHeaders headers = new HttpHeaders();
@@ -194,7 +198,7 @@ public class DataSourceController extends RESTFetch {
 		try {
 			
 			
-			if(session.getId()==applicationCredentials.getSessionId(credentials.getUserId())) {
+			if(Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {
 				
 				credentials.setCurrConnObj(null);///check here
 				

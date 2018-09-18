@@ -1,5 +1,6 @@
 package com.aptus.blackbox.datamodels;
 
+import java.io.Serializable;
 import java.sql.Timestamp;
 import java.util.Calendar;
 import java.util.Date;
@@ -9,7 +10,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
-public class VerificationToken {
+public class VerificationToken implements Serializable{
 	
 
 	private static final int EXPIRATION = 60 * 24;

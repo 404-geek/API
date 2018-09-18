@@ -73,6 +73,10 @@ public class UITrigger {
 	private WebSocketService socketService;
 	
 	
+	public UITrigger() {
+		System.out.println("UITrigger Constructor");
+	}
+	
 	@RequestMapping("/getSchedulerData")
 	public ResponseEntity<Object> getScheduledStatus(HttpSession session){
 		
