@@ -31,6 +31,13 @@ public class UserInfoImpl implements UserInfoDAO{
 	}
 	
 	@Override
+	public UserInfo getUserByEmail(String email) {
+		Query query = new Query();
+		query.addCriteria(Criteria.where("email").is(email));
+		return mongoTemplate.findOne(query, UserInfo.class);
+	}
+	
+	@Override
 	public List<UserInfo> getAllUsers() {
 		return mongoTemplate.findAll(UserInfo.class);
 	}
@@ -78,5 +85,4 @@ public class UserInfoImpl implements UserInfoDAO{
 	}
 
 	
-
 }

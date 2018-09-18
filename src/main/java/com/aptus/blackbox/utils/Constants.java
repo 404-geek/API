@@ -10,13 +10,19 @@ public final class Constants {
 	public final static int USER_EXIST_CODE = 201;
 	public final static String USER_EXIST_MSG = "User Already Exist";
 	
+	
+	public final static int EMAIL_NOT_VERIFIED_CODE = 202;
+	public final static String EMAIL_NOT_VERIFIED_MSG = "Email Not Verified";
+	
+
+	
 	public final static int SUCCESS_CODE = 200;
 	public final static String SUCCESS_MSG = "Success";
 	
 	public final static int FAILED_CODE = 400;
 	public final static String FAILED_MSG = "Failed";
 	
-	public final static int INVALID_CREDENTIALS_CODE = 202;
+	public final static int INVALID_CREDENTIALS_CODE = 403;
 	public final static String INVALID_CREDENTIALS_MSG = "Invalid Credentials";
 	
 	public final static int INTERNAL_SERVER_ERROR = 500;

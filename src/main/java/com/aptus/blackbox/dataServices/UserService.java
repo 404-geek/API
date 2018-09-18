@@ -49,9 +49,11 @@ public class UserService {
 		return userInfoDAO.getAllUsers();
 	}
 
-	public boolean userExist(String _id) {
-		return userInfoDAO.getUserById(_id)!=null;
+	public UserInfo userExist(String email) {
+		return userInfoDAO.getUserByEmail(email);
 	}
+	
+
 	
 	public boolean userValid(String _id,String password) {
 		return userInfoDAO.matchSingleField(_id, "userPassword", password);

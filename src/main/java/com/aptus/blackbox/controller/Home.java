@@ -127,8 +127,9 @@ public class Home extends RESTFetch {
 	// }
 
 	@RequestMapping(value = "/login")
-	private ResponseEntity<String> login(@RequestParam("userId") String _id, @RequestParam("password") String password,
-			HttpServletRequest request) {
+
+	private ResponseEntity<String> login(@RequestParam("email") String email, @RequestParam("password") String password,
+			HttpSession session) {
 		HttpHeaders headers = new HttpHeaders();
 
 		logger.info("INFO MSG");
@@ -138,35 +139,29 @@ public class Home extends RESTFetch {
 		logger.warn("warn MSG");
 		logger.trace("trac  msg");
 
-		
 
 		JsonObject response = new JsonObject();
 
 		try {
+
+			System.out.println(InetAddress.getLocalHost().getHostName());
+			System.out.println(InetAddress.getLocalHost().getHostAddress());
 			
-			HttpSession session = request.getSession();
-			session.invalidate();
-			session = request.getSession(true);
-			
-			System.out.println("/login session" + session.getCreationTime() + "::" + session.getId());
-			
-			if (!userService.userExist(_id)) {
+			if (userService.userExist(email) == null) {
 				response = new ResponseObject().Response(Constants.USER_NOT_FOUND_CODE, Constants.USER_NOT_FOUND_MSG,
-						_id);
+						email);
 			}
-
-			else if (!userService.userValid(_id, password)) {
+			else if (!userService.userValid(email, password)) {
 				response = new ResponseObject().Response(Constants.INVALID_CREDENTIALS_CODE,
-						Constants.INVALID_CREDENTIALS_MSG, _id);
+						Constants.INVALID_CREDENTIALS_MSG, email);
 			}
-
 			else {
 
-				credentials.setUserId(_id);
-				applicationCredentials.setSessionId(_id, session.getId());
+				credentials.setUserId(email);
+				applicationCredentials.setSessionId(email, session.getId());
 
 				getConnectionIds(session);
-				response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, _id);
+				response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, email);
 				//
 				// ThreadContext.clearAll();
 				// ThreadContext.put("id", "192.168.21.9");
@@ -242,7 +237,7 @@ public class Home extends RESTFetch {
 			return "redirect:/badUser.html?lang=" + locale.getLanguage() + "&msg=tokenalreadyused";
 		}
 
-		String userId = verificationToken.getUserId();
+		String userId = verificationToken.getEmail();
 		Calendar cal = Calendar.getInstance();
 
 		if ((verificationToken.getExpiryDate().getTime() - cal.getTime().getTime()) <= 0) {
@@ -272,16 +267,25 @@ public class Home extends RESTFetch {
 			System.out.println(InetAddress.getLocalHost().getHostName());
 			System.out.println(InetAddress.getLocalHost().getHostAddress());
 
-			if (userService.userExist(user.getEmail())) {
 
-				/* UserId already registered */
-				System.out.println("User ID Exists " + user.getEmail());
-				response = new ResponseObject().Response(Constants.USER_EXIST_CODE, Constants.USER_EXIST_MSG,
-						user.getEmail());
+			UserInfo userInfo = userService.userExist(user.getEmail());
+
+			/* Checks userEmail already registered */
+			if (userInfo != null) {
+
+				if (userInfo.isEnabled()) {
+					response = new ResponseObject().Response(Constants.USER_EXIST_CODE, Constants.USER_EXIST_MSG,
+							user.getEmail());
+				} else {
+					response = new ResponseObject().Response(Constants.EMAIL_NOT_VERIFIED_CODE,
+							Constants.EMAIL_NOT_VERIFIED_MSG, user.getEmail());
+				}
+
 			} else {
 
 				/* Insert User record to UserInfo Collection */
-				System.out.println("New User ID Registration" + user.getEmail());
+				System.out.println("New User Email Registration" + user.getEmail());
+
 				userService.createUser(user);
 				response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG,
 						user.getEmail());
@@ -309,7 +313,8 @@ public class Home extends RESTFetch {
 	private ResponseEntity<String> update(@RequestBody UserInfo user) {
 		HttpHeaders headers = new HttpHeaders();
 		JsonObject response = null;
-		if (userService.userExist(user.getEmail())) {
+
+		if (userService.userExist(user.getEmail()) != null) {
 			System.out.println("User ID Exists " + user.getEmail());
 			response = new ResponseObject().Response(Constants.USER_EXIST_CODE, Constants.USER_EXIST_MSG,
 					user.getEmail());

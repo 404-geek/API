@@ -1,5 +1,0 @@
-2018-09-11T12:43:10,371 [main]  [192.168.21.9] INFO  (BlackBoxReloadedApp.java:26) - INFO MSG
-2018-09-11T12:43:10,377 [main]  [192.168.21.9] DEBUG (BlackBoxReloadedApp.java:27) - debug MSG
-2018-09-11T12:43:10,377 [main]  [192.168.21.9] ERROR (BlackBoxReloadedApp.java:28) - error MSG
-2018-09-11T12:43:10,378 [main]  [192.168.21.9] WARN  (BlackBoxReloadedApp.java:30) - warn MSG
-2018-09-11T12:43:10,378 [main]  [192.168.21.9] TRACE (BlackBoxReloadedApp.java:31) - trac  msg
