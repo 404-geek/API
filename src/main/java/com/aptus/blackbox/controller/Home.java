@@ -125,9 +125,8 @@ public class Home extends RESTFetch {
 	// });
 	// th.start();
 	// }
-
+	
 	@RequestMapping(value = "/login")
-
 	private ResponseEntity<String> login(@RequestParam("email") String email, @RequestParam("password") String password,
 			HttpSession session) {
 		HttpHeaders headers = new HttpHeaders();
@@ -146,9 +145,9 @@ public class Home extends RESTFetch {
 
 			System.out.println(InetAddress.getLocalHost().getHostName());
 			System.out.println(InetAddress.getLocalHost().getHostAddress());
-			
+
 			UserInfo userInfo = userService.userExist(email);
-			if (userInfo == null) {
+			if ( userInfo == null) {
 				response = new ResponseObject().Response(Constants.USER_NOT_FOUND_CODE, Constants.USER_NOT_FOUND_MSG,
 						email);
 			}
@@ -157,9 +156,9 @@ public class Home extends RESTFetch {
 						Constants.INVALID_CREDENTIALS_MSG, email);
 			}
 			else if(!userInfo.isEnabled()) {
-				response = new ResponseObject().Response(Constants.EMAIL_NOT_VERIFIED_CODE, 
-						Constants.EMAIL_NOT_VERIFIED_MSG, email);
 
+				response = new ResponseObject().Response(Constants.EMAIL_NOT_VERIFIED_CODE,
+						Constants.EMAIL_NOT_VERIFIED_MSG, email);
 			}
 			else {
 
