@@ -81,7 +81,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import com.nimbusds.oauth2.sdk.Response;
-import com.sun.xml.bind.v2.runtime.reflect.opt.Const;
 
 @RestController
 public class DataController extends RESTFetch {
@@ -126,7 +125,7 @@ public class DataController extends RESTFetch {
 		credentials.setCurrDestValid(false);
 		HttpHeaders headers = new HttpHeaders();
 //		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //		headers.add("access-control-allow-credentials", "true");
 		logger.info("auth destination");
 		try {
@@ -924,12 +923,12 @@ public class DataController extends RESTFetch {
 
 	}
 
-	@RequestMapping("/fordownload")
-	public ResponseEntity<JsonObject> fordownload(@RequestParam("data") JsonObject choice, HttpSession session) {
+	
+	public ResponseEntity<JsonObject> fordownload(String connId,  JsonObject filterEndpoints, HttpSession session) {
 		try {
 
-			System.out.println(choice);
-			JsonObject jobj = choice;
+			System.out.println(filterEndpoints);
+			JsonObject jobj = filterEndpoints;
 			JsonArray arr = new JsonArray();
 			for (Entry<String, JsonElement> elem : jobj.entrySet()) {
 				if (elem.getValue().isJsonObject()) {
@@ -944,12 +943,13 @@ public class DataController extends RESTFetch {
 			}
 			HttpHeaders headers = new HttpHeaders();
 //			headers.add("Cache-Control", "no-cache");
-//			headers.add("access-control-allow-origin", config.getRootUrl());
+//			
 //			headers.add("access-control-allow-credentials", "true");
 			JsonObject respBody = new JsonObject();
-			respBody.add("data", arr);
+			respBody.add("endpoints", arr);
 			respBody.addProperty("status", "200");
-			respBody.addProperty("message", "endpoints");
+			respBody.addProperty("connId",connId);
+			respBody.addProperty("message", "Endpoints url");
 			return ResponseEntity.status(HttpStatus.OK).headers(headers).body(respBody);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -962,7 +962,7 @@ public class DataController extends RESTFetch {
 			@RequestParam("endpoint") String endpoint,  HttpSession session) {
 		HttpHeaders headers = new HttpHeaders();
 //		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //		headers.add("access-control-allow-credentials", "true");
 		byte[] check1;
 		try {
@@ -1059,7 +1059,7 @@ public class DataController extends RESTFetch {
 						}
 						check1 = sheet.getBytes();
 //						headers.add("Cache-Control", "no-cache");
-//						headers.add("access-control-allow-origin", config.getRootUrl());
+//						
 //						headers.add("access-control-allow-credentials", "true");
 						headers.add("charset", "utf-8");
 						headers.add("content-disposition", "attachment; filename=" + credentials.getCurrSrcName() + "_"
@@ -1410,7 +1410,7 @@ public class DataController extends RESTFetch {
 			@RequestParam("connId") String connId, HttpSession httpsession) {
 		HttpHeaders headers = new HttpHeaders();
 //		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //		headers.add("access-control-allow-credentials", "true");
 		try {
 			JsonElement respBody = new JsonObject();
@@ -1589,7 +1589,7 @@ public class DataController extends RESTFetch {
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 //		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {

@@ -45,8 +45,7 @@ import com.google.gson.JsonSyntaxException;
 
 @Component
 public class DataListeners {
-	@Autowired
-	private Config config;
+
 	
 	@Autowired
 	private ApplicationCredentials applicationCredentials;

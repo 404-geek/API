@@ -46,7 +46,7 @@ public class WebSocketController {
 //    	
 //    	HttpHeaders headers = new HttpHeaders();
 //		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //        headers.add("access-control-allow-credentials", "true");
 //    	
 //    	Gson gson = new Gson();

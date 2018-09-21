@@ -82,7 +82,7 @@ public class UITrigger {
 		
 		HttpHeaders headers = new HttpHeaders();
 //		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
@@ -123,7 +123,7 @@ public class UITrigger {
 		HttpHeaders headers = new HttpHeaders();
 		JsonObject respBody = new JsonObject();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
+		
 		headers.add("access-control-allow-credentials", "true");
 		
 		ConnObj currConnObj = credentials.getConnectionIds(connId);
@@ -175,7 +175,7 @@ public class UITrigger {
 		HttpHeaders headers = new HttpHeaders();
 		JsonObject respBody = new JsonObject();
 //		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //		headers.add("access-control-allow-credentials", "true");
 		
 		ConnObj currConnObj = credentials.getConnectionIds(connId);
@@ -343,7 +343,7 @@ public class UITrigger {
 		
 		HttpHeaders headers = new HttpHeaders();
 //        headers.add("Cache-Control", "no-cache");
-//        headers.add("access-control-allow-origin", config.getRootUrl());
+//        
 //        headers.add("access-control-allow-credentials", "true");
         try{
         	JsonObject statistics= new JsonObject();
@@ -380,7 +380,7 @@ public class UITrigger {
 	private ResponseEntity<String> getusage(HttpSession session){
 		HttpHeaders headers = new HttpHeaders();
 //        headers.add("Cache-Control", "no-cache");
-//        headers.add("access-control-allow-origin", config.getRootUrl());
+//        
 //        headers.add("access-control-allow-credentials", "true");
 		
 		try {
@@ -441,7 +441,7 @@ public class UITrigger {
 	public ResponseEntity<Object> OLDgetScheduledStatus(HttpSession session) {
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-		headers.add("access-control-allow-origin", config.getRootUrl());
+		
 		headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
@@ -491,7 +491,7 @@ public class UITrigger {
         
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache");
-        headers.add("access-control-allow-origin", config.getRootUrl());
+        
         headers.add("access-control-allow-credentials", "true");
         
         try {         

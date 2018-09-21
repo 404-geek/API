@@ -66,7 +66,7 @@ public class SourceController extends RESTFetch {
 		ResponseEntity<String> ret = null;
 		HttpHeaders headers = new HttpHeaders();
 //		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //        headers.add("access-control-allow-credentials", "true");
 		try {			
 			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
@@ -184,7 +184,7 @@ public class SourceController extends RESTFetch {
 
 			headers = new HttpHeaders();
 //			headers.add("Cache-Control", "no-cache");
-//			headers.add("access-control-allow-origin", config.getRootUrl());
+//			
 //			headers.add("access-control-allow-credentials", "true");
 			if (!out.getStatusCode().is2xxSuccessful()) {
 				System.out.println("invalid access token");

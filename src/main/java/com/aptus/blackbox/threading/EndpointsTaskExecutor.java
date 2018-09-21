@@ -66,9 +66,7 @@ import com.google.gson.JsonSyntaxException;
 @Component
 @Scope("prototype")
 public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
-	
-	@Value("${access.control.allow.origin}")
-	private String rootUrl;
+
 	
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
@@ -188,8 +186,8 @@ public class EndpointsTaskExecutor extends RESTFetch implements Runnable{
 		
 		HttpHeaders header = new HttpHeaders();
 		header.add("Cache-Control", "no-cache");
-		header.add("access-control-allow-origin", rootUrl);
-        header.add("access-control-allow-credentials", "true");
+//		header.add("access-control-allow-origin", rootUrl);
+//        header.add("access-control-allow-credentials", "true");
         
 		try {
 			String url = Utilities.buildUrl(endpoint, scheduleObject.getSrcToken(),Thread.currentThread().getName()+"THREAD	EXECUTOR RUN");

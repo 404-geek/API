@@ -140,7 +140,7 @@ public class AdminController {
 		  ResponseEntity<String> out = null;
 	        HttpHeaders headers = new HttpHeaders();
 //	        headers.add("Cache-Control", "no-cache");
-//	        headers.add("access-control-allow-origin", config.getRootUrl());
+//	        
 //	        headers.add("access-control-allow-credentials", "true");
 	        try {         
 	        	
@@ -188,7 +188,7 @@ public class AdminController {
 		  ResponseEntity<String> out = null;
 	        HttpHeaders headers = new HttpHeaders();
 //	        headers.add("Cache-Control", "no-cache");
-//	        headers.add("access-control-allow-origin", config.getRootUrl());
+//	        
 //	        headers.add("access-control-allow-credentials", "true");
 	        try {         
 	        	

@@ -19,11 +19,11 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.context.request.WebRequest;
@@ -63,7 +63,7 @@ import com.google.gson.JsonObject;
 				]
  */
 
-@RestController
+@Controller
 public class Home extends RESTFetch {
 
 	@Autowired
@@ -147,13 +147,19 @@ public class Home extends RESTFetch {
 			System.out.println(InetAddress.getLocalHost().getHostName());
 			System.out.println(InetAddress.getLocalHost().getHostAddress());
 			
-			if (userService.userExist(email) == null) {
+			UserInfo userInfo = userService.userExist(email);
+			if (userInfo == null) {
 				response = new ResponseObject().Response(Constants.USER_NOT_FOUND_CODE, Constants.USER_NOT_FOUND_MSG,
 						email);
 			}
 			else if (!userService.userValid(email, password)) {
 				response = new ResponseObject().Response(Constants.INVALID_CREDENTIALS_CODE,
 						Constants.INVALID_CREDENTIALS_MSG, email);
+			}
+			else if(!userInfo.isEnabled()) {
+				response = new ResponseObject().Response(Constants.EMAIL_NOT_VERIFIED_CODE, 
+						Constants.EMAIL_NOT_VERIFIED_MSG, email);
+
 			}
 			else {
 
@@ -293,7 +299,7 @@ public class Home extends RESTFetch {
 				/* Publish event for sending confirmation mail */
 
 				String protocol = env.getProperty("uapi.mail.protocol");
-				String hostname = InetAddress.getLocalHost().getHostName();
+				String hostname = InetAddress.getLocalHost().getHostAddress();
 				String port = env.getProperty("server.port");
 				Locale locale = request.getLocale();
 
@@ -442,7 +448,7 @@ public class Home extends RESTFetch {
 		System.out.println("INSIDE /filterendpoints");
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Cache-Control", "no-cache");
-		// headers.add("access-control-allow-origin", config.getRootUrl());
+		// 
 		// headers.add("access-control-allow-credentials", "true");
 		try {
 			if (Utilities.isSessionValid(session, applicationCredentials, credentials.getUserId())) {
@@ -507,7 +513,7 @@ public class Home extends RESTFetch {
 	 * )) + "INSIDE /getconnectionids:" + session.getId()); String dataSource =
 	 * null; HttpHeaders headers = new HttpHeaders(); //
 	 * headers.add("Cache-Control", "no-cache"); //
-	 * headers.add("access-control-allow-origin", config.getRootUrl()); //
+	 *  //
 	 * headers.add("access-control-allow-credentials", "true"); //
 	 * headers.add("Authorization", "Basic YTph"); try {
 	 * 
@@ -560,7 +566,7 @@ public class Home extends RESTFetch {
 		String dataSource = null;
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Cache-Control", "no-cache");
-		// headers.add("access-control-allow-origin", config.getRootUrl());
+		// 
 		// headers.add("access-control-allow-credentials", "true");
 		// headers.add("Authorization", "Basic YTph");
 		try {

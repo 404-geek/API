@@ -51,8 +51,7 @@ import com.google.gson.JsonSyntaxException;
 public class ConnectionsTaskScheduler extends RESTFetch implements Runnable {
 
 	
-	@Value("${access.control.allow.origin}")
-	private String rootUrl;
+
 	@Autowired
 	private ApplicationContext Context;
 	@Autowired

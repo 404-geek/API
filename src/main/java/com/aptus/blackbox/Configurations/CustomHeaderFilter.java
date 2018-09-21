@@ -40,7 +40,7 @@ import org.springframework.context.annotation.Configuration;
       FilterChain chain) throws IOException, ServletException {
     	
         HttpServletResponse httpServletResponse = (HttpServletResponse) response;
-        httpServletResponse.setHeader("Access-Control-Allow-Origin", "http://192.168.1.9:4200");
+        httpServletResponse.setHeader("Access-Control-Allow-Origin", "http://192.168.1.18:4200");
         httpServletResponse.setHeader("access-control-allow-credentials", "true");
         httpServletResponse.setHeader("Cache-Control", "no-cache");
         chain.doFilter(request, response);

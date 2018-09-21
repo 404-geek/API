@@ -13,7 +13,7 @@ import org.springframework.session.data.mongo.config.annotation.web.http.EnableM
  *   implementation to be backed by Spring Session.
  *   In this instance Spring Session is backed by Mongo.
  */
-@EnableMongoHttpSession(maxInactiveIntervalInSeconds=6)
+@EnableMongoHttpSession(maxInactiveIntervalInSeconds=600)
 public class HttpSessionConfig {
 
 	public HttpSessionConfig() {

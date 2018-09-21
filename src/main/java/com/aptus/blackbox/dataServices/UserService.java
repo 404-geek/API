@@ -56,7 +56,7 @@ public class UserService {
 
 	
 	public boolean userValid(String _id,String password) {
-		return userInfoDAO.matchSingleField(_id, "userPassword", password);
+		return userInfoDAO.matchSingleField(_id, "password", password);
 	}
 	
 	public UserInfo getUserByEmail(String _id) {

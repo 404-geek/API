@@ -184,7 +184,9 @@ public class DataSourceController extends RESTFetch {
 			@RequestParam(value ="db_password",required=false) String db_password,
 			@RequestParam(value ="server_host",required=false) String server_host,
 			@RequestParam(value ="server_port",required=false) String server_port){
-		
+		System.out.println("type::"+type+" :: id"+srcdestId);
+		System.out.println(database_name+" 1"+db_username+"2"+db_password+"3"+
+		server_host+"4"+server_port);
 		
 		ResponseEntity<String> out = null;
 		System.out.println("Inside validate()");
@@ -193,7 +195,7 @@ public class DataSourceController extends RESTFetch {
 		HttpHeaders headers = new HttpHeaders();
 		// headers.add("Authorization","Basic YWRtaW46Y2hhbmdlaXQ=");
 		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //		headers.add("access-control-allow-credentials", "true");
 		try {
 			
@@ -265,7 +267,7 @@ public class DataSourceController extends RESTFetch {
 
 		headers = new HttpHeaders();
 //		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //		headers.add("access-control-allow-credentials", "true");
 
 		try {			
@@ -377,7 +379,7 @@ public class DataSourceController extends RESTFetch {
 
 		headers = new HttpHeaders();
 		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //		headers.add("access-control-allow-credentials", "true");
 		System.out.println("srcExist:"+credentials.isUsrSrcExist() +"\ndestExist:"+ credentials.isUsrDestExist()+" type:"+type);
 
@@ -541,7 +543,7 @@ public class DataSourceController extends RESTFetch {
 			String url = config.getMongoUrl()+"/credentials/sourceCredentials/" + userid.toLowerCase()+"_"+appId.toLowerCase();
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
-			//headers.add("access-control-allow-origin", config.getRootUrl());
+			//
             //headers.add("access-control-allow-credentials", "true");
 			HttpEntity<?> httpEntity = new HttpEntity<Object>(headers);
 			URI uri = UriComponentsBuilder.fromUriString(url).build().encode().toUri();
@@ -586,7 +588,7 @@ public class DataSourceController extends RESTFetch {
 			@RequestParam("srcdestId") String srcDestId, HttpSession session) {
 		HttpHeaders headers = new HttpHeaders();
 //		headers.add("Cache-Control", "no-cache");
-//		headers.add("access-control-allow-origin", config.getRootUrl());
+//		
 //		headers.add("access-control-allow-credentials", "true");
 		try {
 			if(Utilities.isSessionValid(session,applicationCredentials,credentials.getUserId())) {
@@ -665,7 +667,7 @@ public class DataSourceController extends RESTFetch {
         ResponseEntity<String> out = null;
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache");
-//        headers.add("access-control-allow-origin", config.getRootUrl());
+//        
 //        headers.add("access-control-allow-credentials", "true");
         try {         
             HttpEntity<?> httpEntity;
@@ -730,7 +732,7 @@ public class DataSourceController extends RESTFetch {
         ResponseEntity<String> out = null;
         HttpHeaders headers = new HttpHeaders();
         headers.add("Cache-Control", "no-cache");
-//        headers.add("access-control-allow-origin", config.getRootUrl());
+//        
 //        headers.add("access-control-allow-credentials", "true");
         try {         
             HttpEntity<?> httpEntity;
@@ -874,7 +876,7 @@ public class DataSourceController extends RESTFetch {
 					ResponseEntity<String> str = Context.getBean(DataController.class).selectAction("view", session);
 					HttpHeaders headers = new HttpHeaders();
 //					headers.add("Cache-Control", "no-cache");
-//					headers.add("access-control-allow-origin", config.getRootUrl());
+//					
 //					headers.add("access-control-allow-credentials", "true");
 					return ResponseEntity.status(HttpStatus.OK).headers(headers).body(str.getBody());
 				}
@@ -908,7 +910,7 @@ public class DataSourceController extends RESTFetch {
 			System.out.println(filteredEndpoints + " ");
 			HttpHeaders headers = new HttpHeaders();
 			headers.add("Cache-Control", "no-cache");
-			headers.add("access-control-allow-origin", config.getRootUrl());
+			
 			headers.add("access-control-allow-credentials", "true");
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				// if(validateCredentials==null||endPoints==null||refreshToken==null) {
@@ -1052,13 +1054,16 @@ public class DataSourceController extends RESTFetch {
 			@RequestParam(value="destination") String destination,
 			@RequestParam(value="choice") String choice,
 			HttpSession session) {
+		
+		
 		ResponseEntity<String> ret = null;
 		try {
 			System.out.println(filteredEndpoints.getClass());
 			System.out.println(filteredEndpoints + " ");
+			System.out.println("Period :: "+period);
 			HttpHeaders headers = new HttpHeaders();
 //			headers.add("Cache-Control", "no-cache");
-//			headers.add("access-control-allow-origin", config.getRootUrl());
+//			
 //			headers.add("access-control-allow-credentials", "true");
 			if (Utilities.isSessionValid(session, applicationCredentials,credentials.getUserId())) {
 				// if(validateCredentials==null||endPoints==null||refreshToken==null) {
@@ -1070,6 +1075,8 @@ public class DataSourceController extends RESTFetch {
 					add("json");
 				}};
 				String conId;
+				System.out.println("Currdestname:: "+credentials.getCurrDestName());
+				System.out.println("Destination :: "+destination);
 				JsonObject respBody = new JsonObject();
 				if(downloadDest.contains(destination)) {
 					credentials.setCurrDestName(destination);
@@ -1095,7 +1102,7 @@ public class DataSourceController extends RESTFetch {
 //					String period = filteredEndpoints.get("period");
 //					String schedule = "true";
 //					String 
-					period = "30";
+//					period = "30";//change here for scheduling time
 					if(schedule.equalsIgnoreCase("false"))
 						period="0";
 					JsonArray temp2,endpoints = new JsonArray();
@@ -1161,7 +1168,7 @@ public class DataSourceController extends RESTFetch {
 						respBody.addProperty("data", out);
 					}
 					else if(choice.equalsIgnoreCase("download")) {
-						JsonObject out = Context.getBean(DataController.class).fordownload(gson.fromJson(filteredEndpoints, JsonElement.class)
+						JsonObject out = Context.getBean(DataController.class).fordownload(conId, gson.fromJson(filteredEndpoints, JsonElement.class)
 								.getAsJsonObject(), session).getBody();
 						respBody.add("data", out);
 					}
