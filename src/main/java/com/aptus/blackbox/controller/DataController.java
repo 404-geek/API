@@ -48,7 +48,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
-import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.dataServices.DestinationConfigService;
 import com.aptus.blackbox.dataServices.MeteringService;

@@ -22,7 +22,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.dataService.ApplicationCredentials;
-import com.aptus.blackbox.dataService.Config;
+
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.dataServices.DestinationConfigService;
 import com.aptus.blackbox.dataServices.SourceConfigService;
@@ -40,8 +40,6 @@ import com.google.gson.JsonObject;
 @RestController
 public class AdminController {
 
-	@Autowired
-	private Config config;
 	
 	@Autowired
 	private ApplicationCredentials applicationCredentials;

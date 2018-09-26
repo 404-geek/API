@@ -86,14 +86,11 @@ public class Home extends RESTFetch {
 	@Autowired
 	private Environment env;
 
-	private SimpMessagingTemplate template;
+	private final SimpMessagingTemplate template;
 	final Logger logger = LogManager.getLogger(Home.class.getPackage());
 
 	
-	public Home() {
-		System.out.println("Home Constructor");
-	}
-	
+
 	
 	@Autowired
 	public Home(SimpMessagingTemplate template) {
@@ -143,30 +140,36 @@ public class Home extends RESTFetch {
 
 		try {
 
-			System.out.println(InetAddress.getLocalHost().getHostName());
-			System.out.println(InetAddress.getLocalHost().getHostAddress());
+			System.out.println("Login User SessionId::"+session.getId());
 
 			UserInfo userInfo = userService.userExist(email);
+			JsonObject data = new JsonObject();
+			
+			
 			if ( userInfo == null) {
+				data.addProperty("email", email);
 				response = new ResponseObject().Response(Constants.USER_NOT_FOUND_CODE, Constants.USER_NOT_FOUND_MSG,
-						email);
+						data);
 			}
 			else if (!userService.userValid(email, password)) {
+				data.addProperty("email", userInfo.getEmail());
 				response = new ResponseObject().Response(Constants.INVALID_CREDENTIALS_CODE,
-						Constants.INVALID_CREDENTIALS_MSG, email);
+						Constants.INVALID_CREDENTIALS_MSG, data);
 			}
 			else if(!userInfo.isEnabled()) {
-
+				data.addProperty("email", userInfo.getEmail());
+				
 				response = new ResponseObject().Response(Constants.EMAIL_NOT_VERIFIED_CODE,
-						Constants.EMAIL_NOT_VERIFIED_MSG, email);
+						Constants.EMAIL_NOT_VERIFIED_MSG, data);
 			}
 			else {
-
+				data.addProperty("email", userInfo.getEmail());
+				data.addProperty("name", userInfo.getName());
 				credentials.setUserId(email);
 				applicationCredentials.setSessionId(email, session.getId());
 
 				getConnectionIds(session);
-				response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, email);
+				response = new ResponseObject().Response(Constants.SUCCESS_CODE, Constants.SUCCESS_MSG, data);
 				//
 				// ThreadContext.clearAll();
 				// ThreadContext.put("id", "192.168.21.9");
@@ -222,6 +225,19 @@ public class Home extends RESTFetch {
 		return null;
 
 	}
+	
+	@RequestMapping(value = "/notify")
+	private ResponseEntity<String> notifyfunc(HttpSession session) {
+		try {
+			System.out.println(session.getId());
+			socketService.sendUserStatistics();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return ResponseEntity.status(HttpStatus.OK).headers(null).body("");
+
+	}
 
 	/*
 	 * Calls upon use clicking registration confirmation link Input :: Verification
@@ -269,8 +285,6 @@ public class Home extends RESTFetch {
 		try {
 			/* Parse JsonResponse string to UserInfo type */
 			UserInfo user = new Gson().fromJson(data, UserInfo.class);
-			System.out.println(InetAddress.getLocalHost().getHostName());
-			System.out.println(InetAddress.getLocalHost().getHostAddress());
 
 
 			UserInfo userInfo = userService.userExist(user.getEmail());
@@ -298,7 +312,7 @@ public class Home extends RESTFetch {
 				/* Publish event for sending confirmation mail */
 
 				String protocol = env.getProperty("uapi.mail.protocol");
-				String hostname = InetAddress.getLocalHost().getHostAddress();
+				String hostname = InetAddress.getLocalHost().getHostName();
 				String port = env.getProperty("server.port");
 				Locale locale = request.getLocale();
 

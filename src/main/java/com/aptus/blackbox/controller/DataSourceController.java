@@ -35,7 +35,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.aptus.blackbox.BlackBoxReloadedApp;
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
-import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.dataServices.DestinationConfigService;
 import com.aptus.blackbox.dataServices.MeteringService;
@@ -614,8 +613,8 @@ public class DataSourceController extends RESTFetch {
 					else {
 						System.out.println("ISVALID");
 						credentials.getSrcToken().entrySet().iterator().forEachRemaining(a->{
-							System.out.println("key :: "+a.getKey());
-							System.out.println("val :: "+a.getValue()+"\n");
+							//System.out.println("key :: "+a.getKey());
+							//System.out.println("val :: "+a.getValue()+"\n");
 						});
 						ResponseEntity<String> out = Utilities.token(credentials.getSrcObj().getValidateCredentials(), credentials.getSrcToken(), "DataSourceController.isvalid");
 						isvalid = out.getStatusCode().is2xxSuccessful();

@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 
 import com.aptus.blackbox.dataService.ApplicationCredentials;
-import com.aptus.blackbox.dataService.Config;
 import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SchedulingService;
 import com.aptus.blackbox.dataServices.SrcDestCredentialsService;

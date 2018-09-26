@@ -30,7 +30,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.dataService.ApplicationCredentials;
-import com.aptus.blackbox.dataService.Config;
+
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.dataServices.MeteringService;
 import com.aptus.blackbox.dataServices.SchedulingService;
@@ -61,8 +61,7 @@ public class UITrigger {
 	private ApplicationEventPublisher applicationEventPublisher;
 	@Autowired
 	private ApplicationContext Context;
-	@Autowired
-	private Config config;
+
 	@Autowired
 	private UserConnectorService userConnectorService;
 	@Autowired

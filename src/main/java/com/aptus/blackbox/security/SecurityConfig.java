@@ -25,6 +25,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
     	http.csrf().disable();
+    	//http.cors().disable();
         http.sessionManagement()
             .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED);
         http.sessionManagement().invalidSessionUrl("/index.html").maximumSessions(1).expiredUrl("/close.html");

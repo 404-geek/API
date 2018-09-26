@@ -27,7 +27,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.aptus.blackbox.RESTFetch;
 import com.aptus.blackbox.dataService.ApplicationCredentials;
-import com.aptus.blackbox.dataService.Config;
+
 import com.aptus.blackbox.dataService.Credentials;
 import com.aptus.blackbox.datamodels.SourceConfig;
 import com.aptus.blackbox.models.UrlObject;
@@ -44,8 +44,7 @@ public class SourceController extends RESTFetch {
 	private Credentials credentials;
 	@Autowired
 	private ApplicationCredentials applicationCredentials;
-	@Autowired
-	private Config config;
+
 
 
 	private String refresh;
